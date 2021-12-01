@@ -1,0 +1,56 @@
+{
+  "test": {
+    "welcome": "Welcome to your new farm! I have put a couple of seeds into your Inventory, so you can start to grow some crops right away. You can access the inventory by pressing [{keyMapping.inventory}].\f\nOh, you may want to know how the other controls work first... Press [{keyMapping.up}], [{keyMapping.down}], [{keyMapping.left}] or [{keyMapping.right}] to walk around. [{keyMapping.item1}], [{keyMapping.item2}] and [{keyMapping.interact}] are the three action buttons.\f\nYou can see what they are currently doing on the top right corner of the sceen. [{keyMapping.interact}] is used to interact with your environment. The buttons [{keyMapping.item1}] and [{keyMapping.item2}] are where you can use your equipped items. While in the inventory, press one of those buttons to equip the currently selected item.\f\nA few meters in front of you there are patches of fertile soil. As a first task, you should equip one of your seed bags and start planting your crops!"
+  },
+  "error": "I AM ERROR",
+  "not-implemented": "Whoops, seems like I haven't implemented this yet :(",
+  "general": {
+    "stamina-low": "You have worked enough for today. Go to bed to get some rest!",
+    "newDay": "Good Morning! It's now day {day}. You feel well rested.",
+    "tired-begin": "You have been awake for a very long time. You're starting to feel a little tired.",
+    "tired-advanced": "You feel dizzy. You should really go to bed now!",
+    "fainting": "You break down tired.",
+    "item-no-action": "Now is not the right time to use this."
+  },
+  "interactibles": {
+    "test-door": "I know you want to go to the bedroom, but unfortunately I did not implement that yet. If you want to sleep until the next day, just press [T].",
+    "crops": {
+      "growing": "The {data.values.name} is growing (It is {age} day(s) old).",
+      "ready": "The {data.values.name} is ready for harvest."
+    },
+    "collectible": "{itemToAdd.screenName} (Quantity: {itemToAdd.quantity})."
+  },
+  "tooltips": {
+    "scytheL1": "A tool to cut crops when they are ready for harvest. You can also use this to remove weeds.",
+    "scytheL2": "A tool to cut crops when they are ready for harvest. You can also use this to remove weeds. Lighter than the normal scythe.",
+    "seeds": "Plant these seeds in a patch of soil.",
+    "harvest": "{screenName} can be sold, processed to feed, or transformed into seeds."
+  },
+  "npc-dialogue": {
+    "generic": {
+      "greet-1": "Hello. How are you?",
+      "greet-2": "Good day sir. Is this your farm? It's pretty nice!",
+      "smalltalk-1": "Nice weather today, do you agree?",
+      "smalltalk-2": "You look like you are working really hard.",
+      "nothing-to-say": "Is there anything else you want?"
+    },
+    "shopping": {
+      "greeting": "Buy somethin' will ya!",
+      "greeting-options": {
+        "text": "Greetings! What do you want to do?",
+        "options": [ "Buy", "Sell" ]
+      },
+      "insufficient-funds": "You don't have enough money to buy this!",
+      "goodbye": "Pleasure doin' business with ya!"
+    },
+    "test": {
+      "test-1": {
+        "text": "Pick an option:", 
+        "options": [ "One", "Two", "Three" ]
+      },
+      "test-one": "You chose option number one.",
+      "test-two": "Option two it is.",
+      "test-three": "This is option three."
+    }
+  }
+}

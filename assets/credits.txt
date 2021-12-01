@@ -1,0 +1,5 @@
+!CL_DEMO.png https://szadiart.itch.io/craftland-demo
+tools.png https://frozentaurus.itch.io/frozentauruss-tool-asset-pack
+gone_fishing_by_memoraphile_CC0.mp3 https://opengameart.org/content/gone-fishin
+
+character sprites made with https://retro-sprite-creator.nihey.org/character 

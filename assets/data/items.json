@@ -1,0 +1,79 @@
+{
+  "seeds": {
+    "wheat": {
+      "name": "wheat",
+      "screenName": "Seeds (Wheat)",
+      "type": "seed",
+      "quantity": 10,
+      "unique": false,
+      "usageCallback": null,
+      "spritesheet": "seeds",
+      "frame": 1,
+      "stamina": 5,
+      "tooltip": "seeds",
+      "buyPrice": 100,
+      "sellPrice": 50,
+      "sellQuantity": 10
+    },
+    "potato": {
+      "name": "potato",
+      "screenName": "Seeds (Potato)",
+      "type": "seed",
+      "quantity": 10,
+      "unique": false,
+      "usageCallback": null,
+      "spritesheet": "seeds",
+      "frame": 2,
+      "stamina": 5,
+      "tooltip": "seeds",
+      "buyPrice": 200,
+      "sellPrice": 100,
+      "sellQuantity": 10
+    },
+    "maize": {
+      "name": "maize",
+      "screenName": "Seeds (Maize)",
+      "type": "seed",
+      "quantity": 10,
+      "unique": false,
+      "usageCallback": null,
+      "spritesheet": "seeds",
+      "frame": 5,
+      "stamina": 5,
+      "tooltip": "seeds",
+      "buyPrice": 150,
+      "sellPrice": 75,
+      "sellQuantity": 10
+    }
+  },
+  "tools": {
+    "scytheL1": {
+      "name": "scytheL1",
+      "screenName": "Scythe [L1]",
+      "type": "tool",
+      "quantity": null,
+      "unique": true,
+      "usageCallback": "scythe",
+      "spritesheet": "inventory-items",
+      "frame": 2,
+      "stamina": 10,
+      "tooltip": "scytheL1",
+      "buyPrice": 200,
+      "sellPrice": 75
+    },
+    "scytheL2": {
+      "name": "scytheL2",
+      "screenName": "Scythe [L2]",
+      "type": "tool",
+      "quantity": null,
+      "unique": true,
+      "usageCallback": "scythe",
+      "spritesheet": "inventory-items",
+      "frame": 6,
+      "stamina": 7,
+      "tooltip": "scytheL2",
+      "buyPrice": 3000,
+      "sellPrice": 1000
+    }
+  }
+}

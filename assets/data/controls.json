@@ -1,0 +1,12 @@
+{
+  "default": {
+    "item1": "A",
+    "item2": "S",
+    "interact": "W",
+    "inventory": "E",
+    "up": "UP",
+    "down": "DOWN",
+    "left": "LEFT",
+    "right": "RIGHT"
+  }
+}

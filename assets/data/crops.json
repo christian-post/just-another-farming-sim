@@ -1,0 +1,64 @@
+{
+  "croplist": {
+    "wheat": {
+      "name": "wheat",
+      "frames": [5, 6, 7, 8],
+      "numPhases": 4,
+      "phaseHarvest": 3,
+      "phaseDurations": [3, 3, 2, 4],
+      "harvest": "wheat",
+      "residue": "straw"
+    },
+    "potato": {
+      "name": "potato",
+      "frames": [0, 1, 2, 3],
+      "numPhases": 4,
+      "phaseHarvest": 3,
+      "phaseDurations": [3, 3, 2, 5],
+      "harvest": "potato",
+      "residue": "nothing"
+    },
+    "maize": {
+      "name": "maize",
+      "frames": [11, 12, 13, 14, 15],
+      "numPhases": 4,
+      "phaseHarvest": 3,
+      "phaseDurations": [4, 4, 3, 4],
+      "harvest": "maize",
+      "residue": "nothing"
+    }
+  },
+  "harvest": {
+    "maize": {
+      "name": "maize",
+      "type": "harvest",
+      "screenName": "Corn cobs",
+      "spritesheet": "inventory-items",
+      "frame": 3,
+      "tooltip": "harvest",
+      "quantity": 1,
+      "sellQuantity": 1,
+      "sellPrice": 20
+    },
+    "potato": {
+      "name": "potato",
+      "screenName": "Potatoes",
+      "spritesheet": "inventory-items",
+      "frame": 0,
+      "tooltip": "harvest",
+      "quantity": 5,
+      "sellQuantity": 5,
+      "sellPrice": 30
+    },
+    "wheat": {
+      "name": "wheat",
+      "screenName": "Wheat ears",
+      "spritesheet": "inventory-items",
+      "frame": 1,
+      "tooltip": "harvest",
+      "quantity": 10,
+      "sellQuantity": 10,
+      "sellPrice": 10
+    }
+  }
+}
