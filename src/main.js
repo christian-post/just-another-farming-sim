@@ -1,7 +1,7 @@
 const windowWidth = 426;
 const windowHeight = 240;
 
-const COLOR_BACKGROUND = 0x9ae81f;
+const COLOR_BACKGROUND = 0x006022;
 
 // debug settings
 const DEBUG = false;
@@ -70,7 +70,7 @@ let additionalConfig = {
 game.registry.merge(additionalConfig);
 
 // define the scenes
-game.scene.add('Preload', PreloadingScene, false);
+game.scene.add('Preload', PreloadingScene, false);   
 game.scene.add('GameManager', GameManager, false);
 game.scene.add('Title', TitleScene, false);
 game.scene.add('Test', TestScene, false);
