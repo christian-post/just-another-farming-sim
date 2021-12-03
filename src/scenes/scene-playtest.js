@@ -127,7 +127,7 @@ class TestScene extends Phaser.Scene {
           };
           break;
         default:
-          console.log(`no object for ${elem.type}, ${elem}`);
+          console.log(`No object for ${elem.type}, ${elem}`);
       }
     });
 
