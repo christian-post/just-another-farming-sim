@@ -122,6 +122,40 @@
                  "width":32,
                  "x":304,
                  "y":160
+                }, 
+                {
+                 "height":16,
+                 "id":6,
+                 "name":"playerStartPosition",
+                 "properties":[
+                        {
+                         "name":"key",
+                         "type":"string",
+                         "value":"player"
+                        }],
+                 "rotation":0,
+                 "type":"spawn",
+                 "visible":true,
+                 "width":16,
+                 "x":256,
+                 "y":208
+                }, 
+                {
+                 "height":32,
+                 "id":9,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"lightcone-lamp"
+                        }],
+                 "rotation":0,
+                 "type":"light",
+                 "visible":true,
+                 "width":16,
+                 "x":448,
+                 "y":112
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -130,7 +164,7 @@
          "y":0
         }],
  "nextlayerid":6,
- "nextobjectid":6,
+ "nextobjectid":10,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.7.2",

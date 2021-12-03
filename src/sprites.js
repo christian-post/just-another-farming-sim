@@ -751,7 +751,7 @@ class Crop extends Phaser.GameObjects.Image {
       // spawn something to collect
       let spawnPos = { x: this.body.center.x, y: this.body.center.y - 8};
       let targetPos = { x: this.body.center.x, y: this.body.center.y};
-      let data = this.scene.cache.json.get('cropData').harvest[this.data.values.harvest];
+      let data = this.scene.cache.json.get('itemData').harvest[this.data.values.harvest];
 
       let cb = new Collectible(
         this.scene, this.scene.collectibles, spawnPos.x, spawnPos.y, data

@@ -273,26 +273,28 @@ class InventoryManager extends Phaser.Scene {
     // check if this kind of item already exists
     let rest;
 
-    for (let [index, item] of this.inventory.entries()) {
-      if (item !== null && item.name === itemToAdd.name && item.type === itemToAdd.type) {
-        if (item.quantity < this.itemMaxQuantity) {
-          // add to the existing slot if the amount is lower than the allowed max. quantity
-          rest = this.inventory[index].quantity + itemToAdd.quantity - this.itemMaxQuantity;
-          this.inventory[index].quantity += itemToAdd.quantity - Math.max(0, rest);
-
-          // check if rest remains, if so, look for the next slot and add the rest there
-          if (rest > 0) {
-            this.addItem(item, rest);
+    if (!itemToAdd.unique) {
+      for (let [index, item] of this.inventory.entries()) {
+        if (item !== null && item.name === itemToAdd.name && item.type === itemToAdd.type) {
+          if (item.quantity < this.itemMaxQuantity) {
+            // add to the existing slot if the amount is lower than the allowed max. quantity
+            rest = this.inventory[index].quantity + itemToAdd.quantity - this.itemMaxQuantity;
+            this.inventory[index].quantity += itemToAdd.quantity - Math.max(0, rest);
+  
+            // check if rest remains, if so, look for the next slot and add the rest there
+            if (rest > 0) {
+              this.addItem(itemToAdd, rest);
+            }
+            return index;
           }
-          return index;
         }
       }
     }
 
-    // if item wasn't found, look for the first free slot
+    // if item wasn't found or it is unique, look for the first free slot
     for (let [index, item] of this.inventory.entries()) {
       if (item === null) {
-        if (itemToAdd.quantity < this.itemMaxQuantity) {
+        if (itemToAdd.unique || itemToAdd.quantity < this.itemMaxQuantity) {
           this.inventory[index] = itemToAdd;
         } else {
           // add 255 of the item to this slot
@@ -303,7 +305,7 @@ class InventoryManager extends Phaser.Scene {
           // check if rest remains, if so, look for the next slot and add the rest there
           rest = itemToAdd.quantity - this.itemMaxQuantity;
           if (rest > 0) {
-            this.addItem(item, rest);
+            this.addItem(itemToAdd, rest);
           }
         }
         return index;
@@ -380,18 +382,10 @@ class InventoryDisplay extends Phaser.Scene {
       .setDepth(-2)
       .setOrigin(0);
     
-    let numSidebarSlots = 6;  // TODO think about what to display here
+    this.numSidebarSlots = 6;  // TODO think about what to display here
     this.sidebarSlots = [];
 
-    for (let i = 0; i < numSidebarSlots; i++) {
-        let yMargin = this.sidebarBackground.height / (numSidebarSlots+  1)
-
-        this.sidebarSlots[i] = {
-          x: this.sidebarBackground.getCenter().x,
-          y: this.sidebarBackground.y + yMargin + i * yMargin,
-          element: null
-        };
-    }
+    this.fillSidebar();
 
     
     //display items in inventory
@@ -416,8 +410,6 @@ class InventoryDisplay extends Phaser.Scene {
       this.invElements.forEach(elem => {
         elem.destroy();
       });
-
-      this.sidebarSlots = [];
 
       this.constructInventory();
       this.constructSidebar();
@@ -517,6 +509,19 @@ class InventoryDisplay extends Phaser.Scene {
     this.manager.events.emit('show-interaction', 'info');
   }
 
+  fillSidebar() {
+    this.sidebarSlots = [];
+    for (let i = 0; i < this.numSidebarSlots; i++) {
+      let yMargin = this.sidebarBackground.height / (this.numSidebarSlots + 1)
+
+      this.sidebarSlots[i] = {
+        x: this.sidebarBackground.getCenter().x,
+        y: this.sidebarBackground.y + yMargin + i * yMargin,
+        element: null
+      };
+    }
+  }
+
   addToSidebar(element, index) {
     if (index >= 0) {
       // if index is specified, put this element in that position
@@ -537,14 +542,20 @@ class InventoryDisplay extends Phaser.Scene {
   }
 
   constructSidebar() {
+    // reset sidebar
+    this.fillSidebar();
+
     // money display
     let moneySprite = this.add.image(-16, 0, 'inventory-items', 5);
     let moneyText = this.add.text(
       moneySprite.getRightCenter().x + 2, moneySprite.getRightCenter().y, 
       this.registry.values.money, { color: '#fff', fontSize: '10px' }
     ).setOrigin(0, 0.5);
+    // this.invElements.push(moneySprite);
+    // this.invElements.push(moneyText);
 
     let moneyInformation = this.add.container(0, 0, [ moneySprite, moneyText ]);
+    this.invElements.push(moneyInformation);
 
     this.addToSidebar(moneyInformation);
 
@@ -654,6 +665,7 @@ class ShopDisplay extends Phaser.Scene {
 
     // interaction key
     this.keys.interact.on('down', () => {
+      // TODO: put in function?
       // buy that stuff
       let item = this.items[this.currentIndex];
       if (item) { 
@@ -672,10 +684,23 @@ class ShopDisplay extends Phaser.Scene {
           }
         } else if (this.type === 'sell') {
           let currentFunds = this.registry.values.money;
-          this.registry.set('money',  currentFunds + item.sellPrice);
-          this.showMoneyChange('+' + item.sellPrice);
 
-          this.manager.events.emit('item-removed', this.currentIndex, item, item.sellQuantity);
+          // determine the amount that can be sold
+          let soldAmount;
+          if (item.unique) {
+            soldAmount = 1;
+          } else if (item.quantity > item.sellQuantity) {
+            soldAmount = item.sellQuantity;
+          } else {
+            soldAmount = item.quantity;
+          }
+
+          let sellPrice = soldAmount * item.sellPrice;
+
+          this.registry.set('money',  currentFunds + sellPrice);
+          this.showMoneyChange('+' + sellPrice);
+
+          this.manager.events.emit('item-removed', this.currentIndex, item, soldAmount);
 
           // reconstruct inventory
           this.constructInventory();
@@ -739,9 +764,12 @@ class ShopDisplay extends Phaser.Scene {
     this.currentItemText = this.add.text(
       this.background.getBottomCenter().x, 
       this.background.getBottomCenter().y - 8, 
-      this.getItemText(this.items[this.currentIndex]),
+      '',
       this.textStyles.bottomText
     );
+    if (this.items[this.currentIndex]) {
+      this.currentItemText.setText(this.getItemText(this.items[this.currentIndex]));
+    }
     this.currentItemText.setOrigin(0.5, 1);
     this.invElements.push(this.currentItemText);
 

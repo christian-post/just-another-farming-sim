@@ -95,6 +95,10 @@ class TestScene extends Phaser.Scene {
 
     this.depthSortedSprites = this.add.layer();
     this.depthSortedSprites.setDepth(this.depthValues.sprites);
+
+    // object to store map information about positions
+    // TODO: change to spawn object for player and NPCs
+    let spawnPositions = {}
     
     rawObjects.forEach( elem => {
       // convert properties array to object
@@ -116,13 +120,19 @@ class TestScene extends Phaser.Scene {
           let lightcone = this.add.image(x, y, properties.texture).setVisible(false);
           this.lightcones.add(lightcone);
           break;
+        case 'spawn':
+          spawnPositions[elem.name] = { 
+            x: elem.x,
+            y: elem.y
+          };
+          break;
         default:
           console.log(`no object for ${elem.type}, ${elem}`);
       }
     });
 
     // create the Player sprite
-    this.player = new Player(this, this.registry.values.tileSize * 28, this.registry.values.tileSize * 15);
+    this.player = new Player(this, spawnPositions.playerStartPosition.x, spawnPositions.playerStartPosition.y);
     // this.player = new Player(this, this.registry.values.tileSize * 16, this.registry.values.tileSize * 12);
     // this.player.setDepth(2);
     this.physics.add.collider(this.player, this.mapLayers.layer1);
@@ -177,12 +187,14 @@ class TestScene extends Phaser.Scene {
     // add items to inventory
     let inventoryManager = this.scene.get('InventoryManager');
 
-    inventoryManager.addItem(itemData.tools.scytheL1);
-    inventoryManager.equipItem(0, 'item1');  // TODO: auto-equip if equip slot is empty
+    // inventoryManager.addItem(itemData.tools.scytheL1);
+    // inventoryManager.equipItem(0, 'item1');  // TODO: auto-equip if equip slot is empty
 
-    inventoryManager.addItem(itemData.seeds.wheat, 20);
-    inventoryManager.addItem(itemData.seeds.potato, 10);
-    inventoryManager.addItem(itemData.seeds.maize, 20);
+    // inventoryManager.addItem(itemData.seeds.wheat, 20);
+    // inventoryManager.addItem(itemData.seeds.potato, 10);
+    // inventoryManager.addItem(itemData.seeds.maize, 20);
+
+    // inventoryManager.addItem(itemData.harvest.wheat, 999);
 
 
     // TESTING
@@ -193,7 +205,7 @@ class TestScene extends Phaser.Scene {
 
     new Vendor(
       this, 28 * tile, 12 * tile, 'npc-woman-1', 
-      [ 'seeds.wheat', 'seeds.potato', 'seeds.maize', 'tools.scytheL2' ]
+      [ 'seeds.wheat', 'seeds.potato', 'seeds.maize', 'tools.scytheL1', 'tools.scytheL2' ]
     );
 
 
