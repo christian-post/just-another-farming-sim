@@ -114,7 +114,17 @@
                         {
                          "name":"dialogueKey",
                          "type":"string",
-                         "value":"test.welcome"
+                         "value":"help.intro"
+                        }, 
+                        {
+                         "name":"hasOptions",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"options",
+                         "type":"string",
+                         "value":"[\"help.controls\", \"help.farming\", \"help.dialogue\", \"help.other\"]"
                         }],
                  "rotation":0,
                  "type":"dialogue",

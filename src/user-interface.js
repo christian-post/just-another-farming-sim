@@ -92,17 +92,19 @@ class DialogueScene extends Phaser.Scene {
 
   update() {
     if (this.cursor) {
+      // move the cursor if the dialogue has options
       let delay = 500;
       let dir = getCursorDirections(this, delay);
       if (dir.x !== 0) {
-        this.currentOptionIndex = (this.currentOptionIndex + 1) % this.options.length;
         if (dir.x > 0) {
-          this.cursor.setX(this.optionPositions[this.currentOptionIndex].x);
+          this.currentOptionIndex = (this.currentOptionIndex + 1) % this.options.length;
         } else {
-          // TODO: doesn't work exactly right (doesn't crash tho)
-          let bIndex = this.options.length - 1 - this.currentOptionIndex;
-          this.cursor.setX(this.optionPositions[bIndex].x);
+          this.currentOptionIndex--;
+          if (this.currentOptionIndex < 0) {
+            this.currentOptionIndex = this.options.length - 1;
+          }
         }
+        this.cursor.setX(this.optionPositions[this.currentOptionIndex].x);
       }
     }
   }    

@@ -3,16 +3,22 @@ class PreloadingScene extends Phaser.Scene {
   preload () {
     // https://gamedevacademy.org/creating-a-preloading-screen-in-phaser-3/?a=13
 
-    // TODO: refactor!
+    let rectWidth = 200;
+    let rectHeight = 24;
+    let rectX = windowWidth / 2 - rectWidth / 2;
+    let rectY = windowHeight / 2 - rectHeight / 2;
+    
+    let progressBoxColor = 0x084010;
+    let progressBarColor = 0x10bb30;
 
-    var progressBar = this.add.graphics();
     var progressBox = this.add.graphics();
-    progressBox.fillStyle(0x222222, 0.8);
-    progressBox.fillRect(240, 270, 320, 50);
+    var progressBar = this.add.graphics();
+    progressBox.fillStyle(progressBoxColor, 1);
+    progressBox.fillRect(rectX, rectY, rectWidth, rectHeight);
 
     var loadingText = this.make.text({
         x: windowWidth / 2,
-        y: windowHeight / 2 - 50,
+        y: windowHeight / 4,
         text: 'Loading...',
         style: {
             fontSize: '20px',
@@ -23,7 +29,7 @@ class PreloadingScene extends Phaser.Scene {
     
     var percentText = this.make.text({
         x: windowWidth / 2,
-        y: windowHeight / 2 - 5,
+        y: windowHeight / 2,
         text: '0%',
         style: {
             fontSize: '18px',
@@ -34,7 +40,7 @@ class PreloadingScene extends Phaser.Scene {
     
     var assetText = this.make.text({
         x: windowWidth / 2,
-        y: windowHeight / 2 + 50,
+        y: windowHeight * 0.75,
         text: '',
         style: {
             fontSize: '18px',
@@ -47,8 +53,8 @@ class PreloadingScene extends Phaser.Scene {
     this.load.on('progress', function (value) {
       percentText.setText(parseInt(value * 100) + '%');
       progressBar.clear();
-      progressBar.fillStyle(0xffffff, 1);
-      progressBar.fillRect(250, 280, 300 * value, 30);
+      progressBar.fillStyle(progressBarColor, 1);
+      progressBar.fillRect(rectX, rectY, rectWidth * value, rectHeight);
     });
                 
     this.load.on('fileprogress', function (file) {
@@ -64,6 +70,7 @@ class PreloadingScene extends Phaser.Scene {
     });
     
 
+    // TODO: testing the loading screen
     // for (var i = 0; i < 500; i++) {
     //   this.load.image('logo'+i, 'assets/images/sprites/test.png');
     // }

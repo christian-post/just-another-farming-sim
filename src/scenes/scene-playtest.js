@@ -110,8 +110,9 @@ class TestScene extends Phaser.Scene {
       // check elem.type and create an object accordingly
       switch (elem.type) {
         case 'dialogue':
+          let options = properties.hasOptions ? JSON.parse(properties.options) : null;
           new DialogueTrigger(
-            this, elem.x, elem.y, elem.width, elem.height, properties.dialogueKey
+            this, elem.x, elem.y, elem.width, elem.height, properties.dialogueKey, options
           );
           break;
         case 'light':
@@ -187,14 +188,15 @@ class TestScene extends Phaser.Scene {
     // add items to inventory
     let inventoryManager = this.scene.get('InventoryManager');
 
-    // inventoryManager.addItem(itemData.tools.scytheL1);
+    inventoryManager.addItem(itemData.tools.scytheL1);
     // inventoryManager.equipItem(0, 'item1');  // TODO: auto-equip if equip slot is empty
 
-    // inventoryManager.addItem(itemData.seeds.wheat, 20);
-    // inventoryManager.addItem(itemData.seeds.potato, 10);
-    // inventoryManager.addItem(itemData.seeds.maize, 20);
+    inventoryManager.addItem(itemData.seeds.wheat, 20);
+    inventoryManager.addItem(itemData.seeds.potato, 10);
+    inventoryManager.addItem(itemData.seeds.maize, 20);
 
-    // inventoryManager.addItem(itemData.harvest.wheat, 999);
+    inventoryManager.addItem(itemData.harvest.wheat, 100);
+    inventoryManager.addItem(itemData.harvest.potato, 200);
 
 
     // TESTING

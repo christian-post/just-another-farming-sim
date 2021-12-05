@@ -639,6 +639,7 @@ class Vendor extends NPC {
   }
 
   interact() {
+    // TODO: make this different for every vendor
     showMessage(
       this.scene, 
       'npc-dialogue.shopping.greeting-options.text', 
@@ -668,6 +669,10 @@ class Vendor extends NPC {
               parentScene: this.scene.scene.key,
               type: 'sell'
             });
+          },
+          ()=> {
+            // leave
+            showMessage(this.scene, 'npc-dialogue.shopping.leaving');
           }
         ]
       }
@@ -883,7 +888,7 @@ class Scythe extends Phaser.GameObjects.Image {
 
 
 class DialogueTrigger extends Phaser.GameObjects.Rectangle {
-  constructor(scene, x, y, width, height, dialogueKey){
+  constructor(scene, x, y, width, height, dialogueKey, options=null){
     // TODO: color and alpha only for testing
     super(scene, x, y, width, height);
     this.scene.add.existing(this);
@@ -900,9 +905,27 @@ class DialogueTrigger extends Phaser.GameObjects.Rectangle {
 
     // TODO: more modular! (cutscenes etc)
     this.dialogueKey = dialogueKey;
+    this.optionsKey = '';
+
+    this.optionsCallbacks = [];
+    if (options) {
+      this.optionsKey = this.dialogueKey + '.options';
+      this.dialogueKey += '.text';
+
+      this.options = options;
+      // TODO: grab callbacks from js file
+      options.forEach(option => {
+        this.optionsCallbacks.push(
+          ()=> { showMessage(this.scene, option); }
+        )
+      });
+    }
   }
 
   interact() {
-    showMessage(this.scene, this.dialogueKey);
+    showMessage(
+      this.scene, this.dialogueKey, this.manager, null, 
+      { key: this.optionsKey, callbacks: this.optionsCallbacks }
+    );
   }
 }
