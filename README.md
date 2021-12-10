@@ -1,6 +1,6 @@
 # Just Another Farming Sim
 
-play at https://christian-post.github.io/just-another-farming-sim/?=test
+play at https://christian-post.github.io/just-another-farming-sim/
 
 
 # Controls (work in progress)
