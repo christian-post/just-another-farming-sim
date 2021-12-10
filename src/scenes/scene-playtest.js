@@ -207,7 +207,7 @@ class TestScene extends Phaser.Scene {
 
     new Vendor(
       this, 28 * tile, 12 * tile, 'npc-woman-1', 
-      [ 'seeds.wheat', 'seeds.potato', 'seeds.maize', 'tools.scytheL1', 'tools.scytheL2' ]
+      [ 'seeds.wheat', 'seeds.potato', 'seeds.maize', 'seeds.sugarbeet', 'tools.scytheL1', 'tools.scytheL2' ]
     );
 
 

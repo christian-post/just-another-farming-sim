@@ -20,11 +20,20 @@
     },
     "maize": {
       "name": "maize",
-      "frames": [11, 12, 13, 14, 15],
+      "frames": [11, 12, 13, 14, 17],
       "numPhases": 4,
       "phaseHarvest": 3,
       "phaseDurations": [4, 4, 3, 4],
       "harvest": "maize",
+      "residue": "nothing"
+    },
+    "sugarbeet": {
+      "name": "sugarbeet",
+      "frames": [18, 19, 20, 21],
+      "numPhases": 4,
+      "phaseHarvest": 3,
+      "phaseDurations": [3, 3, 2, 6],
+      "harvest": "sugarbeet",
       "residue": "nothing"
     }
   }

@@ -124,7 +124,7 @@
                         {
                          "name":"options",
                          "type":"string",
-                         "value":"[\"help.controls\", \"help.farming\", \"help.dialogue\", \"help.other\"]"
+                         "value":"[\"help.controls\", \"help.farming\", \"help.economy\", \"help.other\"]"
                         }],
                  "rotation":0,
                  "type":"dialogue",

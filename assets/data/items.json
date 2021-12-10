@@ -44,6 +44,21 @@
       "buyPrice": 150,
       "sellPrice": 75,
       "sellQuantity": 10
+    },
+    "sugarbeet": {
+      "name": "sugarbeet",
+      "screenName": "Seeds (Sugar beet)",
+      "type": "seed",
+      "quantity": 10,
+      "unique": false,
+      "usageCallback": null,
+      "spritesheet": "seeds",
+      "frame": 6,
+      "stamina": 5,
+      "tooltip": "seeds",
+      "buyPrice": 150,
+      "sellPrice": 75,
+      "sellQuantity": 10
     }
   },
   "harvest": {
@@ -57,7 +72,7 @@
       "frame": 3,
       "tooltip": "harvest",
       "quantity": 1,
-      "sellQuantity": 1,
+      "sellQuantity": 5,
       "sellPrice": 20
     },
     "potato": {
@@ -85,6 +100,19 @@
       "quantity": 10,
       "sellQuantity": 10,
       "sellPrice": 10
+    },
+    "sugarbeet": {
+      "name": "sugarbeet",
+      "type": "harvest",
+      "screenName": "Sugar beet",
+      "unique": false,
+      "usageCallback": null,
+      "spritesheet": "inventory-items",
+      "frame": 8,
+      "tooltip": "harvest",
+      "quantity": 1,
+      "sellQuantity": 5,
+      "sellPrice": 5
     }
   },
   "tools": {
