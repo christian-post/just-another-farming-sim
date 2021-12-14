@@ -7,6 +7,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
     // reference to the game manager scene
     this.manager = this.scene.scene.get('GameManager');
+    this.inventory = this.scene.scene.get('InventoryManager');
 
     this.setBodySize(16, 12, false);
     this.body.setOffset(5, this.height - this.body.height);
@@ -125,7 +126,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     this.isSowing = false;
 
     // resources
-    this.maxStamina = 200;
+    this.maxStamina = this.manager.registry.values.startingMaxStamina;
     this.stamina = this.maxStamina;
 
     // the tool that is currently being used
@@ -271,19 +272,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 let cropY = this.scene.registry.values.tileSize * interactY;
                 new Crop(this.scene, this.scene.crops, cropX, cropY, item.name);
       
-                item.quantity -= 1;
-                // TODO: replace this code with event for the inventory scene
-                if (item.quantity > 0) {
-                  this.scene.scene.get('InventoryManager').selectedItemQuantities[button].setText(item.quantity);
-                } else {
-                  // TODO: remove sprite from inventory that the button points to
-                  this.scene.scene.get('InventoryManager').removeItem(button);
-
-                  // remove the sprite from the action button
-                  this.scene.scene.get('InventoryManager').equipItem(null, button);
-                  this.scene.scene.get('InventoryManager').selectedItemQuantities[button].setText('');
-                }
-                
+                this.inventory.events.emit('itemConsumed', item, button);              
 
                 // reduce the player's stamina by a bit
                 this.changeStamina(-item.stamina);
@@ -311,11 +300,17 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             this.changeStamina(-item.stamina);
           }
           // use the tool
-          this.createTool(item, { collisions: collisions });
+          this.createTool(
+            item, { 
+              collisions: collisions,
+              button: button,
+              mapIndex: convertIndexTo1D(interactX, interactY, this.scene.currentMap.width)
+          });
+
           break;
 
         default:
-          console.log(`behavior for item "${item.type}" not implemented`);
+          console.warn(`behavior for item "${item.type}" not implemented`);
           showMessage(this.scene, 'general.item-no-action');
       }
     }
@@ -334,6 +329,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     switch(item.usageCallback) {
+      // TODO: put in own js file?
       case 'scythe':
         this.tool = new Scythe(this.scene, this.x, this.y, item.frame);
         // check if collision object has a "harvest" method
@@ -346,8 +342,42 @@ class Player extends Phaser.Physics.Arcade.Sprite {
           }
         }
         break;
+      case 'sodaStamina': 
+        if (item.quantity > 0) {
+          // check if stamina is full
+          if (this.stamina >= this.maxStamina) {
+            showMessage(this.scene, 'general.stamina-full');
+          } else {
+            this.changeStamina(this.maxStamina * item.refillStamina);
+            this.inventory.events.emit('itemConsumed', item, config.button);
+          }
+        }
+        
+        break;
+      case 'fertilizer':
+        if (item.quantity > 0) {
+          // look for collision with crop and raise its fertilization level
+          if (config.collisions.length > 0) {
+            for (let crop of config.collisions) {
+              if (crop.fertilizedLevel < crop.data.values.maxFertilizer) {
+                crop.fertilizedLevel++;
+                this.inventory.events.emit('itemConsumed', item, config.button);
+
+                // TODO: make a function of the scene
+                let pos = convertIndexTo2D(config.mapIndex, this.scene.currentMap.width);
+                let rect = this.scene.add.rectangle(pos.x * 16, pos.y * 16, 16, 16, 0x000000, 0.2);
+                rect.setOrigin(0);
+
+                break;
+              } else {
+                showMessage(this.scene, 'interactibles.crops.enoughFertilizer');
+              }
+            }
+          }
+        }
+        break;
       default:
-        console.warn('tool not implemented: ', type);
+        console.warn('function for tool not implemented: ', type);
     }
   }
 
@@ -711,6 +741,7 @@ class Crop extends Phaser.GameObjects.Image {
     this.age = 0;
     this.currentPhaseDay = 0;
     this.harvestReady = false;
+    this.fertilizedLevel = 0;
 
     // calculate the color of particles that appear when the crop is cut
     this.avgColor = getAvgColorButFaster(
@@ -756,7 +787,11 @@ class Crop extends Phaser.GameObjects.Image {
       // spawn something to collect
       let spawnPos = { x: this.body.center.x, y: this.body.center.y - 8};
       let targetPos = { x: this.body.center.x, y: this.body.center.y};
-      let data = this.scene.cache.json.get('itemData').harvest[this.data.values.harvest];
+      let data = deepcopy(this.scene.cache.json.get('itemData').harvest[this.data.values.harvest]);
+
+      // effect of fertillizer
+      // TODO: better calculation
+      data.quantity *= this.fertilizedLevel + 1;
 
       let cb = new Collectible(
         this.scene, this.scene.collectibles, spawnPos.x, spawnPos.y, data

@@ -193,7 +193,7 @@ const getAvgColorButFaster = function(scene, key, frame=null) {
   newTexture.drawFrame(key, frame);
   newTexture.update();
 
-  let colorArray = newTexture.getPixels();
+  let colorArray = newTexture.getPixels(0, 0, width, height);
 
   let sumRed = 0;
   let sumGreen = 0;

@@ -168,6 +168,19 @@ class InventoryManager extends Phaser.Scene {
       }
     });
 
+    this.events.on('itemConsumed', (item, button) => {
+      // fires if a non-unique item is used
+      item.quantity -= 1;
+      if (item.quantity > 0) {
+        this.selectedItemQuantities[button].setText(item.quantity);
+      } else {
+        this.removeItem(button);
+        // remove the sprite from the action button
+        this.equipItem(null, button);
+        this.selectedItemQuantities[button].setText('');
+      }
+    });
+
     // changing the clock
     this.manager.events.on('setClock', data => {
       this.clock.setText(`${data.hour}:${data.minutes}`);

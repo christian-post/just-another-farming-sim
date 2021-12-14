@@ -192,11 +192,7 @@ class TestScene extends Phaser.Scene {
     // inventoryManager.equipItem(0, 'item1');  // TODO: auto-equip if equip slot is empty
 
     inventoryManager.addItem(itemData.seeds.wheat, 20);
-    inventoryManager.addItem(itemData.seeds.potato, 10);
-    inventoryManager.addItem(itemData.seeds.maize, 20);
-
-    inventoryManager.addItem(itemData.harvest.wheat, 100);
-    inventoryManager.addItem(itemData.harvest.potato, 200);
+    inventoryManager.addItem(itemData.seeds.sugarbeet, 20);
 
 
     // TESTING
@@ -207,7 +203,16 @@ class TestScene extends Phaser.Scene {
 
     new Vendor(
       this, 28 * tile, 12 * tile, 'npc-woman-1', 
-      [ 'seeds.wheat', 'seeds.potato', 'seeds.maize', 'seeds.sugarbeet', 'tools.scytheL1', 'tools.scytheL2' ]
+      [
+        'seeds.wheat', 
+        'seeds.potato', 
+        'seeds.maize', 
+        'seeds.sugarbeet', 
+        'tools.scytheL1', 
+        'tools.scytheL2', 
+        'tools.sodaStamina', 
+        'tools.fertilizer' 
+      ]
     );
 
 

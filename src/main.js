@@ -63,7 +63,8 @@ let additionalConfig = {
     hour: 12,
     minutes: 0
   },
-  startingMoney: 10000
+  startingMoney: 2000,
+  startingMaxStamina: 100
 };
 
 // Object.assign(game.registry.values, additionalConfig);

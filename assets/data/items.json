@@ -143,6 +143,35 @@
       "tooltip": "scytheL2",
       "buyPrice": 3000,
       "sellPrice": 1000
+    },
+    "sodaStamina": {
+      "name": "sodaStamina",
+      "screenName": "Energy Drink",
+      "type": "tool",
+      "quantity": 1,
+      "unique": false,
+      "usageCallback": "sodaStamina",
+      "spritesheet": "inventory-items",
+      "frame": 9,
+      "stamina": 0,
+      "refillStamina": 0.25,
+      "tooltip": "sodaStamina",
+      "buyPrice": 350,
+      "sellPrice": 100
+    },
+    "fertilizer": {
+      "name": "fertilizer",
+      "screenName": "Fertilizer",
+      "type": "tool",
+      "quantity": 10,
+      "unique": false,
+      "usageCallback": "fertilizer",
+      "spritesheet": "inventory-items",
+      "frame": 10,
+      "stamina": 5,
+      "tooltip": "fertilizer",
+      "buyPrice": 100,
+      "sellPrice": 25
     }
   }
 }
