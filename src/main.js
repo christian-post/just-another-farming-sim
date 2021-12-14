@@ -13,8 +13,6 @@ URL_REXUI = 'plugins/rexuiplugin.min.js'
 URL_SCENEWATCHER = 'plugins/phaser-plugin-scene-watcher.umd.js'
 
 
-
-
 const config = {
   type: Phaser.AUTO,
   width: windowWidth,
@@ -23,7 +21,7 @@ const config = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: {y: 0},
+      gravity: { y: 0 },
       debug: DEBUG,
       debugShowBody: true
     }
@@ -36,12 +34,16 @@ const config = {
     target: 60
   },
   audio: {
-    noAudio: true  // set to off during testing
+    noAudio: true  // set to "off" during testing
   }
 };
 
+
+const game = new Phaser.Game(config);
+
+// Scene watcher for debugging
 if (SCENEWATCHER) {
-  Object.assign(config, {
+  game.registry.merge({
     plugins: {
       global: [
         { key: 'SceneWatcher', plugin: PhaserSceneWatcherPlugin, start: true }
@@ -50,11 +52,9 @@ if (SCENEWATCHER) {
   });
 }
 
-const game = new Phaser.Game(config);
-
 
 // additional configuration to be added to the game registry
-let additionalConfig = {
+game.registry.merge({
   windowWidth: windowWidth,
   windowHeight: windowHeight,
   tileSize: 16,
@@ -65,10 +65,7 @@ let additionalConfig = {
   },
   startingMoney: 2000,
   startingMaxStamina: 100
-};
-
-// Object.assign(game.registry.values, additionalConfig);
-game.registry.merge(additionalConfig);
+});
 
 // define the scenes
 game.scene.add('Preload', PreloadingScene, false);   

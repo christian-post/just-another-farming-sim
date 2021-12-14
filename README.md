@@ -3,15 +3,15 @@
 play at https://christian-post.github.io/just-another-farming-sim/
 
 
-# Controls (work in progress)
+# Controls 
 
-| key     | function |
-| ------- | -------- |
-| cursors | move     |
-| W       | interact |
-| E       | open/close menu |
-| A       | item 1   |
-| S       | item 2 |
+| function        | key      | button   |
+| --------------- | -------- | -------- |
+| move            | cursors  | D-pad    |
+| interact        | W        | X        |
+| open/close menu | E        | Y        |
+| item 1          | A        | A        |
+| item 2          | S        | B        |
 
 # Screenshots
 
