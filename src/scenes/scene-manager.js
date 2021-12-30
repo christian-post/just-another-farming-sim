@@ -13,38 +13,15 @@ class GameManager extends Phaser.Scene {
 
     // load the key mapping from the cache
     this.keyMapping = this.cache.json.get('controls').default;
+    this.gamepadMapping = this.cache.json.get('controls').defaultGamepad;
+    
     this.keys = addKeysToScene(this, this.keyMapping);
 
-    // start the User Interface
-    this.scene.run('InventoryManager', this);
-
     // start the first overworld scene
-    this.currentGameScene = 'Test';
+    this.currentGameScene = 'Title';
     this.scene.run(this.currentGameScene);
 
-    // Player action keys
-    // TODO: put this in a method that runs for every overworld scene on create()
-    let scene = this.scene.get(this.currentGameScene);
-    scene.keys = addKeysToScene(scene, this.keyMapping);
-
-    scene.keys.inventory.on('down', ()=> {
-      // pause the current overworld scene and show the Inventory
-      this.scene.pause(this.currentGameScene);
-      this.toggleDaytimePause();
-      this.scene.run('InventoryDisplay', this.currentGameScene);
-    });
-
-    scene.keys.item1.on('down', () => {
-      scene.events.emit('itemUsed', 'item1');
-    });
-
-    scene.keys.item2.on('down', () => {
-      scene.events.emit('itemUsed', 'item2');
-    });
-
-    scene.keys.interact.on('down', () => {
-      scene.events.emit('player-interacts');
-    });
+    
 
     // gameplay variables and functions that are persistent between scenes
     this.day = 1;
@@ -68,6 +45,19 @@ class GameManager extends Phaser.Scene {
     this.input.keyboard.on('keydown-T', ()=> {
       this.events.emit('newDay');
     });
+  }
+
+  checkForGamepad(scene) {
+    if (scene.input.gamepad.total === 0) {
+      scene.input.gamepad.once('connected', pad => {
+        scene.pad = pad;
+        this.configurePad(scene);
+      });
+    }
+    else {
+      scene.pad = scene.input.gamepad.pad1;
+      this.configurePad(scene);
+    }
   }
 
   update(time, delta) {
@@ -124,5 +114,33 @@ class GameManager extends Phaser.Scene {
     // this.minutes = 360;
 
     // showMessage(this.getCurrentGameScene(), 'general.newDay');
+  }
+
+  configurePad(scene) {
+    // binds scene-specific functions to gamepad buttons 
+    scene.pad.on('down', (index, value, button) => {
+      let func;  // TODO I hate this code
+      switch(index) {
+        case this.gamepadMapping.item1:
+          func = scene.buttonCallbacks.item1;
+          if (func !== undefined) func();
+          break;
+
+        case this.gamepadMapping.item2:
+          func = scene.buttonCallbacks.item2;
+          if (func !== undefined) func();
+          break;
+
+        case this.gamepadMapping.interact:
+          func = scene.buttonCallbacks.interact;
+          if (func !== undefined) func();
+          break;
+
+        case this.gamepadMapping.inventory:
+          func = scene.buttonCallbacks.inventory;
+          if (func !== undefined) func();
+          break;
+      }
+    });
   }
 }

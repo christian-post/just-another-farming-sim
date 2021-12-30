@@ -228,14 +228,45 @@ const deepcopy = function(object) {
 }
 
 
-const getCursorDirections = function(scene, delay) {
-  let right = scene.keys.right;
-  let left = scene.keys.left;
-  let down = scene.keys.down;
-  let up = scene.keys.up;
+var DELAYTIMER = 100;   // TODO: temporary solution!!
 
-  let dirX = scene.input.keyboard.checkDown(right, delay) - scene.input.keyboard.checkDown(left, delay);
-  let dirY = scene.input.keyboard.checkDown(down, delay) - scene.input.keyboard.checkDown(up, delay);
+
+const getCursorDirections = function(scene, delay=null, delta) {
+
+  let dirX = 0;
+  let dirY = 0;
+
+  // check gamepad first
+  if (scene.pad) {
+
+    if (delay && DELAYTIMER >= 0) {
+      DELAYTIMER -= delta;
+    } else {
+      let right = scene.manager.gamepadMapping.right;
+      let left = scene.manager.gamepadMapping.left;
+      let down = scene.manager.gamepadMapping.down;
+      let up = scene.manager.gamepadMapping.up;
+      
+      dirX = scene.pad.getButtonValue(right) - scene.pad.getButtonValue(left);
+      dirY = scene.pad.getButtonValue(down) - scene.pad.getButtonValue(up);
+
+      if (delay) { 
+        DELAYTIMER = delay; 
+        if (dirX === 0 && dirY === 0) {
+          DELAYTIMER = 0;
+        }
+      }
+    }
+  } else {
+    let right = scene.keys.right;
+    let left = scene.keys.left;
+    let down = scene.keys.down;
+    let up = scene.keys.up;
+  
+    dirX = scene.input.keyboard.checkDown(right, delay) - scene.input.keyboard.checkDown(left, delay);
+    dirY = scene.input.keyboard.checkDown(down, delay) - scene.input.keyboard.checkDown(up, delay);
+    
+  }
   return { x: dirX, y: dirY };
 }
 

@@ -133,7 +133,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     this.tool = null; 
   }
 
-  update(delta) {
+  update(time, delta) {
     // check if a tool is being used
     // if so, the player can't move for that period
     if (this.tool) {
@@ -195,7 +195,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
   move(delta) {
     // get the movement vector from the inputs
-    let dir = getCursorDirections(this.scene, 0);
+    let dir = getCursorDirections(this.scene, 0, delta);
     
     let move = new Phaser.Math.Vector2(dir.x, dir.y);
     move.setLength(this.speed);
@@ -220,6 +220,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   interactButton() {
+    // console.log(this)
     let interactX = parseInt(this.interactionRect.x / this.scene.registry.values.tileSize);
     let interactY = parseInt(this.interactionRect.y / this.scene.registry.values.tileSize);
 

@@ -72,27 +72,32 @@ class InventoryManager extends Phaser.Scene {
     // action buttons
     const buttonOffsetX = 2;
     const buttonOffsetY = 22;
-    const fontStyle = {color: '#fff', fontSize: '12px'};
+    const fontStyle = { color: '#fff', fontSize: '12px' };
 
-    this.buttonLabels = {
-      item1: this.add.text(
-        pos.item1.x - this.actionButtonSpots.item1.width + buttonOffsetX, 
-        pos.item1.y + buttonOffsetY, 
-        this.registry.values.keymap[this.keys.item1.keyCode],
-        fontStyle
-      ),
-      item2: this.add.text(
-        pos.item2.x - this.actionButtonSpots.item2.width + buttonOffsetX, 
-        pos.item2.y + buttonOffsetY, 
-        this.registry.values.keymap[this.keys.item2.keyCode], 
-        fontStyle
-      ),
-      interact: this.add.text(
-        pos.interact.x - this.actionButtonSpots.interact.width + buttonOffsetX, 
-        pos.interact.y + buttonOffsetY, 
-        this.registry.values.keymap[this.keys.interact.keyCode], 
-        fontStyle
-      )
+
+    if (this.manager.getCurrentGameScene().pad) {
+
+    } else {
+      this.buttonLabels = {
+        item1: this.add.text(
+          pos.item1.x - this.actionButtonSpots.item1.width + buttonOffsetX, 
+          pos.item1.y + buttonOffsetY, 
+          this.registry.values.keymap[this.keys.item1.keyCode],
+          fontStyle
+        ),
+        item2: this.add.text(
+          pos.item2.x - this.actionButtonSpots.item2.width + buttonOffsetX, 
+          pos.item2.y + buttonOffsetY, 
+          this.registry.values.keymap[this.keys.item2.keyCode], 
+          fontStyle
+        ),
+        interact: this.add.text(
+          pos.interact.x - this.actionButtonSpots.interact.width + buttonOffsetX, 
+          pos.interact.y + buttonOffsetY, 
+          this.registry.values.keymap[this.keys.interact.keyCode], 
+          fontStyle
+        )
+      }
     }
 
     // text that shows what the current interaction is
@@ -378,6 +383,9 @@ class InventoryDisplay extends Phaser.Scene {
 
     this.keys = addKeysToScene(this, this.manager.keyMapping);
 
+    this.manager.checkForGamepad(this);
+
+
     let width = 338;
     let height = 184;
 
@@ -427,35 +435,54 @@ class InventoryDisplay extends Phaser.Scene {
       this.constructInventory();
       this.constructSidebar();
     });
+
+    // Key bindings
+    this.buttonCallbacks = {
+      inventory: ()=> {
+        this.scene.sleep(this.scene.key);
+        this.scene.resume(this.parentScene);
+        this.manager.toggleDaytimePause();
+      },
+      interact: () => {
+        let item = this.scene.get('InventoryManager').inventory[this.currentIndex];
+        if (item) { showMessage(this, 'tooltips.' + item.tooltip, item) };
+      },
+      item1: () => {
+        this.scene.get('InventoryManager').equipItem(this.currentIndex, 'item1');
+      },
+      item2: () => {
+        this.scene.get('InventoryManager').equipItem(this.currentIndex, 'item2');
+      }
+    }
     
     // bind the "Y" key to exit
-    this.keys.inventory.on('down', ()=> {
-      this.scene.sleep(this.scene.key);
-      this.scene.run(this.parentScene);
-      this.manager.toggleDaytimePause();
-    });
+    this.keys.inventory.on('down', this.buttonCallbacks.inventory);
 
     // what happens when the action buttons are pressed
     // equips the item to the give key
-    this.keys.item1.on('down', () => {
-      this.scene.get('InventoryManager').equipItem(this.currentIndex, 'item1');
-    });
-
-    this.keys.item2.on('down', () => {
-      this.scene.get('InventoryManager').equipItem(this.currentIndex, 'item2');
-    });
+    this.keys.item1.on('down', this.buttonCallbacks.item1);
+    this.keys.item2.on('down', this.buttonCallbacks.item2);
 
     // functionality for showing tooltips
-    this.keys.interact.on('down', () => {
-      let item = this.scene.get('InventoryManager').inventory[this.currentIndex];
-      if (item) { showMessage(this, 'tooltips.' + item.tooltip, item) };
-    });
+    this.keys.interact.on('down', this.buttonCallbacks.interact);
+
+    // Gamepad functionality
+    if (this.input.gamepad.total === 0) {
+      this.input.gamepad.once('connected', pad => {
+        this.pad = pad;
+        this.manager.configurePad(this);
+      });
+    }
+    else {
+      this.pad = this.input.gamepad.pad1;
+      this.manager.configurePad(this);
+    }
   }
 
-  update() {
+  update(time, delta) {
     // move the cursor
-    let delay = 500;
-    let dir = getCursorDirections(this, delay);
+    let delay = this.registry.values.menuScrollDelay;
+    let dir = getCursorDirections(this, delay, delta);
 
     if (dir.x !== 0 || dir.y !== 0) {
       let increment = convertIndexTo1D(dir.x, dir.y, this.inventoryDimensions.w);
@@ -607,6 +634,7 @@ class ShopDisplay extends Phaser.Scene {
     this.parentScene = data.parentScene;
 
     this.keys = addKeysToScene(this, this.manager.keyMapping);
+    this.manager.checkForGamepad(this);
 
     this.type = data.type;  // 'buy' or 'sell'
 
@@ -668,61 +696,62 @@ class ShopDisplay extends Phaser.Scene {
 
     this.constructInventory();
 
-    // bind the inventory key to exit
-    this.keys.inventory.on('down', ()=> {
-      showMessage(this, 'npc-dialogue.shopping.goodbye', null, ()=> {
-        this.scene.stop(this.scene.key);
-        this.scene.run(this.parentScene);
-      });
-    });
 
-    // interaction key
-    this.keys.interact.on('down', () => {
-      // TODO: put in function?
-      // buy that stuff
-      let item = this.items[this.currentIndex];
-      if (item) { 
-        if (this.type === 'buy') {
-          let currentFunds = this.registry.values.money;
-          if (currentFunds >= item.buyPrice) {
-            this.registry.set('money',  currentFunds - item.buyPrice);
-            this.showMoneyChange('-' + item.buyPrice);
-            this.manager.events.emit('item-collected', item);
+    this.buttonCallbacks = {
+      inventory: ()=> {
+        showMessage(this, 'npc-dialogue.shopping.goodbye', null, ()=> {
+          this.scene.stop(this.scene.key);
+          this.scene.run(this.parentScene);
+        });
+      },
+      interact: this.interactionButtonCallback.bind(this)
+    };
+  }
 
-            // update the text at the buttom
-            this.currentItemText.setText(item ? this.getItemText(item) : '');
+  interactionButtonCallback() {
+    // buy that stuff
+    let item = this.items[this.currentIndex];
+    if (item) { 
+      if (this.type === 'buy') {
+        let currentFunds = this.registry.values.money;
+        if (currentFunds >= item.buyPrice) {
+          this.registry.set('money',  currentFunds - item.buyPrice);
+          this.showMoneyChange('-' + item.buyPrice);
+          this.manager.events.emit('item-collected', item);
 
-          } else {
-            showMessage(this, 'npc-dialogue.shopping.insufficient-funds');
-          }
-        } else if (this.type === 'sell') {
-          let currentFunds = this.registry.values.money;
+          // update the text at the buttom
+          this.currentItemText.setText(item ? this.getItemText(item) : '');
 
-          // determine the amount that can be sold
-          let soldAmount;
-          if (item.unique) {
-            soldAmount = 1;
-          } else if (item.quantity > item.sellQuantity) {
-            soldAmount = item.sellQuantity;
-          } else {
-            soldAmount = item.quantity;
-          }
+        } else {
+          showMessage(this, 'npc-dialogue.shopping.insufficient-funds');
+        }
+      } else if (this.type === 'sell') {
+        let currentFunds = this.registry.values.money;
 
-          let sellPrice = soldAmount * item.sellPrice;
+        // determine the amount that can be sold
+        let soldAmount;
+        if (item.unique) {
+          soldAmount = 1;
+        } else if (item.quantity > item.sellQuantity) {
+          soldAmount = item.sellQuantity;
+        } else {
+          soldAmount = item.quantity;
+        }
 
-          this.registry.set('money',  currentFunds + sellPrice);
-          this.showMoneyChange('+' + sellPrice);
+        let sellPrice = soldAmount * item.sellPrice;
 
-          this.manager.events.emit('item-removed', this.currentIndex, item, soldAmount);
+        this.registry.set('money',  currentFunds + sellPrice);
+        this.showMoneyChange('+' + sellPrice);
 
-          // reconstruct inventory
-          this.constructInventory();
+        this.manager.events.emit('item-removed', this.currentIndex, item, soldAmount);
 
-           // update the text at the buttom
-          //  this.currentItemText.setText(item ? this.getItemText(item) : '');
-        }        
-      }
-    });
+        // reconstruct inventory
+        this.constructInventory();
+
+          // update the text at the buttom
+        //  this.currentItemText.setText(item ? this.getItemText(item) : '');
+      }        
+    }
   }
 
   constructInventory() {
@@ -834,10 +863,10 @@ class ShopDisplay extends Phaser.Scene {
     });
   }
 
-  update() {
+  update(time, delta) {
     // move the cursor
-    let delay = 500;
-    let dir = getCursorDirections(this, delay);
+    let delay = 200;
+    let dir = getCursorDirections(this, delay, delta);
 
     if (dir.x !== 0 || dir.y !== 0) {
       let increment = convertIndexTo1D(dir.x, dir.y, this.inventoryDimensions.w);

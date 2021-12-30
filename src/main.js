@@ -35,6 +35,9 @@ const config = {
   },
   audio: {
     noAudio: true  // set to "off" during testing
+  },
+  input: {
+    gamepad: true
   }
 };
 
@@ -55,9 +58,12 @@ if (SCENEWATCHER) {
 
 // additional configuration to be added to the game registry
 game.registry.merge({
+  // technical settings
   windowWidth: windowWidth,
   windowHeight: windowHeight,
   tileSize: 16,
+  menuScrollDelay: 200,
+  // in-game settings
   ingameTimeSpeed: 20,  // in-game seconds per real-time second
   startingDaytime: {
     hour: 12,
@@ -78,5 +84,4 @@ game.scene.add('ShopDisplay', ShopDisplay, false);
 game.scene.add('Dialogue', DialogueScene, false);
 
 // start the game
-game.scene.start('Preload', 'GameManager');
-// game.scene.start('Title');
+game.scene.start('Preload');

@@ -102,7 +102,8 @@ class PreloadingScene extends Phaser.Scene {
       { key: 'leaf-particles', file: 'sprites/leaf_particles.png', w: 16, h: 16 },
       { key: 'tools', file: 'sprites/tools.png', w: 16, h: 16},
       { key: 'inventory-items', file: 'sprites/inventory_items.png', w: 16, h: 16 },
-      { key: 'ui-images', file: 'ui/ui_stuff.png', w: 16, h: 16 }
+      { key: 'ui-images', file: 'ui/ui_stuff.png', w: 16, h: 16 },
+      { key: 'gamepad-buttons', file: 'ui/gamepad_buttons.png', w: 16, h: 16 }
     ];
 
     spritesheetList.forEach(elem => {
@@ -118,7 +119,7 @@ class PreloadingScene extends Phaser.Scene {
     this.load.audio('overworld', 'assets/sound/bgm/gone_fishin_by_memoraphile_CC0.mp3');
   }
 
-  create(nextScene) {
+  create(scenes) {
 
     // store the keymap in registry
     let KeyMap = {};
@@ -130,6 +131,6 @@ class PreloadingScene extends Phaser.Scene {
 
     // console.log(this.registry.values.keymap[65]);
 
-    this.scene.start(nextScene);
+    this.scene.start('GameManager');
   }
 }

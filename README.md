@@ -10,8 +10,12 @@ play at https://christian-post.github.io/just-another-farming-sim/
 | move            | cursors  | D-pad    |
 | interact        | W        | X        |
 | open/close menu | E        | Y        |
-| item 1          | A        | A        |
-| item 2          | S        | B        |
+| use item 1      | A        | A        |
+| use item 2      | S        | B        |
+
+# How to Play
+
+...
 
 # Screenshots
 

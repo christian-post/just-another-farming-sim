@@ -10,8 +10,11 @@ class DialogueScene extends Phaser.Scene {
 
   create(data) {
     this.manager = this.scene.get('GameManager');
+    this.data = data;
 
     this.keys = addKeysToScene(this, this.manager.keyMapping);
+
+    this.manager.checkForGamepad(this);  
 
     let json = this.cache.json.get('dialogue');
     let messageText = getNestedKey(json, data.key);
@@ -65,36 +68,49 @@ class DialogueScene extends Phaser.Scene {
       });
     }
 
-    this.keys.interact.on('down', () => {
-        // when the message is still typing, show all text
-        // when the message is complete, start next page or close if last page is reached
-        if (this.message.isTyping) {
-          this.message.stop(true);
-        } else {
-          if (this.cursor) {
-            this.manager.scene.stop('Dialogue');  // TODO: does this always work?
-            // options and stuff
-            this.options[this.currentOptionIndex].callback();
-            // currentScene.scene.resume(currentScene.scene.key);
-          } else {
-            // normal text
-            if (this.message.isLastPage) {
-              this.message.destroy();
-              if (data.callback) { data.callback(); }
-            } else {
-              this.message.typeNextPage();
-            }
-          } 
-        }
-      }
-    );
+    this.keys.interact.on('down', this.interactButtonCallback, this);
+
+    this.buttonCallbacks = {
+      interact: this.interactButtonCallback.bind(this)
+    };
+
+    // this.pad.on('down', index => {
+    //   if (index === this.manager.gamepadMapping.interact) {
+    //       this.interactButtonCallback();
+    //     }
+    //   });
   }
 
-  update() {
+  
+
+  interactButtonCallback() {
+    // when the message is still typing, show all text
+    // when the message is complete, start next page or close if last page is reached
+    if (this.message.isTyping) {
+      this.message.stop(true);
+    } else {
+      if (this.cursor) {
+        this.manager.scene.stop('Dialogue');  // TODO: does this always work?
+        // options and stuff
+        this.options[this.currentOptionIndex].callback();
+        // currentScene.scene.resume(currentScene.scene.key);
+      } else {
+        // normal text
+        if (this.message.isLastPage) {
+          this.message.destroy();
+          if (this.data.callback) { this.data.callback(); }
+        } else {
+          this.message.typeNextPage();
+        }
+      } 
+    }
+  }
+
+  update(time, delta) {
     if (this.cursor) {
       // move the cursor if the dialogue has options
-      let delay = 500;
-      let dir = getCursorDirections(this, delay);
+      let delay = 200;
+      let dir = getCursorDirections(this, delay, delta);
       if (dir.x !== 0) {
         if (dir.x > 0) {
           this.currentOptionIndex = (this.currentOptionIndex + 1) % this.options.length;

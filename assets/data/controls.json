@@ -8,5 +8,15 @@
     "down": "DOWN",
     "left": "LEFT",
     "right": "RIGHT"
+  },
+  "defaultGamepad": {
+    "item1": 0,
+    "item2": 1,
+    "interact": 2,
+    "inventory": 3,
+    "up": 12,
+    "down": 13,
+    "left": 14,
+    "right": 15
   }
 }

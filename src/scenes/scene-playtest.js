@@ -149,6 +149,36 @@ class TestScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, this.mapLayers.layer0.width, this.mapLayers.layer0.height);
     this.cameras.main.startFollow(this.player, true);
 
+
+    // configure input
+    this.keys = addKeysToScene(this, this.manager.keyMapping);
+
+    this.buttonCallbacks = {
+      inventory: ()=> {
+        // pause the current overworld scene and show the Inventory
+        this.scene.pause(this.scene.key);
+        this.manager.toggleDaytimePause();
+        this.scene.run('InventoryDisplay', this.scene.key);
+      },
+      interact: () => {
+        this.events.emit('player-interacts');
+      },
+      item1: () => {
+        this.events.emit('itemUsed', 'item1');
+      },
+      item2: () => {
+        this.events.emit('itemUsed', 'item2');
+      }
+    }
+
+    // Gamepad functionality
+    this.manager.checkForGamepad(this);
+
+
+
+    // start the Inventory Scene and User Interface
+    this.scene.run('InventoryManager');
+
     // create arable land
     // TODO: make this a property of the Tiled map?
     // array to indicate where the crops can be planted
@@ -164,7 +194,6 @@ class TestScene extends Phaser.Scene {
       .setDepth(this.depthValues.daytimeOverlay)   // TODO is this needed? (daytime overlay depth is already set)
       .setVisible(false);
 
-    // TODO: bind player lightcone to an item
     this.playerLightcone = this.add.image(0, 0, 'lightcone').setVisible(false);
 
     let mask = this.daytimeOverlay.createBitmapMask(this.textureOverlay);
@@ -188,11 +217,12 @@ class TestScene extends Phaser.Scene {
     // add items to inventory
     let inventoryManager = this.scene.get('InventoryManager');
 
-    inventoryManager.addItem(itemData.tools.scytheL1);
-    // inventoryManager.equipItem(0, 'item1');  // TODO: auto-equip if equip slot is empty
-
-    inventoryManager.addItem(itemData.seeds.wheat, 20);
-    inventoryManager.addItem(itemData.seeds.sugarbeet, 20);
+    inventoryManager.events.on('create', ()=> {
+      inventoryManager.addItem(itemData.tools.scytheL1);
+      // inventoryManager.equipItem(0, 'item1');  // TODO: auto-equip if equip slot is empty
+      inventoryManager.addItem(itemData.seeds.wheat, 20);
+      // inventoryManager.addItem(itemData.seeds.sugarbeet, 20);
+    });
 
 
     // TESTING
