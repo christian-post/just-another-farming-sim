@@ -111,8 +111,9 @@ class TestScene extends Phaser.Scene {
       switch (elem.type) {
         case 'dialogue':
           let options = properties.hasOptions ? JSON.parse(properties.options) : null;
+          let optionsAreCallbacks = properties.optionsAreCallbacks ? true : false;
           new DialogueTrigger(
-            this, elem.x, elem.y, elem.width, elem.height, properties.dialogueKey, options
+            this, elem.x, elem.y, elem.width, elem.height, properties.dialogueKey, options, optionsAreCallbacks
           );
           break;
         case 'light':
@@ -151,8 +152,6 @@ class TestScene extends Phaser.Scene {
 
 
     // configure input
-    this.keys = addKeysToScene(this, this.manager.keyMapping);
-
     this.buttonCallbacks = {
       inventory: ()=> {
         // pause the current overworld scene and show the Inventory
@@ -170,6 +169,8 @@ class TestScene extends Phaser.Scene {
         this.events.emit('itemUsed', 'item2');
       }
     }
+
+    this.manager.configureKeys(this);
 
     // Gamepad functionality
     this.manager.checkForGamepad(this);

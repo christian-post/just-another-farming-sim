@@ -1,3 +1,23 @@
+let XBOXMAPPING = {
+  0: 'A',
+  1: 'B',
+  2: 'X',
+  3: 'Y',
+  4: 'LB',
+  5: 'RB',
+  6: 'LT',
+  7: 'RT',
+  8: 'BACK',
+  9: 'START',
+  10: 'LS',
+  11: 'RS',
+  12: 'UP',
+  13: 'DOWN',
+  14: 'LEFT',
+  15: 'RIGHT'
+};
+
+
 class GameManager extends Phaser.Scene {
   /* 
   Handles code that is persistent between game scenes
@@ -14,14 +34,10 @@ class GameManager extends Phaser.Scene {
     // load the key mapping from the cache
     this.keyMapping = this.cache.json.get('controls').default;
     this.gamepadMapping = this.cache.json.get('controls').defaultGamepad;
-    
-    this.keys = addKeysToScene(this, this.keyMapping);
 
-    // start the first overworld scene
+    // start the first scene
     this.currentGameScene = 'Title';
     this.scene.run(this.currentGameScene);
-
-    
 
     // gameplay variables and functions that are persistent between scenes
     this.day = 1;
@@ -101,7 +117,20 @@ class GameManager extends Phaser.Scene {
     return this.scene.get(this.currentGameScene);
   }
 
-  onNewDay() {
+  get currentInputMapping() {
+    // don't use this every frame
+    if (this.scene.get(this.currentGameScene).pad) {
+      let mapping = {};
+      for (const button in this.gamepadMapping) {
+        mapping[button] = XBOXMAPPING[this.gamepadMapping[button]];
+      }
+      return mapping;
+    } else {
+      return this.keyMapping;
+    }
+  }
+
+  onNewDay(minutes=360) {
     // defines what happens on a new day
     this.day += 1;
     // refill the player's stamina
@@ -110,8 +139,8 @@ class GameManager extends Phaser.Scene {
     if (player) {
       player.changeStamina(player.maxStamina);
     }
-    // set time to 6 am
-    // this.minutes = 360;
+    // set time of day
+    this.minutes = minutes;
 
     // showMessage(this.getCurrentGameScene(), 'general.newDay');
   }
@@ -141,6 +170,15 @@ class GameManager extends Phaser.Scene {
           if (func !== undefined) func();
           break;
       }
+    });
+  }
+
+  configureKeys(scene) {
+    scene.keys = addKeysToScene(scene, this.keyMapping);
+
+    let keys = ['interact', 'inventory', 'item1', 'item2'];
+    keys.forEach(key => {
+      scene.keys[key].on('down', scene.buttonCallbacks[key], scene);
     });
   }
 }

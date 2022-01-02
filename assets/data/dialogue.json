@@ -9,8 +9,8 @@
         "Other"
       ]
     },
-    "controls": "Movement:\nPress [{keyMapping.up}], [{keyMapping.down}], [{keyMapping.left}] or [{keyMapping.right}] to walk around.\f\nActions:\nPress [{keyMapping.interact}] to interact with your environment (Talking to other people, inspect objects and reading signs). The current action is displayed at the top of the screen.\n[{keyMapping.inventory}] opens and closes your inventory. There you can inspect the items you are currently holding, as well as some other useful information. While in the inventory, press either [{keyMapping.item1}] or [{keyMapping.item2}] to equip the currently selected item to the respective button. This lets you use it in the game.",
-    "farming": "On your farm there are two areas of fertile soil. When you are facing them, a red rectangle indicates a patch of soil where you can plant something. To do that, you have to have a seed bag equipped to [{keyMapping.item1}] or [{keyMapping.item2}]. Once you have planted something, it takes a couple of days to grow. You can inspect the plant to see its current status. Once a plant is ready, you can use a scythe to harvest it. This leaves the patch of soil empty for the next crop. Attention: If you wait too long, crops will eventually start to wilt and you won't get any harvest from them.\f\nUse Fertilizer to raise the yield. How much fertilizer you can use depends on the type of crop.",
+    "controls": "Movement:\nPress [{currentInputMapping.up}], [{currentInputMapping.down}], [{currentInputMapping.left}] or [{currentInputMapping.right}] to walk around.\f\nActions:\nPress [{currentInputMapping.interact}] to interact with your environment (Talking to other people, inspect objects and reading signs). The current action is displayed at the top of the screen.\n[{currentInputMapping.inventory}] opens and closes your inventory. There you can inspect the items you are currently holding, as well as some other useful information. While in the inventory, press either [{currentInputMapping.item1}] or [{currentInputMapping.item2}] to equip the currently selected item to the respective button. This lets you use it in the game.",
+    "farming": "On your farm there are two areas of fertile soil. When you are facing them, a red rectangle indicates a patch of soil where you can plant something. To do that, you have to have a seed bag equipped to [{currentInputMapping.item1}] or [{currentInputMapping.item2}]. Once you have planted something, it takes a couple of days to grow. You can inspect the plant to see its current status. Once a plant is ready, you can use a scythe to harvest it. This leaves the patch of soil empty for the next crop. Attention: If you wait too long, crops will eventually start to wilt and you won't get any harvest from them.\f\nUse Fertilizer to raise the yield. How much fertilizer you can use depends on the type of crop.",
     "economy": "Next to the right is the shop. Here you can buy and sell any items. The controls are the same as in your inventory.",
     "other": "Working is hard. On the top left corner of the screen, below the current time, is a green bar. It indicates your stamina. Every action depletes a part of it. Once it is completely drained, you can't work any more for that day. Go to your house to sleep until the next morning. This refills your stamina."
   },
@@ -26,7 +26,13 @@
     "stamina-full": "You already have full stamina."
   },
   "interactibles": {
-    "test-door": "I know you want to go to the bedroom, but unfortunately I did not implement that yet. If you want to sleep until the next day, just press [T].",
+    "test-door": {
+      "text": "Do you want to sleep until the next morning?",
+      "options": [
+        "Yes",
+        "No"
+      ]
+    },
     "crops": {
       "growing": "The {data.values.name} is growing.\nFertilization level: {fertilizedLevel}",
       "ready": "The {data.values.name} is ready for harvest.",

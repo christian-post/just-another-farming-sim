@@ -73,16 +73,8 @@ class DialogueScene extends Phaser.Scene {
     this.buttonCallbacks = {
       interact: this.interactButtonCallback.bind(this)
     };
-
-    // this.pad.on('down', index => {
-    //   if (index === this.manager.gamepadMapping.interact) {
-    //       this.interactButtonCallback();
-    //     }
-    //   });
   }
-
   
-
   interactButtonCallback() {
     // when the message is still typing, show all text
     // when the message is complete, start next page or close if last page is reached
@@ -109,8 +101,7 @@ class DialogueScene extends Phaser.Scene {
   update(time, delta) {
     if (this.cursor) {
       // move the cursor if the dialogue has options
-      let delay = 200;
-      let dir = getCursorDirections(this, delay, delta);
+      let dir = getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
       if (dir.x !== 0) {
         if (dir.x > 0) {
           this.currentOptionIndex = (this.currentOptionIndex + 1) % this.options.length;

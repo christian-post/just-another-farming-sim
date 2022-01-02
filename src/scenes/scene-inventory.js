@@ -56,8 +56,10 @@ class InventoryManager extends Phaser.Scene {
     }
 
     // texts
+    const fontStyle = { color: '#fff', fontSize: '12px' };
+
     this.day = this.add.text(
-      dayBG.getCenter().x, dayBG.getCenter().y, 'Day 1', { color: '#fff', fontSize: '12px' }
+      dayBG.getCenter().x, dayBG.getCenter().y, 'Day 1', fontStyle
     ).setOrigin(0.5);
 
     const hours = this.registry.values.startingDaytime.hour.toString().padStart(2, '0');
@@ -66,18 +68,38 @@ class InventoryManager extends Phaser.Scene {
     this.clock = this.add.text(
       clockBG.getCenter().x, clockBG.getCenter().y, 
       `${hours}:${minutes}`, 
-      { color: '#fff', fontSize: '12px' }
+      fontStyle
     ).setOrigin(0.5);
 
     // action buttons
-    const buttonOffsetX = 2;
-    const buttonOffsetY = 22;
-    const fontStyle = { color: '#fff', fontSize: '12px' };
-
-
     if (this.manager.getCurrentGameScene().pad) {
+      const buttonOffsetX = 8;
+      const buttonOffsetY = 24;
 
+      this.buttonLabels = {
+        item1: this.add.image(
+          pos.item1.x - this.actionButtonSpots.item1.width + buttonOffsetX, 
+          pos.item1.y + buttonOffsetY, 
+          'gamepad-buttons',
+          0
+        ),
+        item2: this.add.image(
+          pos.item2.x - this.actionButtonSpots.item2.width + buttonOffsetX, 
+          pos.item2.y + buttonOffsetY, 
+          'gamepad-buttons',
+          1
+        ),
+        interact: this.add.image(
+          pos.interact.x - this.actionButtonSpots.interact.width + buttonOffsetX, 
+          pos.interact.y + buttonOffsetY, 
+          'gamepad-buttons',
+          2
+        )
+      }
     } else {
+      const buttonOffsetX = 2;
+      const buttonOffsetY = 22;
+
       this.buttonLabels = {
         item1: this.add.text(
           pos.item1.x - this.actionButtonSpots.item1.width + buttonOffsetX, 
@@ -381,11 +403,6 @@ class InventoryDisplay extends Phaser.Scene {
     this.manager = this.scene.get('GameManager');
     this.parentScene = parentScene;
 
-    this.keys = addKeysToScene(this, this.manager.keyMapping);
-
-    this.manager.checkForGamepad(this);
-
-
     let width = 338;
     let height = 184;
 
@@ -436,7 +453,7 @@ class InventoryDisplay extends Phaser.Scene {
       this.constructSidebar();
     });
 
-    // Key bindings
+    // Key and Button bindings
     this.buttonCallbacks = {
       inventory: ()=> {
         this.scene.sleep(this.scene.key);
@@ -454,35 +471,17 @@ class InventoryDisplay extends Phaser.Scene {
         this.scene.get('InventoryManager').equipItem(this.currentIndex, 'item2');
       }
     }
-    
-    // bind the "Y" key to exit
-    this.keys.inventory.on('down', this.buttonCallbacks.inventory);
-
-    // what happens when the action buttons are pressed
-    // equips the item to the give key
-    this.keys.item1.on('down', this.buttonCallbacks.item1);
-    this.keys.item2.on('down', this.buttonCallbacks.item2);
-
-    // functionality for showing tooltips
-    this.keys.interact.on('down', this.buttonCallbacks.interact);
+ 
+    // bind keyboard functionality 
+    this.manager.configureKeys(this);
 
     // Gamepad functionality
-    if (this.input.gamepad.total === 0) {
-      this.input.gamepad.once('connected', pad => {
-        this.pad = pad;
-        this.manager.configurePad(this);
-      });
-    }
-    else {
-      this.pad = this.input.gamepad.pad1;
-      this.manager.configurePad(this);
-    }
+    this.manager.checkForGamepad(this);
   }
 
   update(time, delta) {
     // move the cursor
-    let delay = this.registry.values.menuScrollDelay;
-    let dir = getCursorDirections(this, delay, delta);
+    let dir = getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
 
     if (dir.x !== 0 || dir.y !== 0) {
       let increment = convertIndexTo1D(dir.x, dir.y, this.inventoryDimensions.w);
@@ -633,7 +632,19 @@ class ShopDisplay extends Phaser.Scene {
     this.manager = this.scene.get('GameManager');
     this.parentScene = data.parentScene;
 
-    this.keys = addKeysToScene(this, this.manager.keyMapping);
+    this.buttonCallbacks = {
+      inventory: ()=> {
+        showMessage(this, 'npc-dialogue.shopping.goodbye', null, ()=> {
+          this.scene.stop(this.scene.key);
+          this.scene.run(this.parentScene);
+        });
+      },
+      interact: this.interactionButtonCallback.bind(this),
+      item1: ()=> {},
+      item2: ()=> {}
+    };
+
+    this.manager.configureKeys(this);
     this.manager.checkForGamepad(this);
 
     this.type = data.type;  // 'buy' or 'sell'
@@ -695,17 +706,6 @@ class ShopDisplay extends Phaser.Scene {
     };
 
     this.constructInventory();
-
-
-    this.buttonCallbacks = {
-      inventory: ()=> {
-        showMessage(this, 'npc-dialogue.shopping.goodbye', null, ()=> {
-          this.scene.stop(this.scene.key);
-          this.scene.run(this.parentScene);
-        });
-      },
-      interact: this.interactionButtonCallback.bind(this)
-    };
   }
 
   interactionButtonCallback() {
@@ -865,8 +865,7 @@ class ShopDisplay extends Phaser.Scene {
 
   update(time, delta) {
     // move the cursor
-    let delay = 200;
-    let dir = getCursorDirections(this, delay, delta);
+    let dir = getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
 
     if (dir.x !== 0 || dir.y !== 0) {
       let increment = convertIndexTo1D(dir.x, dir.y, this.inventoryDimensions.w);

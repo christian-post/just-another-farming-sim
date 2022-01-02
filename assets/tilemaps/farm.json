@@ -64,6 +64,21 @@
                          "name":"dialogueKey",
                          "type":"string",
                          "value":"interactibles.test-door"
+                        }, 
+                        {
+                         "name":"hasOptions",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"options",
+                         "type":"string",
+                         "value":"[\"dialogues.doorYes\", \"dialogues.doorNo\"]"
+                        }, 
+                        {
+                         "name":"optionsAreCallbacks",
+                         "type":"bool",
+                         "value":true
                         }],
                  "rotation":0,
                  "type":"dialogue",

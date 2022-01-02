@@ -924,7 +924,7 @@ class Scythe extends Phaser.GameObjects.Image {
 
 
 class DialogueTrigger extends Phaser.GameObjects.Rectangle {
-  constructor(scene, x, y, width, height, dialogueKey, options=null){
+  constructor(scene, x, y, width, height, dialogueKey, options=null, optionsAreCallbacks){
     // TODO: color and alpha only for testing
     super(scene, x, y, width, height);
     this.scene.add.existing(this);
@@ -950,11 +950,20 @@ class DialogueTrigger extends Phaser.GameObjects.Rectangle {
 
       this.options = options;
       // TODO: grab callbacks from js file
-      options.forEach(option => {
-        this.optionsCallbacks.push(
-          ()=> { showMessage(this.scene, option); }
-        )
-      });
+      if (optionsAreCallbacks) {
+        options.forEach(option => {
+          let callback = getNestedKey(CALLBACKS, option);
+            this.optionsCallbacks.push(
+              callback ? ()=> { callback(this.scene) } : ()=>{}
+            );
+        });
+      } else {
+        options.forEach(option => {
+          this.optionsCallbacks.push(
+            ()=> { showMessage(this.scene, option); }
+          )
+        });
+      }
     }
   }
 
