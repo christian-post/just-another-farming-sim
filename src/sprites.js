@@ -177,13 +177,14 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     let interactY = parseInt(this.interactionRect.y / this.scene.registry.values.tileSize);
     let index = convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
 
-    if (this.scene.arableMap[index] === 1) {
+    // check for arable Land
+    if (this.scene.arableMap[index]) {
       if (!this.interactionRect.visible) { this.interactionRect.setVisible(true) };
     } else {
       if (this.interactionRect.visible) { this.interactionRect.setVisible(false) };
     }
 
-    // check if rectangle is colliding with any interactables
+    // check if rectangle is colliding with any interactable sprites
     let collisions = checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
     if (collisions.length > 0 && collisions[0] != this) {
       let string = collisions[0].interactionButtonText || 'error';
@@ -262,7 +263,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
           if (collisions.length === 0) {
             let index = convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
-            if (this.scene.arableMap[index] === 1) {
+            if (this.scene.arableMap[index]) {
               if (this.checkExhausted()) { return; }
               // plant something
               // get crop type from inventory
@@ -271,7 +272,8 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 // TODO: check if it is actually a crop, maybe use the callback of the item
                 let cropX = this.scene.registry.values.tileSize * interactX;
                 let cropY = this.scene.registry.values.tileSize * interactY;
-                new Crop(this.scene, this.scene.crops, cropX, cropY, item.name);
+
+                this.scene.arableMap[index].plantCrop(this.scene, this.scene.crops, cropX, cropY, item.name, index);
       
                 this.inventory.events.emit('itemConsumed', item, button);              
 
@@ -294,11 +296,11 @@ class Player extends Phaser.Physics.Arcade.Sprite {
           break;
 
         case 'tool':
-          collisions = checkCollisionGroup(this.interactionRect, this.scene.crops.getChildren());
+          // collisions = checkCollisionGroup(this.interactionRect, this.scene.crops.getChildren());
+          collisions = checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
           if (collisions.length > 0) {
             // check for stamina only if there would be something to interact with
             if (this.checkExhausted()) { return; }
-            this.changeStamina(-item.stamina);
           }
           // use the tool
           this.createTool(
@@ -337,7 +339,25 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         if (config.collisions.length > 0) {
           for (let col of config.collisions) {
             if (col['harvest']) {
+              this.changeStamina(-item.stamina);
               col.harvest();
+              break;
+            }
+          }
+        }
+        break;
+      case 'wateringCan':
+        this.tool = new WateringCan(this.scene, this.x, this.y, item.frame);
+        // check if there is a collision and can be watered
+        if (config.collisions.length > 0) {
+          for (let col of config.collisions) {
+            if (col['water']) {
+              if (col.waterLevel == this.scene.registry.values.maxWateringLevel) {
+                showMessage(this.scene, 'general.maxWaterLevelReached')
+              } else {
+                this.changeStamina(-item.stamina);
+                col.water(this.scene.registry.values.wateringCanAmount);
+              }
               break;
             }
           }
@@ -359,19 +379,16 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         if (item.quantity > 0) {
           // look for collision with crop and raise its fertilization level
           if (config.collisions.length > 0) {
-            for (let crop of config.collisions) {
-              if (crop.fertilizedLevel < crop.data.values.maxFertilizer) {
-                crop.fertilizedLevel++;
-                this.inventory.events.emit('itemConsumed', item, config.button);
-
-                // TODO: make a function of the scene
-                let pos = convertIndexTo2D(config.mapIndex, this.scene.currentMap.width);
-                let rect = this.scene.add.rectangle(pos.x * 16, pos.y * 16, 16, 16, 0x000000, 0.2);
-                rect.setOrigin(0);
-
+            for (let col of config.collisions) {
+              if (col instanceof Crop) {
+                if (col.fertilizedLevel < col.data.values.maxFertilizer) {
+                  col.fertilizedLevel++;
+                  this.inventory.events.emit('itemConsumed', item, config.button);
+                  this.scene.arableMap[config.mapIndex].fertilize(1);
+                } else {
+                  showMessage(this.scene, 'interactibles.crops.enoughFertilizer');
+                }
                 break;
-              } else {
-                showMessage(this.scene, 'interactibles.crops.enoughFertilizer');
               }
             }
           }
@@ -713,10 +730,13 @@ class Vendor extends NPC {
 
 
 class Crop extends Phaser.GameObjects.Image {
-  constructor(scene, group, x, y, name) {
+  constructor(scene, group, x, y, name, mapIndex) {
     let data = deepcopy(scene.cache.json.get('cropData').croplist[name]);
     super(scene, x, y, 'crops', data.frames[0]);
     this.setData(data);
+
+    // reference to the arable Map of the gameplay scene
+    this.mapIndex = mapIndex;
 
     // reference to game manager
     this.manager = this.scene.scene.get('GameManager');
@@ -742,7 +762,7 @@ class Crop extends Phaser.GameObjects.Image {
     this.age = 0;
     this.currentPhaseDay = 0;
     this.harvestReady = false;
-    this.fertilizedLevel = 0;
+    this.fertilizedLevel = 0;  // TODO: add soil class that holds the fertilization
 
     // calculate the color of particles that appear when the crop is cut
     this.avgColor = getAvgColorButFaster(
@@ -756,8 +776,8 @@ class Crop extends Phaser.GameObjects.Image {
     this.manager.events.on('newDay', this.onNewDay, this);
   }
 
-  update() {
-    // pass
+  get wateringLevel() {
+    return this.scene.arableMap[this.mapIndex].waterLevel;
   }
 
   harvest() {
@@ -798,7 +818,9 @@ class Crop extends Phaser.GameObjects.Image {
         this.scene, this.scene.collectibles, spawnPos.x, spawnPos.y, data
       );
 
-      // cb.setDepth(2);
+      // remove the fertilization level 
+      // TODO: calculate how much fertilizer the crop used
+      this.scene.arableMap[this.mapIndex].reset();
 
       // let this collectible bounce a bit
       this.scene.tweens.add({
@@ -823,22 +845,26 @@ class Crop extends Phaser.GameObjects.Image {
 
   onNewDay() {
     this.age += 1;
-    this.currentPhaseDay += 1;
-    if (this.currentPhaseDay > this.data.values.phaseDurations[this.growthPhase]) {
-      this.growthPhase += 1;
-      this.currentPhaseDay = 0;
 
-      // change to next texture
-      this.setTexture('crops', this.data.values.frames[this.growthPhase]);
-
-      if (this.growthPhase == this.data.values.numPhases) {
-        console.log('The crop died.');
-        this.destroy();
-        return;
+    // plant only grows when it's properly watered
+    if (this.scene.arableMap[this.mapIndex].waterLevel > 0) {
+      this.currentPhaseDay += 1;
+      if (this.currentPhaseDay > this.data.values.phaseDurations[this.growthPhase]) {
+        this.growthPhase += 1;
+        this.currentPhaseDay = 0;
+  
+        // change to next texture
+        this.setTexture('crops', this.data.values.frames[this.growthPhase]);
+  
+        if (this.growthPhase == this.data.values.numPhases) {
+          console.log('The crop died.');
+          this.destroy();
+          return;
+        }
       }
-    }
-    if (this.growthPhase == this.data.values.phaseHarvest) {
-      this.harvestReady = true;
+      if (this.growthPhase == this.data.values.phaseHarvest) {
+        this.harvestReady = true;
+      }
     }
   }
 
@@ -922,55 +948,82 @@ class Scythe extends Phaser.GameObjects.Image {
   }
 }
 
+class WateringCan extends Phaser.GameObjects.Image {
+  constructor(scene, x, y, imageIndex=7) {
+    super(scene, x, y, 'inventory-items', imageIndex);
+    scene.add.existing(this);
+    
+    this.player = scene.player;
 
-class DialogueTrigger extends Phaser.GameObjects.Rectangle {
-  constructor(scene, x, y, width, height, dialogueKey, options=null, optionsAreCallbacks){
-    // TODO: color and alpha only for testing
-    super(scene, x, y, width, height);
-    this.scene.add.existing(this);
-    this.scene.allSprites.add(this);
-    this.scene.physics.add.existing(this);
-    this.scene.interactables.add(this);   // TODO instead check for inteact() method
-    this.setOrigin(0);
+    scene.time.addEvent({
+        delay: 1500, 
+        callback: () => {
+          this.destroy();
+          scene.player.tool = null;
+        }
+    });
 
-    this.interactionButtonText = 'read';
+    let particleAngle;
+    let particleStartPos = { x: 0, x: 0 };
 
-    if (DEBUG) {
-      this.setFillStyle(0xff0000, 0.3);
+    switch(this.player.lastDir) {
+      case 'left': 
+        this.x = this.player.x - 16;
+        this.y = this.player.y + 12;
+        particleStartPos.x = this.x;
+        particleStartPos.y = this.y - 12;
+        particleAngle = 180;
+        this.setFlipX(true);
+        this.setOrigin(0, 1);
+        this.setDepth(this.scene.depthSortedSprites.depth - 1);
+        break;
+      case 'right': 
+        this.x = this.player.x + 16;
+        this.y = this.player.y + 14;
+        particleStartPos.x = this.x;
+        particleStartPos.y = this.y - 12;
+        particleAngle = 0;
+        this.setOrigin(1);
+        this.setDepth(this.scene.depthSortedSprites.depth + 1);
+        break;
+      case 'up': 
+        this.x = this.player.x - 12;
+        this.y = this.player.y + 8;
+        particleStartPos.x = this.x;
+        particleStartPos.y = this.y - 12;
+        particleAngle = 270;
+        this.setFlipX(true);
+        this.setOrigin(0, 1);
+        this.setDepth(this.scene.depthSortedSprites.depth - 1);
+        break;
+      case 'down': 
+        this.x = this.player.x + 8;
+        this.y = this.player.y + 14;
+        particleStartPos.x = this.x;
+        particleStartPos.y = this.y - 12;
+        particleAngle = 90;
+        this.setOrigin(1);
+        this.setDepth(this.scene.depthSortedSprites.depth + 1);
+        break;
     }
 
-    // TODO: more modular! (cutscenes etc)
-    this.dialogueKey = dialogueKey;
-    this.optionsKey = '';
+    // add particles for water effect
+    let particles = this.scene.add.particles('water-droplet');
+    particles.setDepth(3);
 
-    this.optionsCallbacks = [];
-    if (options) {
-      this.optionsKey = this.dialogueKey + '.options';
-      this.dialogueKey += '.text';
+    let emitter = particles.createEmitter({
+      x: particleStartPos.x,
+      y: particleStartPos.y,
+      maxParticles: 30,
+      active: true,
+      lifespan: 500,
+      speed: 50,
+      gravityY: 100,
+      angle: {min: particleAngle - 20, max: particleAngle + 20 },
+      alpha: {start: 0.5, end: 0.1}
+    });
 
-      this.options = options;
-      // TODO: grab callbacks from js file
-      if (optionsAreCallbacks) {
-        options.forEach(option => {
-          let callback = getNestedKey(CALLBACKS, option);
-            this.optionsCallbacks.push(
-              callback ? ()=> { callback(this.scene) } : ()=>{}
-            );
-        });
-      } else {
-        options.forEach(option => {
-          this.optionsCallbacks.push(
-            ()=> { showMessage(this.scene, option); }
-          )
-        });
-      }
-    }
-  }
+    emitter.start();
 
-  interact() {
-    showMessage(
-      this.scene, this.dialogueKey, this.manager, null, 
-      { key: this.optionsKey, callbacks: this.optionsCallbacks }
-    );
   }
 }

@@ -90,6 +90,7 @@ class PreloadingScene extends Phaser.Scene {
     this.load.image('lightcone', 'assets/images/sprites/lightcone.png');
     this.load.image('lightcone-lamp', 'assets/images/sprites/lightcone_lamp.png');
     this.load.image('player-shadow', 'assets/images/sprites/shadow.png');
+    this.load.image('water-droplet', 'assets/images/sprites/water-droplet.png');
 
     this.load.image('test-tile', 'assets/images/sprites/test.png');
 
@@ -113,7 +114,6 @@ class PreloadingScene extends Phaser.Scene {
         { frameWidth: elem.w, frameHeight: elem.h }
       );
     });
-
 
     // audio
     this.load.audio('overworld', 'assets/sound/bgm/gone_fishin_by_memoraphile_CC0.mp3');

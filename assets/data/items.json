@@ -97,7 +97,7 @@
       "spritesheet": "inventory-items",
       "frame": 1,
       "tooltip": "harvest",
-      "quantity": 10,
+      "quantity": 2,
       "sellQuantity": 10,
       "sellPrice": 10
     },
@@ -143,6 +143,20 @@
       "tooltip": "scytheL2",
       "buyPrice": 3000,
       "sellPrice": 1000
+    },
+    "wateringCan": {
+      "name": "wateringCan",
+      "screenName": "Watering Can",
+      "type": "tool",
+      "quantity": null,
+      "unique": true,
+      "usageCallback": "wateringCan",
+      "spritesheet": "inventory-items",
+      "frame": 7,
+      "stamina": 3,
+      "tooltip": "wateringCan",
+      "buyPrice": 1000,
+      "sellPrice": 400
     },
     "sodaStamina": {
       "name": "sodaStamina",

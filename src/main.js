@@ -34,7 +34,7 @@ const config = {
     target: 60
   },
   audio: {
-    noAudio: true  // set to "off" during testing
+    noAudio: false  // set to "off" during testing
   },
   input: {
     gamepad: true
@@ -63,6 +63,7 @@ game.registry.merge({
   windowHeight: windowHeight,
   tileSize: 16,
   menuScrollDelay: 200,
+  globalMusicVolume: 0.5,
   // in-game settings
   ingameTimeSpeed: 20,  // in-game seconds per real-time second
   startingDaytime: {
@@ -70,7 +71,9 @@ game.registry.merge({
     minutes: 0
   },
   startingMoney: 2000,
-  startingMaxStamina: 100
+  startingMaxStamina: 100,
+  wateringCanAmount: 5,  // how much the watering can raises the soil's water level
+  maxWateringLevel: 10
 });
 
 // define the scenes

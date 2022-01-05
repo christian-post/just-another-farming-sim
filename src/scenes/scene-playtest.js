@@ -135,8 +135,6 @@ class TestScene extends Phaser.Scene {
 
     // create the Player sprite
     this.player = new Player(this, spawnPositions.playerStartPosition.x, spawnPositions.playerStartPosition.y);
-    // this.player = new Player(this, this.registry.values.tileSize * 16, this.registry.values.tileSize * 12);
-    // this.player.setDepth(2);
     this.physics.add.collider(this.player, this.mapLayers.layer1);
     this.physics.add.collider(this.player, this.mapLayers.layer2);
     this.depthSortedSprites.add(this.player);
@@ -183,7 +181,7 @@ class TestScene extends Phaser.Scene {
     // create arable land
     // TODO: make this a property of the Tiled map?
     // array to indicate where the crops can be planted
-    this.arableMap = new Array(map.width * map.height).fill(0);
+    this.arableMap = new Array(map.width * map.height).fill(null);
 
     this.makeAcre(9, 15, 10, 4);
     this.makeAcre(23, 18, 10, 16);
@@ -202,9 +200,13 @@ class TestScene extends Phaser.Scene {
     this.daytimeOverlay.setMask(mask);
 
     // play the background music
-    this.backgroundMusic = this.sound.add('overworld', { loop: true });
-    this.backgroundMusic.play();
-
+    this.backgroundMusic = this.sound.add(
+      'overworld', 
+      { 
+        loop: true,
+        volume: this.registry.values.globalMusicVolume
+      }
+    ).play();
 
 
     // add items for testing
@@ -220,9 +222,10 @@ class TestScene extends Phaser.Scene {
 
     inventoryManager.events.on('create', ()=> {
       inventoryManager.addItem(itemData.tools.scytheL1);
-      // inventoryManager.equipItem(0, 'item1');  // TODO: auto-equip if equip slot is empty
+      inventoryManager.addItem(itemData.tools.wateringCan);
+      // inventoryManager.equipItem(1, 'item1');  // TODO: auto-equip if equip slot is empty
       inventoryManager.addItem(itemData.seeds.wheat, 20);
-      // inventoryManager.addItem(itemData.seeds.sugarbeet, 20);
+      inventoryManager.addItem(itemData.tools.fertilizer, 10);
     });
 
 
@@ -241,8 +244,9 @@ class TestScene extends Phaser.Scene {
         'seeds.sugarbeet', 
         'tools.scytheL1', 
         'tools.scytheL2', 
+        'tools.wateringCan',
         'tools.sodaStamina', 
-        'tools.fertilizer' 
+        'tools.fertilizer'
       ]
     );
 
@@ -322,7 +326,9 @@ class TestScene extends Phaser.Scene {
         let indexX = acreStartX + x;
         let indexY = acreStartY + y;
 
-        this.arableMap[convertIndexTo1D(indexX, indexY, this.currentMap.width)] = 1;
+        // this.arableMap[convertIndexTo1D(indexX, indexY, this.currentMap.width)] = 1;
+        let index = convertIndexTo1D(indexX, indexY, this.currentMap.width);
+        this.arableMap[index] = new SoilPatch(this, indexX * this.registry.values.tileSize, indexY * this.registry.values.tileSize, index);
       }
     }
   }

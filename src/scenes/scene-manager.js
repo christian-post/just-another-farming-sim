@@ -67,6 +67,7 @@ class GameManager extends Phaser.Scene {
     if (scene.input.gamepad.total === 0) {
       scene.input.gamepad.once('connected', pad => {
         scene.pad = pad;
+        console.log(pad);
         this.configurePad(scene);
       });
     }
