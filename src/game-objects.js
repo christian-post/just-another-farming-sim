@@ -80,7 +80,7 @@ class SoilPatch extends Phaser.GameObjects.Rectangle {
     // define what happens on a new day
     this.scene.manager.events.on('newDay', ()=> {
       // TODO check for rain here?
-      this.waterLevel -= 1;
+      this.waterLevel = max(this.waterLevel - 1, 0);
       this.setFillStyle(0x000000, 0);
     });
   }
