@@ -1,7 +1,8 @@
-const windowWidth = 426;
-const windowHeight = 240;
+const WINDOW_WIDTH = 426;
+const WINDOW_HEIGHT = 240;
 
-const COLOR_BACKGROUND = 0x006022;
+const COLOR_BACKGROUND = 0x000000;
+// const COLOR_BACKGROUND = 0x006022;
 
 // debug settings
 const DEBUG = false;
@@ -15,8 +16,8 @@ URL_SCENEWATCHER = 'plugins/phaser-plugin-scene-watcher.umd.js'
 
 const config = {
   type: Phaser.AUTO,
-  width: windowWidth,
-  height: windowHeight,
+  width: WINDOW_WIDTH,
+  height: WINDOW_HEIGHT,
   backgroundColor: COLOR_BACKGROUND,
   physics: {
     default: 'arcade',
@@ -34,7 +35,7 @@ const config = {
     target: 60
   },
   audio: {
-    noAudio: false  // set to "off" during testing
+    noAudio: true  // set to "off" during testing
   },
   input: {
     gamepad: true
@@ -59,8 +60,8 @@ if (SCENEWATCHER) {
 // additional configuration to be added to the game registry
 game.registry.merge({
   // technical settings
-  windowWidth: windowWidth,
-  windowHeight: windowHeight,
+  windowWidth: WINDOW_WIDTH,
+  windowHeight: WINDOW_HEIGHT,
   tileSize: 16,
   menuScrollDelay: 200,
   globalMusicVolume: 0.5,

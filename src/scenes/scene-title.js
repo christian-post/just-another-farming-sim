@@ -29,6 +29,10 @@ class TitleScene extends Phaser.Scene {
       this.scene.start(this.manager.currentGameScene);
     });
 
+    this.add.graphics()
+      .fillStyle(0x006022)
+      .fillRect(0, 0, this.registry.values.windowWidth,this.registry.values.windowHeight);
+
     // Text (TODO: placeholder for actual title sprite)
 
     let titleText = "[size=14]Oh no! It\'s\n[/size][size=36][b]JUST ANOTHER\nFARMING SIM[/b][/size]"

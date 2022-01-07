@@ -5,7 +5,7 @@ play at https://christian-post.github.io/just-another-farming-sim/
 
 # Controls 
 
-| function        | key      | button   |
+| function        | keyboard | gamepad  |
 | --------------- | -------- | -------- |
 | move            | cursors  | D-pad    |
 | interact        | W        | X        |

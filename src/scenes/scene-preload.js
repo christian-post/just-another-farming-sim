@@ -5,8 +5,8 @@ class PreloadingScene extends Phaser.Scene {
 
     let rectWidth = 200;
     let rectHeight = 24;
-    let rectX = windowWidth / 2 - rectWidth / 2;
-    let rectY = windowHeight / 2 - rectHeight / 2;
+    let rectX = WINDOW_WIDTH / 2 - rectWidth / 2;
+    let rectY = WINDOW_HEIGHT / 2 - rectHeight / 2;
     
     let progressBoxColor = 0x084010;
     let progressBarColor = 0x10bb30;
@@ -17,8 +17,8 @@ class PreloadingScene extends Phaser.Scene {
     progressBox.fillRect(rectX, rectY, rectWidth, rectHeight);
 
     var loadingText = this.make.text({
-        x: windowWidth / 2,
-        y: windowHeight / 4,
+        x: WINDOW_WIDTH / 2,
+        y: WINDOW_HEIGHT / 4,
         text: 'Loading...',
         style: {
             fontSize: '20px',
@@ -28,8 +28,8 @@ class PreloadingScene extends Phaser.Scene {
     loadingText.setOrigin(0.5, 0.5);
     
     var percentText = this.make.text({
-        x: windowWidth / 2,
-        y: windowHeight / 2,
+        x: WINDOW_WIDTH / 2,
+        y: WINDOW_HEIGHT / 2,
         text: '0%',
         style: {
             fontSize: '18px',
@@ -39,8 +39,8 @@ class PreloadingScene extends Phaser.Scene {
     percentText.setOrigin(0.5, 0.5);
     
     var assetText = this.make.text({
-        x: windowWidth / 2,
-        y: windowHeight * 0.75,
+        x: WINDOW_WIDTH / 2,
+        y: WINDOW_HEIGHT * 0.75,
         text: '',
         style: {
             fontSize: '18px',
