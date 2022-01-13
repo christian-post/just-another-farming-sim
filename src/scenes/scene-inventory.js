@@ -151,6 +151,12 @@ class InventoryManager extends Phaser.Scene {
 
     this.itemMaxQuantity = 255;
 
+
+    // setup the camera
+    // this.cameras.main.setBounds(0, 0, this.registry.values.windowWidth, this.registry.values.windowHeight);
+
+
+
     // events that change the UI contents
     this.manager.events.on('newDay', ()=> {
       this.day.setText(`Day ${this.manager.day}`);

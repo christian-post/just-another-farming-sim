@@ -27,10 +27,6 @@ class GameManager extends Phaser.Scene {
   }
 
   create() {
-    // reference to the cursors
-    // TODO might remove this
-    this.cursors = this.input.keyboard.createCursorKeys();
-
     // load the key mapping from the cache
     this.keyMapping = this.cache.json.get('controls').default;
     this.gamepadMapping = this.cache.json.get('controls').defaultGamepad;
@@ -49,6 +45,8 @@ class GameManager extends Phaser.Scene {
     this.timer = 0.0;
     this.isNight = true;
     this.timerPaused = false;
+
+    this.hasControl = true;   // flage for whether input is processed
 
     this.events.on('newDay', this.onNewDay, this);
 

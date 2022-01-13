@@ -86,6 +86,7 @@ game.scene.add('InventoryManager', InventoryManager, false);
 game.scene.add('InventoryDisplay', InventoryDisplay, false);
 game.scene.add('ShopDisplay', ShopDisplay, false);
 game.scene.add('Dialogue', DialogueScene, false);
+game.scene.add('Transition', TransitionScene, false);
 
 // start the game
 game.scene.start('Preload');

@@ -233,6 +233,10 @@ var DELAYTIMER = 100;   // TODO: temporary solution!!
 
 const getCursorDirections = function(scene, delay=null, delta) {
 
+  if (!scene.manager.hasControl) { 
+    return { x: 0, y: 0 }; 
+  }
+
   let dirX = 0;
   let dirY = 0;
 
