@@ -131,6 +131,10 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
     // the tool that is currently being used
     this.tool = null; 
+
+    this.manager.events.on('refillStamina', amount => {
+      this.changeStamina(amount);
+    });
   }
 
   update(time, delta) {
@@ -781,8 +785,8 @@ class Crop extends Phaser.GameObjects.Image {
 
     // variables for growth and harvesting
     this.growthPhase = 0;
-    this.age = 0;
-    this.currentPhaseDay = 0;
+    // this.age = 0;
+    this.growth = 0;
     this.harvestReady = false;
     this.fertilizedLevel = 0;  // TODO: add soil class that holds the fertilization
 
@@ -866,27 +870,33 @@ class Crop extends Phaser.GameObjects.Image {
   }
 
   onNewDay() {
-    this.age += 1;
+    // this.age += 1;
 
-    // plant only grows when it's properly watered
-    if (this.scene.arableMap[this.mapIndex].waterLevel > 0) {
-      this.currentPhaseDay += 1;
-      if (this.currentPhaseDay > this.data.values.phaseDurations[this.growthPhase]) {
-        this.growthPhase += 1;
-        this.currentPhaseDay = 0;
-  
-        // change to next texture
-        this.setTexture('crops', this.data.values.frames[this.growthPhase]);
-  
-        if (this.growthPhase == this.data.values.numPhases) {
-          console.log('The crop died.');
-          this.destroy();
-          return;
-        }
+    // plant grows faster when it's properly watered
+    if (
+      this.scene.arableMap[this.mapIndex].waterLevel > 0 
+      || this.growthPhase > this.data.values.wateringPhases - 1
+    ) {
+      this.growth += 1;
+    } else {
+      this.growth += 0.5;
+    }
+
+    if (this.growth > this.data.values.phaseDurations[this.growthPhase]) {
+      this.growthPhase += 1;
+      this.growth = 0;
+
+      // change to next texture
+      this.setTexture('crops', this.data.values.frames[this.growthPhase]);
+
+      if (this.growthPhase == this.data.values.numPhases) {
+        console.log('The crop died.');
+        this.destroy();
+        return;
       }
-      if (this.growthPhase == this.data.values.phaseHarvest) {
-        this.harvestReady = true;
-      }
+    }
+    if (this.growthPhase == this.data.values.phaseHarvest) {
+      this.harvestReady = true;
     }
   }
 
@@ -959,6 +969,14 @@ class Scythe extends Phaser.GameObjects.Image {
       this.rotationDir = 1;
       this.setOrigin(1);
     }
+  }
+
+  update() {
+    this.angle += 10 * this.rotationDir;
+
+    // set position relative to the player
+    this.x = this.player.x;
+    this.y = this.player.y + ((this.player.lastDir === 'up') ? -4 : 8);
   }
 }
 

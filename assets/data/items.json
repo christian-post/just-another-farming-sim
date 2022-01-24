@@ -73,7 +73,7 @@
       "tooltip": "harvest",
       "quantity": 1,
       "sellQuantity": 5,
-      "sellPrice": 20
+      "sellPrice": 40
     },
     "potato": {
       "name": "potato",
@@ -86,7 +86,7 @@
       "tooltip": "harvest",
       "quantity": 5,
       "sellQuantity": 5,
-      "sellPrice": 30
+      "sellPrice": 60
     },
     "wheat": {
       "name": "wheat",
@@ -99,7 +99,7 @@
       "tooltip": "harvest",
       "quantity": 2,
       "sellQuantity": 10,
-      "sellPrice": 10
+      "sellPrice": 25
     },
     "sugarbeet": {
       "name": "sugarbeet",
@@ -112,7 +112,7 @@
       "tooltip": "harvest",
       "quantity": 1,
       "sellQuantity": 5,
-      "sellPrice": 5
+      "sellPrice": 80
     }
   },
   "tools": {
@@ -139,10 +139,24 @@
       "usageCallback": "scythe",
       "spritesheet": "inventory-items",
       "frame": 6,
-      "stamina": 7,
+      "stamina": 5,
       "tooltip": "scytheL2",
       "buyPrice": 3000,
-      "sellPrice": 1000
+      "sellPrice": 1500
+    },
+    "scytheL3": {
+      "name": "scythe",
+      "screenName": "Scythe [L3]",
+      "type": "tool",
+      "quantity": null,
+      "unique": true,
+      "usageCallback": "scythe",
+      "spritesheet": "tools",
+      "frame": 11,
+      "stamina": 2,
+      "tooltip": "scytheL3",
+      "buyPrice": 8000,
+      "sellPrice": 4000
     },
     "hoeL1": {
       "name": "hoe",
@@ -153,10 +167,10 @@
       "usageCallback": "hoe",
       "spritesheet": "tools",
       "frame": 0,
-      "stamina": 0,
+      "stamina": 15,
       "tooltip": "hoeL1",
-      "buyPrice": 400,
-      "sellPrice": 200
+      "buyPrice": 2000,
+      "sellPrice": 1000
     },
     "hoeL2": {
       "name": "hoe",
@@ -166,11 +180,25 @@
       "unique": true,
       "usageCallback": "hoe",
       "spritesheet": "tools",
-      "frame": 2,
+      "frame": 1,
       "stamina": 10,
       "tooltip": "hoeL2",
       "buyPrice": 5000,
       "sellPrice": 2500
+    },
+    "hoeL3": {
+      "name": "hoe",
+      "screenName": "Hoe [L3]",
+      "type": "tool",
+      "quantity": null,
+      "unique": true,
+      "usageCallback": "hoe",
+      "spritesheet": "tools",
+      "frame": 2,
+      "stamina": 5,
+      "tooltip": "hoeL3",
+      "buyPrice": 10000,
+      "sellPrice": 5000
     },
     "wateringCan": {
       "name": "wateringCan",
@@ -196,7 +224,7 @@
       "spritesheet": "inventory-items",
       "frame": 9,
       "stamina": 0,
-      "refillStamina": 0.25,
+      "refillStamina": 1,
       "tooltip": "sodaStamina",
       "buyPrice": 350,
       "sellPrice": 100

@@ -241,8 +241,8 @@ class TestScene extends Phaser.Scene {
     // array to indicate where the crops can be planted
     this.arableMap = new Array(map.width * map.height).fill(null);
 
-    // this.makeAcre(9, 15, 10, 4);
-    // this.makeAcre(23, 18, 10, 16);
+    this.makeAcre(9, 15, 10, 4);
+    this.makeAcre(23, 18, 10, 16);
 
     // render Texture for light sources at night
     this.textureOverlay = this.add.renderTexture(
@@ -281,10 +281,11 @@ class TestScene extends Phaser.Scene {
     inventoryManager.events.on('create', ()=> {
       inventoryManager.addItem(itemData.tools.scytheL1);
       inventoryManager.addItem(itemData.tools.wateringCan);
-      inventoryManager.addItem(itemData.tools.hoeL1);
+      // inventoryManager.addItem(itemData.tools.hoeL1);
       // inventoryManager.equipItem(1, 'item1');  // TODO: auto-equip if equip slot is empty
       inventoryManager.addItem(itemData.seeds.wheat, 20);
       inventoryManager.addItem(itemData.tools.fertilizer, 10);
+      inventoryManager.addItem(itemData.tools.sodaStamina, 10);
     });
 
 
@@ -302,12 +303,16 @@ class TestScene extends Phaser.Scene {
         'seeds.wheat', 
         'seeds.potato', 
         'seeds.maize', 
-        'seeds.sugarbeet', 
+        'seeds.sugarbeet',
+        'tools.fertilizer', 
         'tools.scytheL1', 
         'tools.scytheL2', 
+        'tools.scytheL3', 
+        'tools.hoeL1',
+        'tools.hoeL2',
+        'tools.hoeL3',
         'tools.wateringCan',
-        'tools.sodaStamina', 
-        'tools.fertilizer'
+        'tools.sodaStamina'
       ]
     );
 

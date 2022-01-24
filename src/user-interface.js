@@ -56,7 +56,13 @@ class DialogueScene extends Phaser.Scene {
           let y = this.message.y + 24
 
           let text = this.add.text(
-            x, y, option.text, { fontSize: '12px', color: '#fff', padding: { y: 2 } }
+            x, y, option.text, 
+            { 
+              fontSize: '12px', 
+              color: '#fff', 
+              padding: { y: 2 }, 
+              fontFamily: this.registry.values.globalFontFamily, 
+            }
           ).setOrigin(0.5);
 
           this.optionPositions[index] = { x: text.getLeftCenter().x - 4, y: text.getLeftCenter().y };

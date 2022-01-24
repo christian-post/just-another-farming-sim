@@ -56,7 +56,12 @@ class InventoryManager extends Phaser.Scene {
     }
 
     // texts
-    const fontStyle = { color: '#fff', fontSize: '12px' };
+    const fontStyle = { 
+      color: '#fff', 
+      fontSize: '12px', 
+      fontFamily: this.registry.values.globalFontFamily,
+      padding: { y: 2 }
+    };
 
     this.day = this.add.text(
       dayBG.getCenter().x, dayBG.getCenter().y, 'Day 1', fontStyle
@@ -523,7 +528,11 @@ class InventoryDisplay extends Phaser.Scene {
         this.invElements.push(img);
         let txt = this.add.text(
           itemPos.x + 8, itemPos.y + 12, item.quantity, 
-          { color: '#fff', fontSize: '10px' }
+          { 
+            color: '#fff', 
+            fontSize: '10px', 
+            fontFamily: this.registry.values.globalFontFamily 
+          }
         );
         this.invElements.push(txt);
       }
@@ -552,7 +561,11 @@ class InventoryDisplay extends Phaser.Scene {
       this.background.x, 
       this.background.getBottomCenter().y - 8, 
       screenName,
-      { color: '#fff', fontSize: '18px' }
+      { 
+        color: '#fff', 
+        fontSize: '18px',
+        fontFamily: this.registry.values.globalFontFamily 
+      }
     );
     this.currentItemText.setOrigin(0.5, 1);
     this.invElements.push(this.currentItemText);
@@ -601,7 +614,12 @@ class InventoryDisplay extends Phaser.Scene {
     let moneySprite = this.add.image(-16, 0, 'inventory-items', 5);
     let moneyText = this.add.text(
       moneySprite.getRightCenter().x + 2, moneySprite.getRightCenter().y, 
-      this.registry.values.money, { color: '#fff', fontSize: '10px' }
+      this.registry.values.money, 
+      { 
+        color: '#fff', 
+        fontSize: '10px',
+        fontFamily: this.registry.values.globalFontFamily 
+      }
     ).setOrigin(0, 0.5);
     // this.invElements.push(moneySprite);
     // this.invElements.push(moneyText);
@@ -680,9 +698,9 @@ class ShopDisplay extends Phaser.Scene {
       .setOrigin(0);
 
     this.textStyles = {
-      sidebar: { color: '#fff', fontSize: '10px' },
-      items: { color: '#fff', fontSize: '10px' },
-      bottomText: { color: '#fff', fontSize: '12px' }
+      sidebar: { color: '#fff', fontSize: '10px', fontFamily: this.registry.values.globalFontFamily },
+      items: { color: '#fff', fontSize: '10px', fontFamily: this.registry.values.globalFontFamily },
+      bottomText: { color: '#fff', fontSize: '12px', fontFamily: this.registry.values.globalFontFamily }
     };
 
     let moneySprite = this.add.image(-16, 0, 'inventory-items', 5);
@@ -717,6 +735,18 @@ class ShopDisplay extends Phaser.Scene {
       w: this.background.width / (this.inventoryDimensions.w + 1),
       h: this.background.height / (this.inventoryDimensions.h + 1)
     };
+
+    // show how to close the inventory
+    // TODO: gamepad
+
+    if (this.manager.getCurrentGameScene().pad) {
+      // pass
+    } else {
+      let button = this.registry.values.keymap[this.keys.inventory.keyCode];
+      this.add.text(this.background.x, this.background.y - this.background.height, 
+        `${button}: EXIT`, this.textStyles.sidebar)
+        .setOrigin(1, 0);
+    }
 
     this.constructInventory();
   }

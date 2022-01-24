@@ -84,6 +84,9 @@ class GameManager extends Phaser.Scene {
       if (this.timer > 60000) {
         this.minutes += 1;
 
+        // refill player stamina
+        this.events.emit('refillStamina', this.registry.values.playerStaminaRechargeRate);
+
         // check if midnight
         if (this.minutes >= 1440) {
           this.minutes = this.minutes - 1440;

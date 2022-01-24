@@ -6,6 +6,7 @@
       "numPhases": 4,
       "phaseHarvest": 3,
       "phaseDurations": [3, 3, 2, 4],
+      "wateringPhases": 2,
       "harvest": "wheat",
       "residue": "straw",
       "maxFertilizer": 3
@@ -16,6 +17,7 @@
       "numPhases": 4,
       "phaseHarvest": 3,
       "phaseDurations": [3, 3, 2, 5],
+      "wateringPhases": 2,
       "harvest": "potato",
       "residue": "nothing",
       "maxFertilizer": 4
@@ -26,6 +28,7 @@
       "numPhases": 5,
       "phaseHarvest": 4,
       "phaseDurations": [4, 4, 3, 4, 6],
+      "wateringPhases": 3,
       "harvest": "maize",
       "residue": "nothing",
       "maxFertilizer": 5
@@ -36,6 +39,7 @@
       "numPhases": 4,
       "phaseHarvest": 3,
       "phaseDurations": [3, 3, 2, 6],
+      "wateringPhases": 2,
       "harvest": "sugarbeet",
       "residue": "nothing",
       "maxFertilizer": 5

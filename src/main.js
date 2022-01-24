@@ -72,6 +72,7 @@ game.registry.merge({
     hour: 12,
     minutes: 0
   },
+  playerStaminaRechargeRate: 1,
   startingMoney: 2000,
   startingMaxStamina: 100,
   wateringCanAmount: 5,  // how much the watering can raises the soil's water level
