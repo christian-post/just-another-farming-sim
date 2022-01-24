@@ -52,7 +52,11 @@ class TitleScene extends Phaser.Scene {
       this.registry.values.windowWidth * 0.5,
       this.registry.values.windowHeight * 0.75,
       'Press any Key or Button',
-      { color: '#fff', fontSize: '18px' }
+      { 
+        color: '#fff', 
+        fontSize: '18px', 
+        fontFamily: this.registry.values.globalFontFamily
+      }
     )
       .setOrigin(0.5); 
 

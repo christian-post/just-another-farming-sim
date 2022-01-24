@@ -117,7 +117,7 @@
   },
   "tools": {
     "scytheL1": {
-      "name": "scytheL1",
+      "name": "scythe",
       "screenName": "Scythe [L1]",
       "type": "tool",
       "quantity": null,
@@ -131,7 +131,7 @@
       "sellPrice": 75
     },
     "scytheL2": {
-      "name": "scytheL2",
+      "name": "scythe",
       "screenName": "Scythe [L2]",
       "type": "tool",
       "quantity": null,
@@ -143,6 +143,34 @@
       "tooltip": "scytheL2",
       "buyPrice": 3000,
       "sellPrice": 1000
+    },
+    "hoeL1": {
+      "name": "hoe",
+      "screenName": "Hoe [L1]",
+      "type": "tool",
+      "quantity": null,
+      "unique": true,
+      "usageCallback": "hoe",
+      "spritesheet": "tools",
+      "frame": 0,
+      "stamina": 0,
+      "tooltip": "hoeL1",
+      "buyPrice": 400,
+      "sellPrice": 200
+    },
+    "hoeL2": {
+      "name": "hoe",
+      "screenName": "Hoe [L2]",
+      "type": "tool",
+      "quantity": null,
+      "unique": true,
+      "usageCallback": "hoe",
+      "spritesheet": "tools",
+      "frame": 2,
+      "stamina": 10,
+      "tooltip": "hoeL2",
+      "buyPrice": 5000,
+      "sellPrice": 2500
     },
     "wateringCan": {
       "name": "wateringCan",

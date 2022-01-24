@@ -16,10 +16,69 @@ class TestScene extends Phaser.Scene {
       daytimeOverlay: 10
     }
 
+
+    // Auto tiling representations (experimental)
+    this.autoTileDict = {
+      2 : 682,    // 00000010
+      8 : 683,    // 00001000
+      10 : 684,   // 00001010
+      11 : 685,   // 00001011
+      16 : 686,   // 00010000
+      18 : 687,   // 00010010
+      22 : 688,   // 00010110
+
+      24 : 721,   // 00011000
+      26 : 722,   // 00011010
+      27 : 723,   // 00011011
+      30 : 724,   // 00011110
+      31 : 725,   // 00011111
+      64 : 726,   // 00100000
+      66 : 727,   // 00111110
+      72 : 728,   // 01001000
+
+      74 : 761,   // 01001010
+      75 : 762,   // 01001011
+      80 : 763,   // 01010000
+      82 : 764,   // 01010010
+      86 : 765,   // 01010110
+      88 : 766,   // 01011000
+      90 : 767,   // 01011010
+      91 : 768,   // 01011011
+
+      94 : 801,   // 01011110
+      95 : 802,   // 01011111
+      104 : 803,  // 01101000
+      106 : 804,  // 01101010
+      107 : 805,  // 01101011
+      120 : 806,  // 01111000
+      122 : 807,  // 01111010
+      123 : 808,  // 01111011
+
+      126 : 841,  // 01111110
+      127 : 842,  // 01111111
+      208 : 843,  // 11001000
+      210 : 844,  // 11010010
+      214 : 845,  // 11010110
+      216 : 846,  // 11011000
+      218 : 847,  // 11011010
+      219 : 848,  // 11011011
+
+      222 : 881,  // 11011110
+      223 : 882,  // 11011111
+      248 : 883,  // 11111000
+      250 : 884,  // 11111010
+      251 : 885,  // 11111011
+      254 : 886,  // 11111110
+      255 : 887,  // 11111111
+      0 : 888
+      // 0 : 681     // 00000000
+    };
+
+
     // map layers
     // TODO make this process more modular?
     this.mapLayers = {
-      layer0: map.createLayer('layer0', tileset),
+      layer0: map.createLayer('layer0', tileset),  // ground layer
       layer1: map.createLayer('layer1', tileset),
       layer2: map.createLayer('layer2', tileset),
       layer3: map.createLayer('layer3', tileset)
@@ -183,8 +242,8 @@ class TestScene extends Phaser.Scene {
     // array to indicate where the crops can be planted
     this.arableMap = new Array(map.width * map.height).fill(null);
 
-    this.makeAcre(9, 15, 10, 4);
-    this.makeAcre(23, 18, 10, 16);
+    // this.makeAcre(9, 15, 10, 4);
+    // this.makeAcre(23, 18, 10, 16);
 
     // render Texture for light sources at night
     this.textureOverlay = this.add.renderTexture(
@@ -223,6 +282,7 @@ class TestScene extends Phaser.Scene {
     inventoryManager.events.on('create', ()=> {
       inventoryManager.addItem(itemData.tools.scytheL1);
       inventoryManager.addItem(itemData.tools.wateringCan);
+      inventoryManager.addItem(itemData.tools.hoeL1);
       // inventoryManager.equipItem(1, 'item1');  // TODO: auto-equip if equip slot is empty
       inventoryManager.addItem(itemData.seeds.wheat, 20);
       inventoryManager.addItem(itemData.tools.fertilizer, 10);
@@ -230,6 +290,8 @@ class TestScene extends Phaser.Scene {
 
 
     // TESTING
+
+    
     
     let tile = this.registry.values.tileSize;
 
@@ -320,15 +382,128 @@ class TestScene extends Phaser.Scene {
 
   }
 
+  isArable(x, y) {
+    // helper function, might delete
+    let patch = this.arableMap[convertIndexTo1D(x, y, this.currentMap.width)];
+    // console.log(x, y, convertIndexTo1D(x, y, this.currentMap.width))
+    return patch !== undefined && patch !== null;
+  }
+
+  rebuildArableLayer() {
+    // TODO rebuild only in parts where it makes sense
+    for (let x = 0; x < this.currentMap.width; x++) {
+      for (let y = 0; y < this.currentMap.height; y++) {
+      
+        let indexX = x;
+        let indexY = y;
+
+        let bitmask = new Array(8).fill(0);
+
+        if (this.isArable(indexX - 1, indexY - 1)) {
+          // check adjacent tiles to the west and south
+          // this is done to reduce the possible index values to 48 in total
+          if (this.isArable(indexX, indexY - 1) && this.isArable(indexX - 1, indexY)) {
+            bitmask[7] = 1;
+          }
+        }
+        if (this.isArable(indexX, indexY - 1)) {
+          bitmask[6] = 1;
+        }
+        if (this.isArable(indexX + 1, indexY - 1)) {
+          if (this.isArable(indexX, indexY - 1) && this.isArable(indexX + 1, indexY)) {
+            bitmask[5] = 1;
+          }
+        }
+        if (this.isArable(indexX - 1, indexY)) {
+          bitmask[4] = 1;
+        }
+        if (this.isArable(indexX + 1, indexY)) {
+          bitmask[3] = 1;
+        }
+        if (this.isArable(indexX - 1, indexY + 1)) {
+          if (this.isArable(indexX, indexY + 1) && this.isArable(indexX - 1, indexY)) {
+            bitmask[2] = 1;
+          }
+        }
+        if (this.isArable(indexX, indexY + 1)) {
+          bitmask[1] = 1;
+        }
+        if (this.isArable(indexX + 1, indexY + 1)) {
+          if (this.isArable(indexX, indexY + 1) && this.isArable(indexX + 1, indexY)) {
+            bitmask[0] = 1;
+          }
+        }
+
+        // convert to binary string and then to int
+        let tileIndex = this.autoTileDict[parseInt(bitmask.join(""), 2)];
+
+        if (!this.isArable(indexX, indexY)) {
+          tileIndex = 681;
+        }
+
+        this.mapLayers.layer0.putTileAt(tileIndex, indexX, indexY);
+      }
+    }
+  }
+
+
   makeAcre(acreStartX, acreStartY, acreWidth, acreHeight) {
     for (let x = 0; x < acreWidth; x++) {
       for (let y = 0; y < acreHeight; y++) {
         let indexX = acreStartX + x;
         let indexY = acreStartY + y;
 
-        // this.arableMap[convertIndexTo1D(indexX, indexY, this.currentMap.width)] = 1;
+        // auto tiling
+        // let bitmask = new Array(8).fill(0);
+
+        // if (this.isArable(indexX - 1, indexY - 1)) {
+        //   // check adjacent tiles to the west and south
+        //   // this is done to reduce the possible index values to 48 in total
+        //   if (this.isArable(indexX, indexY - 1) && this.isArable(indexX - 1, indexY)) {
+        //     bitmask[7] = 1;
+        //   }
+        // }
+        // if (this.isArable(indexX, indexY - 1)) {
+        //   bitmask[6] = 1;
+        // }
+        // if (this.isArable(indexX + 1, indexY - 1)) {
+        //   if (this.isArable(indexX, indexY - 1) && this.isArable(indexX + 1, indexY)) {
+        //     bitmask[5] = 1;
+        //   }
+        // }
+        // if (this.isArable(indexX - 1, indexY)) {
+        //   bitmask[4] = 1;
+        // }
+        // if (this.isArable(indexX + 1, indexY)) {
+        //   bitmask[3] = 1;
+        // }
+        // if (this.isArable(indexX - 1, indexY + 1)) {
+        //   if (this.isArable(indexX, indexY + 1) && this.isArable(indexX - 1, indexY)) {
+        //     bitmask[2] = 1;
+        //   }
+        // }
+        // if (this.isArable(indexX, indexY + 1)) {
+        //   bitmask[1] = 1;
+        // }
+        // if (this.isArable(indexX + 1, indexY + 1)) {
+        //   if (this.isArable(indexX, indexY + 1) && this.isArable(indexX + 1, indexY)) {
+        //     bitmask[0] = 1;
+        //   }
+        // }
+
+        // // convert to binary string and then to int
+        // let tileIndex = this.autoTileDict[parseInt(bitmask.join(""), 2)];
+        // console.log(bitmask.join(""));
+
+        // console.log(this.arableMap);
+        
+
         let index = convertIndexTo1D(indexX, indexY, this.currentMap.width);
         this.arableMap[index] = new SoilPatch(this, indexX * this.registry.values.tileSize, indexY * this.registry.values.tileSize, index);
+
+        this.rebuildArableLayer();
+        // this.mapLayers.layer0.putTileAt(tileIndex, indexX, indexY);
+        // console.log(this.mapLayers.layer0.getTileAt(indexX, indexY).index);
       }
     }
   }

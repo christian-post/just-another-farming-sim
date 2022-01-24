@@ -65,6 +65,7 @@ game.registry.merge({
   tileSize: 16,
   menuScrollDelay: 200,
   globalMusicVolume: 0.5,
+  globalFontFamily: 'Verdana',
   // in-game settings
   ingameTimeSpeed: 20,  // in-game seconds per real-time second
   startingDaytime: {
@@ -88,5 +89,15 @@ game.scene.add('ShopDisplay', ShopDisplay, false);
 game.scene.add('Dialogue', DialogueScene, false);
 game.scene.add('Transition', TransitionScene, false);
 
-// start the game
-game.scene.start('Preload');
+
+// load the font
+new FontFace("CustomFont", "url(assets/fonts/slkscr.ttf)")
+  .load()
+  .then(function (loaded) {
+    document.fonts.add(loaded);
+    game.scene.start('Preload');
+  })
+  .catch(function (error) {
+    return error;
+  });
+

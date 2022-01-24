@@ -181,7 +181,12 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.scene.arableMap[index]) {
       if (!this.interactionRect.visible) { this.interactionRect.setVisible(true) };
     } else {
-      if (this.interactionRect.visible) { this.interactionRect.setVisible(false) };
+      if (this.inventory.isEquipped('hoe')) {
+        // if hoe is equipped, rect is visible outside of arable land
+        if (!this.interactionRect.visible) { this.interactionRect.setVisible(true) };
+      } else {
+        if (this.interactionRect.visible) { this.interactionRect.setVisible(false) };
+      }
     }
 
     // check if rectangle is colliding with any interactable sprites
@@ -307,7 +312,9 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             item, { 
               collisions: collisions,
               button: button,
-              mapIndex: convertIndexTo1D(interactX, interactY, this.scene.currentMap.width)
+              mapIndex: convertIndexTo1D(interactX, interactY, this.scene.currentMap.width),
+              x: interactX,
+              y: interactY
           });
 
           break;
@@ -346,6 +353,21 @@ class Player extends Phaser.Physics.Arcade.Sprite {
           }
         }
         break;
+      case 'hoe':
+        if (this.checkExhausted()) { return; }
+
+        this.tool = new Hoe(this.scene, this.x, this.y, item.frame);
+        // TODO: make a property in Tiled where land can be dug over
+        // TODO when hoe is selected, show interact rect everywhere
+
+        // check if there is arable land
+        if (!this.scene.arableMap[config.mapIndex]) {
+          this.scene.makeAcre(config.x, config.y, 1, 1);
+          this.changeStamina(-item.stamina);
+        }
+        
+        break;
+
       case 'wateringCan':
         this.tool = new WateringCan(this.scene, this.x, this.y, item.frame);
         // check if there is a collision and can be watered
@@ -395,7 +417,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         }
         break;
       default:
-        console.warn('function for tool not implemented: ', type);
+        console.warn('function for tool not implemented: ', item.name);
     }
   }
 
@@ -938,6 +960,35 @@ class Scythe extends Phaser.GameObjects.Image {
       this.setOrigin(1);
     }
   }
+}
+
+
+class Hoe extends Phaser.GameObjects.Image {
+  constructor(scene, x, y, imageIndex=0) {
+    super(scene, x, y, 'tools', imageIndex);
+
+    scene.add.existing(this);
+    scene.depthSortedSprites.add(this);
+
+    scene.time.addEvent({
+        delay: 500, 
+        callback: () => {
+          this.destroy();
+          scene.player.tool = null;
+        }
+    });
+
+    this.player = scene.player;
+
+    if (this.player.lastDir === 'left') {
+      this.setFlipX(true);
+      this.rotationDir = -1;
+      this.setOrigin(0, 1);
+    } else {
+      this.rotationDir = 1;
+      this.setOrigin(1);
+    }
+  }
 
   update() {
     this.angle += 10 * this.rotationDir;
@@ -947,6 +998,7 @@ class Scythe extends Phaser.GameObjects.Image {
     this.y = this.player.y + ((this.player.lastDir === 'up') ? -4 : 8);
   }
 }
+
 
 class WateringCan extends Phaser.GameObjects.Image {
   constructor(scene, x, y, imageIndex=7) {
@@ -967,6 +1019,7 @@ class WateringCan extends Phaser.GameObjects.Image {
     let particleStartPos = { x: 0, x: 0 };
 
     switch(this.player.lastDir) {
+      // TODO clean this up a bit...
       case 'left': 
         this.x = this.player.x - 16;
         this.y = this.player.y + 12;
@@ -1024,6 +1077,5 @@ class WateringCan extends Phaser.GameObjects.Image {
     });
 
     emitter.start();
-
   }
 }

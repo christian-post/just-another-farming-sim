@@ -159,6 +159,8 @@ const GetBBcodeText = function(scene, wrapWidth, fixedWidth, fixedHeight, fontSi
       fixedWidth: fixedWidth,
       fixedHeight: fixedHeight,
 
+      fontFamily: scene.registry.values.globalFontFamily,
+
       fontSize: `${fontSize}px`,
       wrap: {
           mode: 'word',
