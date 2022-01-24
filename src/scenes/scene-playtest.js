@@ -16,9 +16,10 @@ class TestScene extends Phaser.Scene {
       daytimeOverlay: 10
     }
 
-
     // Auto tiling representations (experimental)
     this.autoTileDict = {
+      grass: 681,
+      0 : 888,     // 00000000
       2 : 682,    // 00000010
       8 : 683,    // 00001000
       10 : 684,   // 00001010
@@ -69,9 +70,7 @@ class TestScene extends Phaser.Scene {
       250 : 884,  // 11111010
       251 : 885,  // 11111011
       254 : 886,  // 11111110
-      255 : 887,  // 11111111
-      0 : 888
-      // 0 : 681     // 00000000
+      255 : 887   // 11111111
     };
 
 
@@ -385,60 +384,61 @@ class TestScene extends Phaser.Scene {
   isArable(x, y) {
     // helper function, might delete
     let patch = this.arableMap[convertIndexTo1D(x, y, this.currentMap.width)];
-    // console.log(x, y, convertIndexTo1D(x, y, this.currentMap.width))
     return patch !== undefined && patch !== null;
   }
 
   rebuildArableLayer() {
-    // TODO rebuild only in parts where it makes sense
     for (let x = 0; x < this.currentMap.width; x++) {
       for (let y = 0; y < this.currentMap.height; y++) {
       
         let indexX = x;
         let indexY = y;
-
-        let bitmask = new Array(8).fill(0);
-
-        if (this.isArable(indexX - 1, indexY - 1)) {
-          // check adjacent tiles to the west and south
-          // this is done to reduce the possible index values to 48 in total
-          if (this.isArable(indexX, indexY - 1) && this.isArable(indexX - 1, indexY)) {
-            bitmask[7] = 1;
-          }
-        }
-        if (this.isArable(indexX, indexY - 1)) {
-          bitmask[6] = 1;
-        }
-        if (this.isArable(indexX + 1, indexY - 1)) {
-          if (this.isArable(indexX, indexY - 1) && this.isArable(indexX + 1, indexY)) {
-            bitmask[5] = 1;
-          }
-        }
-        if (this.isArable(indexX - 1, indexY)) {
-          bitmask[4] = 1;
-        }
-        if (this.isArable(indexX + 1, indexY)) {
-          bitmask[3] = 1;
-        }
-        if (this.isArable(indexX - 1, indexY + 1)) {
-          if (this.isArable(indexX, indexY + 1) && this.isArable(indexX - 1, indexY)) {
-            bitmask[2] = 1;
-          }
-        }
-        if (this.isArable(indexX, indexY + 1)) {
-          bitmask[1] = 1;
-        }
-        if (this.isArable(indexX + 1, indexY + 1)) {
-          if (this.isArable(indexX, indexY + 1) && this.isArable(indexX + 1, indexY)) {
-            bitmask[0] = 1;
-          }
-        }
-
-        // convert to binary string and then to int
-        let tileIndex = this.autoTileDict[parseInt(bitmask.join(""), 2)];
+        let tileIndex;   // corresponds to the tileset image
 
         if (!this.isArable(indexX, indexY)) {
-          tileIndex = 681;
+          // if it is not arable land, just use the grass tile
+          tileIndex = this.autoTileDict.grass;
+        } else {
+          // see https://github.com/christianpostprivate/Autotiles
+
+          let bitmask = new Array(8).fill(0);
+
+          if (this.isArable(indexX - 1, indexY - 1)) {
+            // check adjacent tiles to the west and south
+            // this is done to reduce the possible index values to 48 in total
+            if (this.isArable(indexX, indexY - 1) && this.isArable(indexX - 1, indexY)) {
+              bitmask[7] = 1;
+            }
+          }
+          if (this.isArable(indexX, indexY - 1)) {
+            bitmask[6] = 1;
+          }
+          if (this.isArable(indexX + 1, indexY - 1)) {
+            if (this.isArable(indexX, indexY - 1) && this.isArable(indexX + 1, indexY)) {
+              bitmask[5] = 1;
+            }
+          }
+          if (this.isArable(indexX - 1, indexY)) {
+            bitmask[4] = 1;
+          }
+          if (this.isArable(indexX + 1, indexY)) {
+            bitmask[3] = 1;
+          }
+          if (this.isArable(indexX - 1, indexY + 1)) {
+            if (this.isArable(indexX, indexY + 1) && this.isArable(indexX - 1, indexY)) {
+              bitmask[2] = 1;
+            }
+          }
+          if (this.isArable(indexX, indexY + 1)) {
+            bitmask[1] = 1;
+          }
+          if (this.isArable(indexX + 1, indexY + 1)) {
+            if (this.isArable(indexX, indexY + 1) && this.isArable(indexX + 1, indexY)) {
+              bitmask[0] = 1;
+            }
+          }
+          // convert array to binary string and then to int
+          tileIndex = this.autoTileDict[parseInt(bitmask.join(""), 2)];
         }
 
         this.mapLayers.layer0.putTileAt(tileIndex, indexX, indexY);
@@ -453,60 +453,14 @@ class TestScene extends Phaser.Scene {
         let indexX = acreStartX + x;
         let indexY = acreStartY + y;
 
-        // auto tiling
-        // let bitmask = new Array(8).fill(0);
-
-        // if (this.isArable(indexX - 1, indexY - 1)) {
-        //   // check adjacent tiles to the west and south
-        //   // this is done to reduce the possible index values to 48 in total
-        //   if (this.isArable(indexX, indexY - 1) && this.isArable(indexX - 1, indexY)) {
-        //     bitmask[7] = 1;
-        //   }
-        // }
-        // if (this.isArable(indexX, indexY - 1)) {
-        //   bitmask[6] = 1;
-        // }
-        // if (this.isArable(indexX + 1, indexY - 1)) {
-        //   if (this.isArable(indexX, indexY - 1) && this.isArable(indexX + 1, indexY)) {
-        //     bitmask[5] = 1;
-        //   }
-        // }
-        // if (this.isArable(indexX - 1, indexY)) {
-        //   bitmask[4] = 1;
-        // }
-        // if (this.isArable(indexX + 1, indexY)) {
-        //   bitmask[3] = 1;
-        // }
-        // if (this.isArable(indexX - 1, indexY + 1)) {
-        //   if (this.isArable(indexX, indexY + 1) && this.isArable(indexX - 1, indexY)) {
-        //     bitmask[2] = 1;
-        //   }
-        // }
-        // if (this.isArable(indexX, indexY + 1)) {
-        //   bitmask[1] = 1;
-        // }
-        // if (this.isArable(indexX + 1, indexY + 1)) {
-        //   if (this.isArable(indexX, indexY + 1) && this.isArable(indexX + 1, indexY)) {
-        //     bitmask[0] = 1;
-        //   }
-        // }
-
-        // // convert to binary string and then to int
-        // let tileIndex = this.autoTileDict[parseInt(bitmask.join(""), 2)];
-        // console.log(bitmask.join(""));
-
-        // console.log(this.arableMap);
-        
-
         let index = convertIndexTo1D(indexX, indexY, this.currentMap.width);
         this.arableMap[index] = new SoilPatch(this, indexX * this.registry.values.tileSize, indexY * this.registry.values.tileSize, index);
 
         this.rebuildArableLayer();
-        // this.mapLayers.layer0.putTileAt(tileIndex, indexX, indexY);
-        // console.log(this.mapLayers.layer0.getTileAt(indexX, indexY).index);
       }
     }
   }
+
 
   update(time, delta) {
     this.player.update(delta);

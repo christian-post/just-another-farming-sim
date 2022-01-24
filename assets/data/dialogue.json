@@ -45,6 +45,8 @@
   "tooltips": {
     "scytheL1": "A tool to cut crops when they are ready for harvest. You can also use this to remove weeds.",
     "scytheL2": "A tool to cut crops when they are ready for harvest. You can also use this to remove weeds. Lighter than the normal scythe.",
+    "hoeL1": "A tool that let's you dig up the ground to create new arable land.",
+    "hoeL2": "A tool that let's you dig up the ground to create new arable land. Lighter than the normal hoe.",
     "wateringCan": "Use the Watering Can to water your crops regularly. Otherwise, they won't grow.",
     "seeds": "Plant these seeds in a patch of soil.",
     "harvest": "{screenName} can be sold, processed to feed, or transformed into seeds.",
