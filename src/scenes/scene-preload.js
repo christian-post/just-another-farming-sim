@@ -76,8 +76,19 @@ class PreloadingScene extends Phaser.Scene {
     // }
 
     // Tilesets and Tilemaps
-    this.load.image('overworld', 'assets/images/tilesets/!CL_DEMO.png');
     this.load.tilemapTiledJSON('farm', 'assets/tilemaps/farm.json');
+    this.load.tilemapTiledJSON('village', 'assets/tilemaps/village.json');
+
+    this.load.image('overworld', 'assets/images/tilesets/!CL_DEMO.png');
+    this.load.image('village', 'assets/images/tilesets/village.png');
+
+    // store data that indicates which tilesets belong to which tilemap
+    this.registry.merge({
+      tilemapImages: {
+        farm: 'overworld',
+        village: 'village'
+      }
+    });
 
     // Data
     this.load.json('cropData', 'assets/data/crops.json');

@@ -157,11 +157,6 @@ class InventoryManager extends Phaser.Scene {
     this.itemMaxQuantity = 255;
 
 
-    // setup the camera
-    // this.cameras.main.setBounds(0, 0, this.registry.values.windowWidth, this.registry.values.windowHeight);
-
-
-
     // events that change the UI contents
     this.manager.events.on('newDay', ()=> {
       this.day.setText(`Day ${this.manager.day}`);
@@ -417,9 +412,8 @@ class InventoryDisplay extends Phaser.Scene {
   that shows up when  the player presses the "I" key
   it also pauses the main game scene
   */
-  create(parentScene) {
+  create() {
     this.manager = this.scene.get('GameManager');
-    this.parentScene = parentScene;
 
     let width = 338;
     let height = 184;
@@ -475,7 +469,8 @@ class InventoryDisplay extends Phaser.Scene {
     this.buttonCallbacks = {
       inventory: ()=> {
         this.scene.sleep(this.scene.key);
-        this.scene.resume(this.parentScene);
+        this.scene.resume(this.manager.currentGameScene);
+
         this.manager.toggleDaytimePause();
       },
       interact: () => {

@@ -18,7 +18,6 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     let animsDuration = 300;  // frame duration in milliseconds
     
     // IDLE
-
     this.anims.create({
       key: 'player-idle-down',
       frames: [{key: 'player', frame: 1}],
@@ -52,7 +51,6 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     });
 
     // WALKING
-
     this.anims.create({
       key: 'player-walk-down',
       frames: this.anims.generateFrameNumbers('player', {frames: [0, 1, 2, 1]}),
@@ -90,8 +88,9 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     this.lastDir = 'down';
 
     // make a shadow
-    this.shadow = this.scene.add.image(this.x, this.getBounds().bottom, 'player-shadow');
-    this.shadow.setAlpha(0.3);
+    this.shadow = this.scene.add.image(this.x, this.getBounds().bottom, 'player-shadow')
+      .setAlpha(0.3)
+      .setDepth(this.scene.depthValues.sprites - 1);
     this.scene.events.on('prerender', ()=> {
       this.shadow.setPosition(this.x, this.getBounds().bottom);
     });
@@ -113,14 +112,12 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     // Controls
 
     // interaction button
-    this.scene.events.on('player-interacts', ()=> {
-      this.interactButton();
-    });
+    this.scene.events.on('player-interacts', this.interactButton, this);
 
     // Item usage
     this.scene.events.on('itemUsed', button => {
       this.itemUseButton(button);
-    }, this);
+    });
 
     // cooldown for seed usage
     this.isSowing = false;
@@ -182,14 +179,16 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     let index = convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
 
     // check for arable Land
-    if (this.scene.arableMap[index]) {
-      if (!this.interactionRect.visible) { this.interactionRect.setVisible(true) };
-    } else {
-      if (this.inventory.isEquipped('hoe')) {
-        // if hoe is equipped, rect is visible outside of arable land
+    if (this.scene.hasArableLand) {
+      if (this.scene.arableMap[index]) {
         if (!this.interactionRect.visible) { this.interactionRect.setVisible(true) };
       } else {
-        if (this.interactionRect.visible) { this.interactionRect.setVisible(false) };
+        if (this.inventory.isEquipped('hoe')) {
+          // if hoe is equipped, rect is visible outside of arable land
+          if (!this.interactionRect.visible) { this.interactionRect.setVisible(true) };
+        } else {
+          if (this.interactionRect.visible) { this.interactionRect.setVisible(false) };
+        }
       }
     }
 
@@ -239,7 +238,6 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     let collisions = checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
-    // let collisions = checkCollisionGroup(this.interactionRect, this.scene.interactables.getChildren());
 
     // check for interactible if any collisions happen
     if (collisions.length > 0) {

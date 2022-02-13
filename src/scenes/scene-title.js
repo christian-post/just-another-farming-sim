@@ -9,6 +9,8 @@ class TitleScene extends Phaser.Scene {
 
   create() {
     this.manager = this.scene.get('GameManager');
+    // this.nextScene = 'VillageScene';
+    this.nextScene = 'FarmScene';
 
     this.buttonCallbacks = {};
 
@@ -16,17 +18,11 @@ class TitleScene extends Phaser.Scene {
 
     // "any key" event to advance
     this.input.gamepad.on('down', ()=> {
-      // TODO make a function "switchGameScenes"
-      this.scene.stop(this.scene.key);
-      this.manager.currentGameScene = 'Test';
-      this.scene.start(this.manager.currentGameScene);
+      this.manager.switchScenes(this.scene.key, this.nextScene, {playerPos: { x: 256, y: 200 }}, false);
     });
 
     this.input.keyboard.on('keydown', ()=> {
-      // TODO make a function "switchGameScenes"
-      this.scene.stop(this.scene.key);
-      this.manager.currentGameScene = 'Test';
-      this.scene.start(this.manager.currentGameScene);
+      this.manager.switchScenes(this.scene.key, this.nextScene, {playerPos: { x: 256, y: 200 }}, false);
     });
 
     this.add.graphics()

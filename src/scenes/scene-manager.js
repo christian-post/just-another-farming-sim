@@ -57,7 +57,35 @@ class GameManager extends Phaser.Scene {
 
     // TODO: only for debugging
     this.input.keyboard.on('keydown-T', ()=> {
-      this.events.emit('newDay');
+      console.log(this.player.scene.scene.key)
+    });
+
+    this.input.on('pointerdown', pointer => {
+      if (DEBUG) {
+        console.log(pointer.x, pointer.y)
+      }
+    })
+
+    this.input.keyboard.on('keydown-M', ()=> {
+      if (this.currentGameScene === 'FarmScene') {
+        this.switchScenes(
+          this.currentGameScene, 'VillageScene', 
+          { 
+            playerPos: {x: 100, y: 100}, 
+            lastDir: this.scene.get(this.currentGameScene).player.lastDir
+          },
+          true
+        );
+      } else {
+        this.switchScenes(
+          this.currentGameScene, 'FarmScene', 
+          { 
+            playerPos: {x: 100, y: 100}, 
+            lastDir: this.scene.get(this.currentGameScene).player.lastDir
+          },
+          true
+        );
+      }
     });
   }
 
@@ -65,7 +93,7 @@ class GameManager extends Phaser.Scene {
     if (scene.input.gamepad.total === 0) {
       scene.input.gamepad.once('connected', pad => {
         scene.pad = pad;
-        console.log(pad);
+        console.log(`pad connected: ${pad}`);
         this.configurePad(scene);
       });
     }
@@ -90,7 +118,7 @@ class GameManager extends Phaser.Scene {
         // check if midnight
         if (this.minutes >= 1440) {
           this.minutes = this.minutes - 1440;
-          this.events.emit('newDay');
+          this.events.emit('newDay', this.minutes);
         }
 
         if (this.minutes > 1200 || this.minutes < 240) {
@@ -130,6 +158,11 @@ class GameManager extends Phaser.Scene {
     } else {
       return this.keyMapping;
     }
+  }
+
+  get player() {
+    // reference to the player sprite of the current game scene
+    return this.getCurrentGameScene().player;
   }
 
   onNewDay(minutes=360) {
@@ -182,5 +215,26 @@ class GameManager extends Phaser.Scene {
     keys.forEach(key => {
       scene.keys[key].on('down', scene.buttonCallbacks[key], scene);
     });
+  }
+
+  switchScenes(current, next, createConfig, playTransitionAnim=true) {
+
+    console.log(`Switching from ${current} to ${next}`);
+
+    if (playTransitionAnim) {
+      // Fade out/fade in effect
+      this.scene.run('Transition', {
+        sceneFrom: current,
+        sceneTo: next, 
+        callback: null,
+        createConfig: createConfig
+      });
+      
+    } else {
+      // this.scene.pause(current);
+      this.scene.stop(current);
+      this.currentGameScene = next;
+      this.scene.run(next, createConfig);
+    }
   }
 }

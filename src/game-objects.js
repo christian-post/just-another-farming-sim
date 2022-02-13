@@ -50,6 +50,33 @@ class DialogueTrigger extends Phaser.GameObjects.Rectangle {
   }
 }
 
+class TeleportTrigger extends Phaser.GameObjects.Rectangle {
+  constructor(scene, x, y, width, height, targetScene, playerX, playerY){
+    super(scene, x, y, width, height);
+    this.scene.add.existing(this);
+    this.scene.allSprites.add(this);
+    this.scene.physics.add.existing(this);
+    this.setOrigin(0);
+
+    if (DEBUG) {
+      this.setFillStyle(0xff0000, 0.3);
+    }
+
+    // collision results in change of tilemaps
+    this.scene.physics.add.overlap(this.scene.player, this, ()=> {
+      this.scene.manager.switchScenes(
+        this.scene.scene.key,
+        targetScene,
+        { 
+          playerPos: { x: playerX, y: playerY },
+          lastDir: this.scene.player.lastDir
+        },
+        false
+      );
+    });
+  }
+}
+
 
 class SoilPatch extends Phaser.GameObjects.Rectangle {
   constructor(scene, x, y, index) {

@@ -1,14 +1,22 @@
 class TransitionScene extends Phaser.Scene {
   create(data) {
-
     this.sceneFrom = data.sceneFrom;
     this.sceneTo = data.sceneTo;
     this.callback = data.callback;
+    this.createConfig = data.createConfig;
 
     this.effectWidth = this.registry.values.windowWidth;
     this.effectHeight = this.registry.values.windowHeight;
 
+    // TODO center ellipse around player
+    let cameraView = this.scene.get(this.sceneFrom).cameras.main.worldView;
+    let player = this.scene.get(this.sceneFrom).player;
+    let screenX = player.x - cameraView.x;
+    let screenY = player.y - cameraView.y;
+
     let ellipse = new Phaser.Geom.Ellipse(
+      // screenX, 
+      // screenY,
       this.registry.values.windowWidth / 2, 
       this.registry.values.windowHeight / 2, 
       this.effectWidth, 
@@ -44,6 +52,7 @@ class TransitionScene extends Phaser.Scene {
     this.duration = 1000;
 
     this.scene.pause(this.sceneFrom);
+
     this.scene.bringToTop(this.scene.key);
 
     this.add.tween({
@@ -56,11 +65,22 @@ class TransitionScene extends Phaser.Scene {
   }
   
   onExpand() {
-    // this is where it's all black
-    this.scene.run(this.sceneTo);
+    // this happens when it's all black
+    this.scene.stop(this.sceneFrom);
+    this.scene.start(this.sceneTo, this.createConfig);
+    this.scene.run(this.sceneTo, this.createConfig);
+    this.scene.get('GameManager').currentGameScene = this.sceneTo;
+
+    // if scene was paused and is resumed, change the player's position
+    // TODO: might not be needed?
+    // this.scene.get(this.sceneTo).events.on('resume', ()=> {
+    //   this.scene.get(this.sceneTo).player.setPosition(this.createConfig.playerPos.x, this.createConfig.playerPos.y);
+    //   console.log(this.scene.get(this.sceneTo).player.x)
+    // });
+
 
     if (this.callback) {
-      // execute additional code if necessary
+      // execute additional code if given to constructor
       this.callback(); 
     }
 
