@@ -5,8 +5,8 @@ const COLOR_BACKGROUND = 0x000000;
 // const COLOR_BACKGROUND = 0x006022;
 
 // debug settings
-const DEBUG = false;
-const SCENEWATCHER = true;
+const DEBUG = true;
+const SCENEWATCHER = false;
 
 // RexUI Plugin File path
 // URL_REXUI = 'plugins/rexuiplugin.js'
@@ -63,7 +63,8 @@ game.registry.merge({
   windowHeight: WINDOW_HEIGHT,
   tileSize: 16,
   menuScrollDelay: 200,
-  globalMusicVolume: 0.5,
+  globalMusicVolume: 0,
+  globalSoundeffectsVolume: 0.5,
   globalFontFamily: 'Verdana',
   // in-game settings
   // ingameTimeSpeed: 1000,  // in-game seconds per real-time second

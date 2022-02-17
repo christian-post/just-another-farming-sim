@@ -1,91 +1,28 @@
-class Player extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y) {
-    super(scene, x, y, 'player');
+class BaseCharacterSprite extends Phaser.Physics.Arcade.Sprite {
+  constructor(scene, x, y, key) {
+    super(scene, x, y, key);
     this.scene.physics.add.existing(this);
     this.scene.add.existing(this);
     this.scene.allSprites.add(this);
 
-    // reference to the game manager scene
-    this.manager = this.scene.scene.get('GameManager');
-    this.inventory = this.scene.scene.get('InventoryManager');
+    this.key = key;
 
+    // reference persistent scenes
+    this.manager = this.scene.scene.get('GameManager');
+
+    // hitbox
+    // TODO: more modular?
     this.setBodySize(16, 12, false);
     this.body.setOffset(5, this.height - this.body.height);
     this.debugShowBody = true;
 
     // Animations
-    let animsFrateRate = 8;
-    let animsDuration = 300;  // frame duration in milliseconds
-    
-    // IDLE
-    this.anims.create({
-      key: 'player-idle-down',
-      frames: [{key: 'player', frame: 1}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
+    this.animsFrateRate = 8;
+    this.animsDuration = 300;  // frame duration in milliseconds
+    this.lastDir = 'down';  // last facing direction
 
-    this.anims.create({
-      key: 'player-idle-up',
-      frames: [{key: 'player', frame: 10}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    this.anims.create({
-      key: 'player-idle-right',
-      frames: [{key: 'player', frame: 7}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    this.anims.create({
-      key: 'player-idle-left',
-      frames: [{key: 'player', frame: 4}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    // WALKING
-    this.anims.create({
-      key: 'player-walk-down',
-      frames: this.anims.generateFrameNumbers('player', {frames: [0, 1, 2, 1]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    this.anims.create({
-      key: 'player-walk-right',
-      frames: this.anims.generateFrameNumbers('player', {frames: [6, 7, 8, 7]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    this.anims.create({
-      key: 'player-walk-up',
-      frames: this.anims.generateFrameNumbers('player', {frames: [9, 10, 11, 10]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    this.anims.create({
-      key: 'player-walk-left',
-      frames: this.anims.generateFrameNumbers('player', {frames: [3, 4, 5, 4]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    // starting animation (idle)
-    this.anims.play('player-idle-down');
-    this.lastDir = 'down';
+    // Physics
+    this.speed = 80;
 
     // make a shadow
     this.shadow = this.scene.add.image(this.x, this.getBounds().bottom, 'player-shadow')
@@ -94,32 +31,99 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     this.scene.events.on('prerender', ()=> {
       this.shadow.setPosition(this.x, this.getBounds().bottom);
     });
+  }
 
-    // Physics
-    this.speed = 80;
+  createAnimations(animations) {
+    animations.forEach(data => {
+      this.anims.create({
+        key: `${this.key}-${data.key}`,
+        frames: data.frames,
+        frameRate: this.animsFrateRate,
+        duration: this.animsDuration,
+        repeat: data.repeat || 0
+      });
+    });
 
+    // play the first animation as default
+    this.anims.play(`${this.key}-${animations[0].key}`);
+  }
+
+  move(direction) {
+    direction.setLength(this.speed);
+    this.setVelocity(direction.x, direction.y);
+
+    // adjust the player's animation based on the velocity vector
+    if (direction.lengthSq() === 0) {
+      this.anims.play(`${this.key}-idle-${this.lastDir}`, true);
+    } else {
+      if (Math.abs(direction.x) > Math.abs(direction.y)) {
+        // horizontal component of the velocity vector is bigger
+        if (direction.x > 0) {
+          this.lastDir = 'right';
+        } else if (direction.x < 0) {
+          this.lastDir = 'left';
+        }
+      } else {
+        // vertical component is bigger
+        if (direction.y > 0) {
+          this.lastDir = 'down';
+        } else if (direction.y < 0) {
+          this.lastDir = 'up';
+        }
+      }
+      this.anims.play(`${this.key}-walk-${this.lastDir}`, true);
+    }
+  }
+}
+
+
+
+class Player extends BaseCharacterSprite {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'player');
+
+    this.inventory = this.scene.scene.get('InventoryManager');  // scene reference
+
+    this.createAnimations([
+      { key: 'idle-down', frames: [{key: this.key, frame: 1}] },
+      { key: 'idle-up', frames: [{key: this.key, frame: 10}] },
+      { key: 'idle-right', frames: [{key: this.key, frame: 7}] },
+      { key: 'idle-left', frames: [{key: this.key, frame: 4}] },
+      { key: 'walk-down', frames: this.anims.generateFrameNumbers(this.key, {frames: [0, 1, 2, 1]}) },
+      { key: 'walk-up', frames: this.anims.generateFrameNumbers(this.key, {frames: [9, 10, 11, 10]}) },
+      { key: 'walk-right', frames: this.anims.generateFrameNumbers(this.key, {frames: [6, 7, 8, 7]}) },
+      { key: 'walk-left', frames: this.anims.generateFrameNumbers(this.key, {frames: [3, 4, 5, 4]}) },
+    ]);
+
+    // create an object that lets the player interact with other objects
     this.interactionRect = scene.add.rectangle(
-      x, y + this.scene.registry.values.tileSize, 
-      this.scene.registry.values.tileSize, this.scene.registry.values.tileSize
+      x, 
+      y + this.scene.registry.values.tileSize, 
+      this.scene.registry.values.tileSize, 
+      this.scene.registry.values.tileSize
     )
       .setOrigin(0.5)
       .setFillStyle()
       .setStrokeStyle(2, 0xDD0000, 0.3)
-      .setVisible(false);
+      .setVisible(false);   // only visible under certain conditions
 
     this.scene.physics.add.existing(this.interactionRect);
 
-    // Controls
+    // ##  Controls  ##
 
-    // interaction button
+    // remove listeners from previous overworld scenes (if there are any)
+    this.scene.events.removeListener('player-interacts');
+    this.scene.events.removeListener('itemUsed');
+
+    // interaction button event
     this.scene.events.on('player-interacts', this.interactButton, this);
 
-    // Item usage
+    // Item usage event
     this.scene.events.on('itemUsed', button => {
       this.itemUseButton(button);
     });
 
-    // cooldown for seed usage
+    // cooldown flag for seed usage (TODO: make an object if more flags are needed)
     this.isSowing = false;
 
     // resources
@@ -140,12 +144,15 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.tool) {
       this.tool.update(delta);
       this.setVelocity(0);
+      // TODO: tool usage animation
       this.anims.play('player-idle-' + this.lastDir, true);
     } else if (this.isSowing) {
       this.setVelocity(0);
+      // TODO: sowing animation
       this.anims.play('player-idle-' + this.lastDir, true);
     } else {
-      this.move(delta);
+      let dir = getCursorDirections(this.scene, 0, delta);
+      this.move(dir);
     }
 
     // create a ray that is cast in front of the player based on the last direction
@@ -202,34 +209,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  move(delta) {
-    // get the movement vector from the inputs
-    let dir = getCursorDirections(this.scene, 0, delta);
-    
-    let move = new Phaser.Math.Vector2(dir.x, dir.y);
-    move.setLength(this.speed);
-    this.setVelocity(move.x, move.y);
-
-    // adjust the player's animation
-    if (move.lengthSq() === 0) {
-      this.anims.play('player-idle-' + this.lastDir, true);
-    } else {
-      if (dir.x > 0) {
-        this.lastDir = 'right';
-      } else if (dir.x < 0) {
-        this.lastDir = 'left';
-      }
-      if (dir.y > 0) {
-        this.lastDir = 'down';
-      } else if (dir.y < 0) {
-        this.lastDir = 'up';
-      }
-      this.anims.play('player-walk-' + this.lastDir, true);
-    }
-  }
-
   interactButton() {
-    // console.log(this)
     let interactX = parseInt(this.interactionRect.x / this.scene.registry.values.tileSize);
     let interactY = parseInt(this.interactionRect.y / this.scene.registry.values.tileSize);
 
@@ -435,130 +415,28 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 }
 
 
-class NPC extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y, textureKey) {
-    super(scene, x, y, textureKey);
-    this.scene.physics.add.existing(this);
-    this.scene.add.existing(this);
+class NPC extends BaseCharacterSprite {
+  constructor(scene, x, y, key) {
+    super(scene, x, y, key);
 
-    this.scene.allSprites.add(this);
     this.scene.npcs.add(this);
     this.scene.depthSortedSprites.add(this);
 
-    this.key = textureKey;
+    this.key = key;
 
-    // reference to the game manager scene
-    this.manager = this.scene.scene.get('GameManager');
+    this.createAnimations([
+      { key: 'idle-down', frames: [{key: this.key, frame: 1}] },
+      { key: 'idle-up', frames: [{key: this.key, frame: 10}] },
+      { key: 'idle-right', frames: [{key: this.key, frame: 7}] },
+      { key: 'idle-left', frames: [{key: this.key, frame: 4}] },
+      { key: 'walk-down', frames: this.anims.generateFrameNumbers(this.key, {frames: [0, 1, 2, 1]}), repeat: -1 },
+      { key: 'walk-up', frames: this.anims.generateFrameNumbers(this.key, {frames: [9, 10, 11, 10]}), repeat: -1 },
+      { key: 'walk-right', frames: this.anims.generateFrameNumbers(this.key, {frames: [6, 7, 8, 7]}), repeat: -1 },
+      { key: 'walk-left', frames: this.anims.generateFrameNumbers(this.key, {frames: [3, 4, 5, 4]}), repeat: -1 },
+    ]);
 
-    this.setBodySize(16, 16, false);
-    this.body.setOffset(this.width * 0.25, this.height * 0.5);
-    this.debugShowBody = true;
-
-    // Animations
-    // this.setDepth(2);
-    let animsFrateRate = 8;
-    let animsDuration = 300;  // frame duration in milliseconds
-    
-    // IDLE
-    this.anims.create({
-      key: this.key + '-idle-down',
-      frames: [{key: this.key, frame: 1}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    this.anims.create({
-      key: this.key + '-idle-up',
-      frames: [{key: this.key, frame: 10}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    this.anims.create({
-      key: this.key + '-idle-right',
-      frames: [{key: this.key, frame: 7}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    this.anims.create({
-      key: this.key + '-idle-left',
-      frames: [{key: this.key, frame: 4}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    // WALKING
-
-    this.anims.create({
-      key: this.key + '-walk-down',
-      frames: this.anims.generateFrameNumbers(this.key, {frames: [0, 1, 2, 1]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    this.anims.create({
-      key: this.key + '-walk-right',
-      frames: this.anims.generateFrameNumbers(this.key, {frames: [6, 7, 8, 7]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    this.anims.create({
-      key: this.key + '-walk-up',
-      frames: this.anims.generateFrameNumbers(this.key, {frames: [9, 10, 11, 10]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    this.anims.create({
-      key: this.key + '-walk-left',
-      frames: this.anims.generateFrameNumbers(this.key, {frames: [3, 4, 5, 4]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    // starting animation (idle)
-    this.anims.play(this.key + '-idle-down');
-    this.lastDir = 'down';
-
-    // make a shadow
-    this.shadow = this.scene.add.image(this.x, this.getBounds().bottom, 'player-shadow');
-    this.shadow.setAlpha(0.3);
-    this.scene.events.on('prerender', ()=> {
-      this.shadow.setPosition(this.x, this.getBounds().bottom);
-    });
-
-    // Physics settings
+    this.body.pushable = true;
     this.speed = 50;
-    this.body.pushable = false;
-    this.setCollideWorldBounds(true);
-
-    // TODO: replace with random walking or maybe state machine
-    // var timer = this.scene.time.addEvent({
-    //   delay: Phaser.Math.Between(1000, 3000),
-    //   loop: true,
-    //   callback: ()=> {
-    //     timer.delay = Phaser.Math.Between(1000, 3000);
-    //     // choose one of four direction, or stop
-    //     let choice = chooseWeighted([
-    //       { x: 1, y: 0 },
-    //       { x: 0, y: 1 },
-    //       { x: -1, y: 0 },
-    //       { x: 0, y: -1 },
-    //       { x: 0, y: 0 }
-    //     ], [1, 1, 1, 1, 5]);
-    //     this.move(choice.x, choice.y);
-    //   }
-    // });
 
     this.scene.physics.add.collider(this, this.scene.player, (npc, player) => { 
       npc.stop(); 
@@ -575,6 +453,9 @@ class NPC extends Phaser.Physics.Arcade.Sprite {
     // collision with walls etc
     this.scene.physics.add.collider(this, this.scene.mapLayers.layer1, (npc, wall) => { npc.stop(); });
 
+    // pathfinding
+    this.path = null;
+
     // interaction with player
     this.interactionButtonText = 'talk';
 
@@ -585,33 +466,119 @@ class NPC extends Phaser.Physics.Arcade.Sprite {
     };
   }
 
-  move(dirX, dirY) {
-    let move = new Phaser.Math.Vector2(dirX, dirY);
-    move.setLength(this.speed);
-    this.setVelocity(move.x, move.y);
-
-    // adjust the NPC's animation
-    if (move.lengthSq() === 0) {
-      this.anims.play(`${this.key}-idle-${this.lastDir}`, true);
-    } else {
-      if (dirX > 0) {
-        this.lastDir = 'right';
-      } else if (dirX < 0) {
-        this.lastDir = 'left';
-      }
-      if (dirY > 0) {
-        this.lastDir = 'down';
-      } else if (dirY < 0) {
-        this.lastDir = 'up';
-      }
-      this.anims.play(`${this.key}-walk-${this.lastDir}`, true);
+  update(time, delta) {
+    if (this.path) {
+      this.followPath();
     }
   }
+
+  setBehaviour(type) {
+    switch(type) {
+      case 'randomWalk': 
+      // walks in a random direction after some time, or stops
+      // TODO: check for collisions beforehand!
+        var timer = this.scene.time.addEvent({
+          delay: Phaser.Math.Between(1000, 3000),
+          loop: true,
+          callback: ()=> {
+            timer.delay = Phaser.Math.Between(1000, 3000);
+            // flip a coin
+            if (Math.random() < 0.5) {
+              // choose one of four direction, or stop
+              let choice = chooseWeighted([
+                { x: 1, y: 0 },
+                { x: 0, y: 1 },
+                { x: -1, y: 0 },
+                { x: 0, y: -1 },
+                { x: 0, y: 0 }
+              ], [1, 1, 1, 1, 5]);
+              this.move(new Phaser.Math.Vector2(choice.x, choice.y));
+            } else {
+              // look in a random direction that the NPC is not already facing
+              this.stop();
+              let dirs = ['up', 'down', 'left', 'right'];
+              this.lastDir = choose(dirs.filter(value => { return value !== this.lastDir; }));
+            }
+          }
+        });
+      break;
+
+      case 'followEvent':
+        // TODO: testing
+        this.manager.events.on('path-test', ()=> {
+          this.findPath(this.body, this.scene.player.body);
+        });
+
+        break;
+    
+      default:
+        console.warn(`no behaviour defined for ${type}`);
+    }
+  }
+
+  findPath(from, to) {
+    if (!this.scene.pathfinder) {
+      console.warn('Pathfinding plugin not initialised');
+      return; 
+    } else {
+
+      // translate world coordinates to tile coordinates
+      let tile = this.scene.registry.values.tileSize;
+      let startTileX = Math.floor(from.x / tile);
+      let startTileY = Math.floor(from.y / tile);
+      let endTileX = Math.floor(to.x / tile);
+      let endTileY = Math.floor(to.y / tile);
+
+      this.scene.pathfinder.findPath(startTileX, startTileY, endTileX, endTileY, path => {
+        if (path === null) {
+          console.warn("Path was not found.");
+        } else {
+          this.path = simplifyPath(path);
+
+          if (DEBUG) {
+            if (this.scene.hasOwnProperty('debugPath')) {
+              this.scene.debugPath.destroy();
+            }
+            this.scene.debugPath = drawDebugPath(this.scene, path);
+          }
+        }
+      });
+
+      this.scene.pathfinder.calculate();
+    }
+  }
+
+  followPath() {
+    if (this.path.length === 0) {
+      this.stop();
+      return;
+    }
+    
+    let target = this.path[0];
+
+    let tile = this.scene.registry.values.tileSize;
+    let targetX = target.x * tile;
+    let targetY = target.y * tile;
+
+    let dist = Phaser.Math.Distance.Between(this.x, this.y, targetX, targetY);
+
+    if (dist > this.scene.registry.values.tileSize / 2) {
+      // seek the target
+      let vecToTarget = new Phaser.Math.Vector2(targetX, targetY).subtract(new Phaser.Math.Vector2(this.x, this.y));
+      vecToTarget.normalize();
+
+      this.move(vecToTarget);
+    } else {
+      this.path.shift();
+    }
+  }
+
 
   stop() {
     this.setVelocity(0);
     this.anims.play(`${this.key}-idle-${this.lastDir}`, true);
   }
+
 
   face(object) {
     let direction = '';
@@ -636,43 +603,50 @@ class NPC extends Phaser.Physics.Arcade.Sprite {
 
   interact(sprite) {
     this.face(sprite);
-    if (this.dialogue.length > 0) {
-      let dialogue = this.dialogue.shift();
 
-      if (dialogue.type === 'normal') {
-        showMessage(this.scene, 'npc-dialogue.' + dialogue.key);
-      } else if (dialogue.type === 'options') {
-        showMessage(
-          this.scene, 'npc-dialogue.' + dialogue.key, 
-          null, null, { key: 'npc-dialogue.' + dialogue.optionKey, callbacks: dialogue.callbacks }
-        );
-      }
+    let dialogue;
+    if (this.dialogue.length > 0) {
+      dialogue = this.dialogue.shift();
     } else {
       // fallback if nothing left
+      dialogue = this.finalDialogue;
+    }
+    if (dialogue.type === 'normal') {
+      showMessage(this.scene, 'npc-dialogue.' + dialogue.key);
+    } else if (dialogue.type === 'options') {
       showMessage(
-        this.scene, 'npc-dialogue.' + this.finalDialogue.key, 
-        null, null, { key: 'npc-dialogue.' + this.finalDialogue.optionKey, callbacks: this.finalDialogue.callbacks });
+        this.scene, 'npc-dialogue.' + dialogue.key, 
+        null, null, { key: 'npc-dialogue.' + dialogue.optionKey, callbacks: dialogue.callbacks }
+      );
     }
   }
 
-  setDialogue(array) {
-    if (array.length === 1) {
+  setDialogue(stringOrArray) {
+    if (typeof stringOrArray === 'string') {
       this.finalDialogue = {
-        key: [...array][0],
+        key: stringOrArray,
         type: 'normal'
       };
     } else {
-      this.finalDialogue = {
-        key: array.unshift(),
-        type: 'normal'
-      };
+      if (stringOrArray.length === 1) {
+        this.finalDialogue = {
+          key: [...stringOrArray][0],
+          type: 'normal'
+        };
+      } else {
+        this.finalDialogue = {
+          key: stringOrArray.pop(),
+          type: 'normal'
+        };
+      }
+
+      stringOrArray.forEach(key => {
+        this.dialogue.push({
+          key: key,
+          type: 'normal'
+        });
+      });
     }
-    array.forEach(key => {
-      this.dialogue.push({
-        key: key,
-        type: 'normal'
-      })
-    });
   }
 
   addDialogueWithOptions(key, optionCallbacks, final=true) {
@@ -932,6 +906,7 @@ class Collectible extends Phaser.GameObjects.Image {
   collect() {
     if (this.canCollide) {
       this.manager.events.emit('item-collected', this.itemToAdd);
+      this.manager.playSound('item-collect')
       this.destroy();
     }
   }

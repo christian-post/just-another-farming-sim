@@ -71,7 +71,7 @@ class TeleportTrigger extends Phaser.GameObjects.Rectangle {
           playerPos: { x: playerX, y: playerY },
           lastDir: this.scene.player.lastDir
         },
-        false
+        true  // start transition scene
       );
     });
   }

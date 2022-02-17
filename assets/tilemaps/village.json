@@ -107,23 +107,6 @@
                  "y":208
                 }, 
                 {
-                 "height":16,
-                 "id":4,
-                 "name":"playerStartPosition",
-                 "properties":[
-                        {
-                         "name":"key",
-                         "type":"string",
-                         "value":"player"
-                        }],
-                 "rotation":0,
-                 "type":"spawn",
-                 "visible":true,
-                 "width":16,
-                 "x":336,
-                 "y":304
-                }, 
-                {
                  "height":80,
                  "id":5,
                  "name":"toFarm",
@@ -134,12 +117,12 @@
                          "value":"FarmScene"
                         }, 
                         {
-                         "name":"x",
+                         "name":"targetX",
                          "type":"int",
                          "value":608
                         }, 
                         {
-                         "name":"y",
+                         "name":"targetY",
                          "type":"int",
                          "value":304
                         }],
@@ -148,6 +131,28 @@
                  "visible":true,
                  "width":16,
                  "x":0,
+                 "y":240
+                }, 
+                {
+                 "height":16,
+                 "id":6,
+                 "name":"Vendor 1",
+                 "properties":[
+                        {
+                         "name":"items",
+                         "type":"string",
+                         "value":"[\"seeds.wheat\", \"seeds.potato\", \"seeds.maize\"]"
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"npc-woman-1"
+                        }],
+                 "rotation":0,
+                 "type":"vendor",
+                 "visible":true,
+                 "width":16,
+                 "x":528,
                  "y":240
                 }],
          "opacity":1,

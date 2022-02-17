@@ -222,20 +222,20 @@ class TestScene extends Phaser.Scene {
     // fire an equipped event
     // TODO: only for the demo
 
-    // let itemData = this.cache.json.get('itemData');
+    let itemData = this.cache.json.get('itemData');
 
     // // add items to inventory
-    // let inventoryManager = this.scene.get('InventoryManager');
+    let inventoryManager = this.scene.get('InventoryManager');
 
-    // inventoryManager.events.on('create', ()=> {
-    //   inventoryManager.addItem(itemData.tools.scytheL1);
-    //   inventoryManager.addItem(itemData.tools.wateringCan);
-    //   // inventoryManager.addItem(itemData.tools.hoeL1);
-    //   // inventoryManager.equipItem(1, 'item1');  // TODO: auto-equip if equip slot is empty
-    //   inventoryManager.addItem(itemData.seeds.wheat, 20);
-    //   inventoryManager.addItem(itemData.tools.fertilizer, 10);
-    //   inventoryManager.addItem(itemData.tools.sodaStamina, 10);
-    // });
+    inventoryManager.events.on('create', ()=> {
+      inventoryManager.addItem(itemData.tools.scytheL1);
+      inventoryManager.addItem(itemData.tools.wateringCan);
+      // inventoryManager.addItem(itemData.tools.hoeL1);
+      // inventoryManager.equipItem(1, 'item1');  // TODO: auto-equip if equip slot is empty
+      inventoryManager.addItem(itemData.seeds.wheat, 20);
+      inventoryManager.addItem(itemData.tools.fertilizer, 10);
+      inventoryManager.addItem(itemData.tools.sodaStamina, 10);
+    });
 
 
     // TESTING

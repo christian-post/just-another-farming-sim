@@ -31,10 +31,6 @@ class GameManager extends Phaser.Scene {
     this.keyMapping = this.cache.json.get('controls').default;
     this.gamepadMapping = this.cache.json.get('controls').defaultGamepad;
 
-    // start the first scene
-    this.currentGameScene = 'Title';
-    this.scene.run(this.currentGameScene);
-
     // gameplay variables and functions that are persistent between scenes
     this.day = 1;
     // ingame daytime (a day has 1,440 minutes): float
@@ -55,23 +51,93 @@ class GameManager extends Phaser.Scene {
       money: this.registry.values.startingMoney
     });
 
-    // TODO: only for debugging
+    // Music and Sounds
+
+    let music = [
+      'overworld'
+    ];
+
+    this.music = {};
+    music.forEach(key => {
+      this.music[key] = this.sound.add(
+        key, 
+        { 
+          loop: true,
+          volume: this.registry.values.globalMusicVolume
+        }
+      );
+    });
+
+    let sounds = [
+      'item-collect'
+    ];
+
+    this.sounds = {};
+    sounds.forEach(key => {
+      this.sounds[key] = this.sound.add(
+        key, 
+        { 
+          loop: false,
+          volume: this.registry.values.globalSoundeffectsVolume
+        }
+      );
+    });
+
+    // start the first scene
+
+    // this.loadSaveFile();
+
+    this.currentGameScene = 'Title';
+    this.scene.run(this.currentGameScene);
+
+
+    // ############ only for debugging #########################################
+
+    // this.scene.get('FarmScene').events.on('create', scene => {
+    //   if (!scene.pathfinder) { return; }
+
+    //   scene.pathfinder.findPath(4, 5, 37, 18, path => {
+    //     if (path === null) {
+    //       console.warn("Path was not found.");
+    //     } else {
+    //       let newPath = simplifyPath(path);
+          // newPath.forEach(point => {
+          //   this.getCurrentGameScene().mapLayers.layer0.putTileAt(770, point.x, point.y);
+          // });
+    //     }
+    //   });
+    // });
+
+    this.input.keyboard.on('keydown-P', ()=> {
+      if (!this.getCurrentGameScene().pathfinder) { return; }
+      this.events.emit('path-test');
+    });
+
     this.input.keyboard.on('keydown-T', ()=> {
-      console.log(this.player.scene.scene.key)
+      this.saveGame('save0');
+      console.log('game saved');
+    });
+
+    this.input.keyboard.on('keydown-U', ()=> {
+      this.eraseSave('save0');
+      console.log('game save erased');
     });
 
     this.input.on('pointerdown', pointer => {
       if (DEBUG) {
-        console.log(pointer.x, pointer.y)
+        let worldPoint = this.getCurrentGameScene().cameras.main.getWorldPoint(pointer.x, pointer.y);
+        let tileSize = this.registry.values.tileSize;
+
+        console.log(`screen: ${Math.floor(pointer.x)}, ${Math.floor(pointer.y)}  world: ${Math.floor(worldPoint.x)}, ${Math.floor(worldPoint.y)}  tile: ${Math.floor(worldPoint.x / tileSize)}, ${Math.floor(worldPoint.y / tileSize)}`)
       }
-    })
+    });
 
     this.input.keyboard.on('keydown-M', ()=> {
       if (this.currentGameScene === 'FarmScene') {
         this.switchScenes(
           this.currentGameScene, 'VillageScene', 
           { 
-            playerPos: {x: 100, y: 100}, 
+            playerPos: { x: 348, y: 300 }, 
             lastDir: this.scene.get(this.currentGameScene).player.lastDir
           },
           true
@@ -80,7 +146,7 @@ class GameManager extends Phaser.Scene {
         this.switchScenes(
           this.currentGameScene, 'FarmScene', 
           { 
-            playerPos: {x: 100, y: 100}, 
+            playerPos: { x: 320, y: 212 }, 
             lastDir: this.scene.get(this.currentGameScene).player.lastDir
           },
           true
@@ -100,6 +166,18 @@ class GameManager extends Phaser.Scene {
     else {
       scene.pad = scene.input.gamepad.pad1;
       this.configurePad(scene);
+    }
+  }
+
+  playMusic(key) {
+    if (this.registry.values.globalMusicVolume > 0) {
+      this.music[key].play();
+    }
+  }
+
+  playSound(key) {
+    if (this.registry.values.globalSoundeffectsVolume > 0) {
+      this.sounds[key].play();
     }
   }
 
@@ -137,6 +215,11 @@ class GameManager extends Phaser.Scene {
         this.timer = this.timer - 60000;
       }
     }
+  }
+
+  setTime(minutes) {
+    this.minuts = minutes;
+    this.timer = 60000;
   }
 
   toggleDaytimePause() {
@@ -231,10 +314,53 @@ class GameManager extends Phaser.Scene {
       });
       
     } else {
-      // this.scene.pause(current);
       this.scene.stop(current);
       this.currentGameScene = next;
       this.scene.run(next, createConfig);
     }
+  }
+
+  saveGame(key) {
+    let saveData = {
+      playerPos: {
+        x: this.player.x,
+        y: this.player.y
+      },
+      daytime: this.minutes,
+      money: this.registry.values.money,
+      inventory: this.scene.get('InventoryManager').inventory,
+      gameScene: this.currentGameScene
+    };
+
+    localStorage.setItem(key, JSON.stringify(saveData));
+  }
+
+  loadSaveFile(key) {
+    let saveObject = localStorage.getItem(key) || null;
+    if (saveObject) {
+      return JSON.parse(saveObject);
+    } else {
+      return null;
+    }
+  }
+
+  loadGameFromSave(saveData) {
+    this.switchScenes(this.currentGameScene, saveData.gameScene, {playerPos: { x: 0, y: 0 }}, false);
+
+    // overworld scene
+    this.scene.get(saveData.gameScene).events.on('create', ()=> {
+      this.player.setPosition(saveData.playerPos.x, saveData.playerPos.y);
+      this.setTime(saveData.daytime);
+      this.registry.vaules.money = saveData.money;
+    });
+
+    // items
+    this.scene.get('InventoryManager').events.on('create', ()=> {
+      this.scene.get('InventoryManager').inventory = saveData.inventory;
+    });
+  }
+
+  eraseSave(key) {
+    localStorage.removeItem(key);
   }
 }

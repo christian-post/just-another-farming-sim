@@ -149,23 +149,6 @@
                  "y":160
                 }, 
                 {
-                 "height":16,
-                 "id":6,
-                 "name":"playerStartPosition",
-                 "properties":[
-                        {
-                         "name":"key",
-                         "type":"string",
-                         "value":"player"
-                        }],
-                 "rotation":0,
-                 "type":"spawn",
-                 "visible":true,
-                 "width":16,
-                 "x":256,
-                 "y":208
-                }, 
-                {
                  "height":64,
                  "id":11,
                  "name":"toVillage",
@@ -176,12 +159,12 @@
                          "value":"VillageScene"
                         }, 
                         {
-                         "name":"x",
+                         "name":"targetX",
                          "type":"int",
                          "value":36
                         }, 
                         {
-                         "name":"y",
+                         "name":"targetY",
                          "type":"int",
                          "value":278
                         }],
@@ -191,6 +174,38 @@
                  "width":16,
                  "x":624,
                  "y":272
+                }, 
+                {
+                 "height":16,
+                 "id":12,
+                 "name":"Random Guy 1",
+                 "properties":[
+                        {
+                         "name":"behaviour",
+                         "type":"string",
+                         "value":"followEvent"
+                        }, 
+                        {
+                         "name":"dialogue",
+                         "type":"string",
+                         "value":"[\"generic.greet-1\", \"generic.greet-2\", \"generic.nothing-to-say\"]"
+                        }, 
+                        {
+                         "name":"multipleDialogue",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"npc-man-1"
+                        }],
+                 "rotation":0,
+                 "type":"sprite",
+                 "visible":true,
+                 "width":16,
+                 "x":368,
+                 "y":224
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -199,7 +214,7 @@
          "y":0
         }],
  "nextlayerid":6,
- "nextobjectid":12,
+ "nextobjectid":15,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.7.2",

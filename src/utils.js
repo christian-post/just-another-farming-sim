@@ -32,7 +32,7 @@ const chooseWeighted = function(choices, weights) {
 
     // If this value falls within the threshold, we're done!
     if (total >= threshold) {
-        return choices[i];
+      return choices[i];
     }
   }
   // return the last item
@@ -234,7 +234,8 @@ var DELAYTIMER = 100;   // TODO: temporary solution!!
 const getCursorDirections = function(scene, delay=null, delta) {
 
   if (!scene.manager.hasControl) { 
-    return { x: 0, y: 0 }; 
+    // return { x: 0, y: 0 }; 
+    return new Phaser.Math.Vector2(0, 0);
   }
 
   let dirX = 0;
@@ -271,7 +272,8 @@ const getCursorDirections = function(scene, delay=null, delta) {
     dirY = scene.input.keyboard.checkDown(down, delay) - scene.input.keyboard.checkDown(up, delay);
     
   }
-  return { x: dirX, y: dirY };
+  // return { x: dirX, y: dirY };
+  return new Phaser.Math.Vector2(dirX, dirY);
 }
 
 
@@ -281,4 +283,81 @@ const addKeysToScene = function(scene, keyMapping) {
     keys[key] = scene.input.keyboard.addKey(keyMapping[key]);
   }
   return keys;
+}
+
+
+const vec2 = function(x, y) {
+  // wrapper for Vector2, because less typing ;)
+  if (typeof x === 'object') {
+    return new Phaser.Math.Vector2(x.x, x.y);
+  } else {
+    return new Phaser.Math.Vector2(x, x);
+  }
+}
+
+
+const simplifyPath = function(path) {
+  // reduceds an array of Vector2s to the corner points
+  // e.g.
+  /*
+  ####
+     #       ######
+     #       #
+     ####    #
+        ######
+
+  becomes
+
+  #..#
+     .       #....#
+     .       .
+     #..#    .
+        #....#   
+  */
+ 
+  // insert the first node 
+  let newPath = [];
+  newPath.push(vec2(path[0]));
+
+  // iterate to all but the last node
+  for (let i = 1; i< path.length - 1; i++) {
+    let previous = path[i - 1];
+    let current = path[i];
+    let next = path[i + 1];
+    // compare current node to previous and next
+    if ((current.x !== previous.x || current.x !== next.x) && (current.y !== previous.y || current.y !== next.y)) {
+      newPath.push(vec2(path[i]));
+    }
+  }
+  // insert the end node
+  newPath.push(vec2(path[path.length - 1]));
+
+  return newPath;
+}
+
+
+const drawDebugPath = function(scene, path) {
+  let graphics = scene.add.graphics();
+  let tilesize = scene.registry.values.tileSize;
+
+  graphics.lineStyle(4, 0x00ff00, 1);
+  graphics.beginPath();
+  graphics.moveTo(path[0].x * tilesize + tilesize / 2, path[0].y * tilesize + tilesize / 2);
+
+  for (let i = 1; i < path.length; i++) {
+    graphics.lineTo(path[i].x * tilesize + tilesize / 2, path[i].y * tilesize + tilesize / 2);
+  }
+
+  graphics.strokePath();
+
+  return graphics;
+}
+
+
+const getScreenPoint = function(camera, x, y) {
+  // translates a position from world to screen coordinates
+  let cameraView = camera.worldView;
+  let screenX = (x - cameraView.x) * camera.zoom;
+  let screenY = (y - cameraView.y) * camera.zoom;
+  return { x: screenX, y: screenY };
 }

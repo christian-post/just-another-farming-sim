@@ -9,7 +9,6 @@ class TitleScene extends Phaser.Scene {
 
   create() {
     this.manager = this.scene.get('GameManager');
-    // this.nextScene = 'VillageScene';
     this.nextScene = 'FarmScene';
 
     this.buttonCallbacks = {};
@@ -18,11 +17,11 @@ class TitleScene extends Phaser.Scene {
 
     // "any key" event to advance
     this.input.gamepad.on('down', ()=> {
-      this.manager.switchScenes(this.scene.key, this.nextScene, {playerPos: { x: 256, y: 200 }}, false);
+      this.startGame();
     });
 
     this.input.keyboard.on('keydown', ()=> {
-      this.manager.switchScenes(this.scene.key, this.nextScene, {playerPos: { x: 256, y: 200 }}, false);
+      this.startGame();
     });
 
     this.add.graphics()
@@ -63,7 +62,32 @@ class TitleScene extends Phaser.Scene {
       loop: -1,
       alpha: 0,
       yoyo: true
-    })
+    });
+  }
+
+  startGame() {
+    // starts the ingame scene
+
+    // check if there is a saved game
+    let saveData = this.manager.loadSaveFile('save0');
+
+    if (saveData) {
+      this.manager.loadGameFromSave(saveData);
+    } else {
+      // give the player some items for the start
+      let inventoryManager = this.scene.get('InventoryManager');
+      let itemData = this.cache.json.get('itemData');
+
+      inventoryManager.events.on('create', ()=> {
+        inventoryManager.addItem(itemData.tools.scytheL1);
+        inventoryManager.addItem(itemData.tools.wateringCan);
+        inventoryManager.addItem(itemData.seeds.wheat, 20);
+        inventoryManager.addItem(itemData.tools.fertilizer, 10);
+        inventoryManager.addItem(itemData.tools.sodaStamina, 10);
+      });
+
+      this.manager.switchScenes(this.scene.key, this.nextScene, {playerPos: { x: 256, y: 200 }}, false);
+    }
   }
 }
 

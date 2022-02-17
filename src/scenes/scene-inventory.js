@@ -32,6 +32,10 @@ class InventoryManager extends Phaser.Scene {
           x: this.manager.registry.values.windowWidth - 88, 
           y: 8
         },
+      inventory: {
+          x: this.manager.registry.values.windowWidth - 152, 
+          y: 8
+        },
     };
 
     this.actionButtonSpots = {
@@ -42,7 +46,10 @@ class InventoryManager extends Phaser.Scene {
           pos.item2.x, pos.item2.y, 32, 32, 0x000000, 0.5
           ).setOrigin(1, 0),
       interact: this.add.rectangle(
-        pos.interact.x, pos.interact.y, 64, 32, 0x000000, 0.5
+        pos.interact.x, pos.interact.y, 56, 32, 0x000000, 0.5
+          ).setOrigin(1, 0),
+      inventory: this.add.rectangle(
+        pos.inventory.x, pos.inventory.y, 56, 32, 0x000000, 0.5
           ).setOrigin(1, 0),
     };
 
@@ -58,7 +65,7 @@ class InventoryManager extends Phaser.Scene {
     // texts
     const fontStyle = { 
       color: '#fff', 
-      fontSize: '12px', 
+      fontSize: '10px', 
       fontFamily: this.registry.values.globalFontFamily,
       padding: { y: 2 }
     };
@@ -99,11 +106,17 @@ class InventoryManager extends Phaser.Scene {
           pos.interact.y + buttonOffsetY, 
           'gamepad-buttons',
           2
+        ),
+        inventory: this.add.image(
+          pos.interact.x - this.actionButtonSpots.inventory.width + buttonOffsetX, 
+          pos.interact.y + buttonOffsetY, 
+          'gamepad-buttons',
+          3
         )
       }
     } else {
-      const buttonOffsetX = 2;
-      const buttonOffsetY = 22;
+      const buttonOffsetX = 0;
+      const buttonOffsetY = 19;
 
       this.buttonLabels = {
         item1: this.add.text(
@@ -123,7 +136,13 @@ class InventoryManager extends Phaser.Scene {
           pos.interact.y + buttonOffsetY, 
           this.registry.values.keymap[this.keys.interact.keyCode], 
           fontStyle
-        )
+        ),
+        inventory: this.add.text(
+          pos.inventory.x - this.actionButtonSpots.inventory.width + buttonOffsetX, 
+          pos.inventory.y + buttonOffsetY, 
+          this.registry.values.keymap[this.keys.inventory.keyCode], 
+          fontStyle
+        ),
       }
     }
 
@@ -132,6 +151,12 @@ class InventoryManager extends Phaser.Scene {
       this.actionButtonSpots.interact.getCenter().x, 
       this.actionButtonSpots.interact.getCenter().y,
       '', fontStyle
+    ).setOrigin(0.5);
+
+    this.inventoryText = this.add.text(
+      this.actionButtonSpots.inventory.getCenter().x, 
+      this.actionButtonSpots.inventory.getCenter().y,
+      'inventory', fontStyle
     ).setOrigin(0.5);
 
     // stamina bar
@@ -168,6 +193,11 @@ class InventoryManager extends Phaser.Scene {
 
     this.manager.events.on('show-interaction', string => {
       this.interactionText.setText(string);
+    });
+
+    this.manager.events.on('show-inventory', string => {
+      console.log(string)
+      this.inventoryText.setText(string);
     });
 
     this.events.on('itemEquipped', button => {
@@ -471,6 +501,8 @@ class InventoryDisplay extends Phaser.Scene {
         this.scene.sleep(this.scene.key);
         this.scene.resume(this.manager.currentGameScene);
 
+        this.manager.events.emit('show-inventory', 'inventory');
+
         this.manager.toggleDaytimePause();
       },
       interact: () => {
@@ -565,8 +597,9 @@ class InventoryDisplay extends Phaser.Scene {
     this.currentItemText.setOrigin(0.5, 1);
     this.invElements.push(this.currentItemText);
 
-    // tell the inventory manager that the interaction button shows "info"
+    // change the text on the button UI
     this.manager.events.emit('show-interaction', 'info');
+    this.manager.events.emit('show-inventory', 'exit');
   }
 
   fillSidebar() {

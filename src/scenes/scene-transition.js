@@ -3,7 +3,7 @@ class TransitionScene extends Phaser.Scene {
     this.sceneFrom = data.sceneFrom;
     this.sceneTo = data.sceneTo;
     this.callback = data.callback;
-    this.createConfig = data.createConfig;
+    this.createConfig = data.createConfig || {};
 
     this.effectWidth = this.registry.values.windowWidth;
     this.effectHeight = this.registry.values.windowHeight;
@@ -66,17 +66,22 @@ class TransitionScene extends Phaser.Scene {
   
   onExpand() {
     // this happens when it's all black
-    this.scene.stop(this.sceneFrom);
-    this.scene.start(this.sceneTo, this.createConfig);
+    // this.scene.stop(this.sceneFrom);
+    this.scene.sleep(this.sceneFrom);
     this.scene.run(this.sceneTo, this.createConfig);
     this.scene.get('GameManager').currentGameScene = this.sceneTo;
 
     // if scene was paused and is resumed, change the player's position
     // TODO: might not be needed?
-    // this.scene.get(this.sceneTo).events.on('resume', ()=> {
-    //   this.scene.get(this.sceneTo).player.setPosition(this.createConfig.playerPos.x, this.createConfig.playerPos.y);
-    //   console.log(this.scene.get(this.sceneTo).player.x)
-    // });
+    this.scene.get(this.sceneTo).events.on('wake', ()=> {
+      let player = this.scene.get(this.sceneTo).player;
+      if ('playerPos' in this.createConfig) {
+        player.setPosition(this.createConfig.playerPos.x, this.createConfig.playerPos.y);
+      }
+      if ('lastDir' in this.createConfig) {
+        player.lastDir = this.createConfig.lastDir;
+      }
+    });
 
 
     if (this.callback) {

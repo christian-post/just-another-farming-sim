@@ -128,6 +128,7 @@ class PreloadingScene extends Phaser.Scene {
 
     // audio
     this.load.audio('overworld', 'assets/sound/bgm/gone_fishin_by_memoraphile_CC0.mp3');
+    this.load.audio('item-collect', 'assets/sound/sfx/plopp.mp3');
   }
 
   create(scenes) {

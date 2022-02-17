@@ -7,6 +7,7 @@ class OverworldScene extends Phaser.Scene {
     this.autoTileDict = {};   // Auto tiling indices 
     this.mapLayers = {};
     this.currentMap = null;
+    this.pathfinder = null;
 
     this.hasArableLand = false; // flag that indicates if the makeAcre function can be called
 
@@ -73,6 +74,21 @@ class OverworldScene extends Phaser.Scene {
 
     // start the Inventory Scene and User Interface
     this.scene.run('InventoryManager');
+
+
+
+    // visual overlays for debugging
+    if (DEBUG) {
+      this.events.on('create', ()=> {
+        this.add.grid(
+          0, 0, this.mapLayers.layer1.width, this.mapLayers.layer1.height, 
+          this.registry.values.tileSize, this.registry.values.tileSize, null, null, 0x333333, 0.25
+          ).setOrigin(0);
+  
+        debugDraw(this.mapLayers.layer2, this);
+        debugDraw(this.mapLayers.layer1, this);
+      });
+    }
   }
 
   makeTilemap(mapKey, numLayers, collisionLayers, layersDrawnAbove) {
@@ -106,50 +122,84 @@ class OverworldScene extends Phaser.Scene {
 
     this.physics.world.setBounds(0, 0, this.mapLayers.layer1.width, this.mapLayers.layer1.height);
 
-    // TODO: change to spawn object for player and NPCs
-    let spawnPositions = {}
-
     // create map objects that trigger collision events with the interact rect
     if (this.currentMap.getObjectLayer('objects').visible) {
       let rawObjects = this.currentMap.getObjectLayer('objects').objects;
       
-      rawObjects.forEach( elem => {
+      rawObjects.forEach(obj => {
         // convert properties array to object
         let properties = {}
-        elem.properties.forEach( p => {
-          properties[p.name] = p.value;
+        obj.properties.forEach(p => {
+          // properties[p.name] = p.value;
+          obj[p.name] = p.value;
         });
   
         // check elem.type and create an object accordingly
-        switch (elem.type) {
-          case 'dialogue':
-            let options = properties.hasOptions ? JSON.parse(properties.options) : null;
-            let optionsAreCallbacks = properties.optionsAreCallbacks ? true : false;
-            new DialogueTrigger(
-              this, elem.x, elem.y, elem.width, elem.height, properties.dialogueKey, options, optionsAreCallbacks
-            );
-            break;
-          case 'light':
-            let x = elem.x + elem.width / 2;
-            let y = elem.y + elem.height;
-            let lightcone = this.add.image(x, y, properties.texture).setVisible(false);
-            this.lightcones.add(lightcone);
-            break;
-          case 'spawn':
-            spawnPositions[elem.name] = { 
-              x: elem.x,
-              y: elem.y
-            };
-            break;
-          case 'teleport':
-            new TeleportTrigger(this, elem.x, elem.y, elem.width, elem.height, properties.target, properties.x, properties.y);
-            break;
-          default:
-            console.log(`No object for ${elem.type}, ${elem}`);
-        }
+        this.createMapObject(obj);
       });
     }
-    
+  }
+
+  createMapObject(object) {
+    // instantiates sprites and game objects from Tiled data
+    switch (object.type) {
+      case 'dialogue':
+        let options = object.hasOptions ? JSON.parse(object.options) : null;
+        let optionsAreCallbacks = object.optionsAreCallbacks ? true : false;
+        new DialogueTrigger(
+          this, object.x, object.y, object.width, object.height, object.dialogueKey, options, optionsAreCallbacks
+        );
+        break;
+
+      case 'light':
+        let x = object.x + object.width / 2;
+        let y = object.y + object.height;
+        let lightcone = this.add.image(x, y, object.texture).setVisible(false);
+        this.lightcones.add(lightcone);
+        break;
+
+      case 'sprite':
+        let npc = new NPC(this, object.x, object.y, object.texture);
+        if (object.multipleDialogue) {
+          npc.setDialogue(JSON.parse(object.dialogue));
+        } else {
+          npc.setDialogue(object.dialogue);
+        }
+        npc.setBehaviour(object.behaviour);
+
+        break;
+      
+      case 'vendor':
+        let items = JSON.parse(object.items);
+        new Vendor(this, object.x, object.y, object.texture, items);
+        break;
+
+      case 'teleport':
+        new TeleportTrigger(this, object.x, object.y, object.width, object.height, object.target, object.targetX, object.targetY);
+        break;
+
+      default:
+        console.log(`No object for ${object.type}, ${object}`);
+    }
+  }
+
+  addPathfinding() {
+    // adds the Easystar pathfinding to this overworld scene
+    this.pathfinder = new EasyStar.js();
+    this.pathfinder.setGrid(this.getTilemapCollisionArray('layer1'));
+    this.pathfinder.setAcceptableTiles([false]);
+  }
+
+  getTilemapCollisionArray(layer) {
+    let grid = [];
+    for (let y = 0; y < this.currentMap.height; y++) {
+      let col = [];
+      for (let x = 0; x < this.currentMap.width; x++) {
+        col.push(this.currentMap.getTileAt(x, y, true, layer).collides);
+      }
+      grid.push(col);
+    }
+    return grid;
   }
 
   setupCamera() {
@@ -318,6 +368,9 @@ class FarmScene extends OverworldScene {
     this.makeTilemap('farm', 4, ['layer1', 'layer2'], ['layer3']);
     this.setupCamera();
 
+    // pathfinding for the NPCs
+    this.addPathfinding();
+
     this.arableMap = new Array(this.currentMap.width * this.currentMap.height).fill(null);
 
     // acre that the player has from the start
@@ -328,7 +381,11 @@ class FarmScene extends OverworldScene {
 
     // light sources at night
     this.setupLightSources();
+
+    // Start the background music
+    this.manager.playMusic('overworld');
   }
+
 
   isArable(x, y) {
     // helper function, might delete
