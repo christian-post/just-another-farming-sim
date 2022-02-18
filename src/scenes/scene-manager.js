@@ -93,66 +93,53 @@ class GameManager extends Phaser.Scene {
 
     // ############ only for debugging #########################################
 
-    // this.scene.get('FarmScene').events.on('create', scene => {
-    //   if (!scene.pathfinder) { return; }
+    if (DEBUG) {
+      this.input.keyboard.on('keydown-P', ()=> {
+        if (!this.getCurrentGameScene().pathfinder) { return; }
+        this.events.emit('path-test');
+      });
 
-    //   scene.pathfinder.findPath(4, 5, 37, 18, path => {
-    //     if (path === null) {
-    //       console.warn("Path was not found.");
-    //     } else {
-    //       let newPath = simplifyPath(path);
-          // newPath.forEach(point => {
-          //   this.getCurrentGameScene().mapLayers.layer0.putTileAt(770, point.x, point.y);
-          // });
-    //     }
-    //   });
-    // });
+      this.input.keyboard.on('keydown-T', ()=> {
+        this.saveGame('save0');
+        console.log('game saved');
+      });
 
-    this.input.keyboard.on('keydown-P', ()=> {
-      if (!this.getCurrentGameScene().pathfinder) { return; }
-      this.events.emit('path-test');
-    });
+      this.input.keyboard.on('keydown-U', ()=> {
+        this.eraseSave('save0');
+        console.log('game save erased');
+      });
 
-    this.input.keyboard.on('keydown-T', ()=> {
-      this.saveGame('save0');
-      console.log('game saved');
-    });
+      this.input.on('pointerdown', pointer => {
+        if (DEBUG) {
+          let worldPoint = this.getCurrentGameScene().cameras.main.getWorldPoint(pointer.x, pointer.y);
+          let tileSize = this.registry.values.tileSize;
 
-    this.input.keyboard.on('keydown-U', ()=> {
-      this.eraseSave('save0');
-      console.log('game save erased');
-    });
+          console.log(`screen: ${Math.floor(pointer.x)}, ${Math.floor(pointer.y)}  world: ${Math.floor(worldPoint.x)}, ${Math.floor(worldPoint.y)}  tile: ${Math.floor(worldPoint.x / tileSize)}, ${Math.floor(worldPoint.y / tileSize)}`)
+        }
+      });
 
-    this.input.on('pointerdown', pointer => {
-      if (DEBUG) {
-        let worldPoint = this.getCurrentGameScene().cameras.main.getWorldPoint(pointer.x, pointer.y);
-        let tileSize = this.registry.values.tileSize;
-
-        console.log(`screen: ${Math.floor(pointer.x)}, ${Math.floor(pointer.y)}  world: ${Math.floor(worldPoint.x)}, ${Math.floor(worldPoint.y)}  tile: ${Math.floor(worldPoint.x / tileSize)}, ${Math.floor(worldPoint.y / tileSize)}`)
-      }
-    });
-
-    this.input.keyboard.on('keydown-M', ()=> {
-      if (this.currentGameScene === 'FarmScene') {
-        this.switchScenes(
-          this.currentGameScene, 'VillageScene', 
-          { 
-            playerPos: { x: 348, y: 300 }, 
-            lastDir: this.scene.get(this.currentGameScene).player.lastDir
-          },
-          true
-        );
-      } else {
-        this.switchScenes(
-          this.currentGameScene, 'FarmScene', 
-          { 
-            playerPos: { x: 320, y: 212 }, 
-            lastDir: this.scene.get(this.currentGameScene).player.lastDir
-          },
-          true
-        );
-      }
-    });
+      this.input.keyboard.on('keydown-M', ()=> {
+        if (this.currentGameScene === 'FarmScene') {
+          this.switchScenes(
+            this.currentGameScene, 'VillageScene', 
+            { 
+              playerPos: { x: 348, y: 300 }, 
+              lastDir: this.scene.get(this.currentGameScene).player.lastDir
+            },
+            true
+          );
+        } else {
+          this.switchScenes(
+            this.currentGameScene, 'FarmScene', 
+            { 
+              playerPos: { x: 320, y: 212 }, 
+              lastDir: this.scene.get(this.currentGameScene).player.lastDir
+            },
+            true
+          );
+        }
+      });
+    }
   }
 
   checkForGamepad(scene) {

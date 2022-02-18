@@ -105,7 +105,8 @@ class Player extends BaseCharacterSprite {
       .setOrigin(0.5)
       .setFillStyle()
       .setStrokeStyle(2, 0xDD0000, 0.3)
-      .setVisible(false);   // only visible under certain conditions
+      .setVisible(false)   // only visible under certain conditions
+      .setDepth(this.scene.depthValues.sprites);
 
     this.scene.physics.add.existing(this.interactionRect);
 
@@ -203,9 +204,9 @@ class Player extends BaseCharacterSprite {
     let collisions = checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
     if (collisions.length > 0 && collisions[0] != this) {
       let string = collisions[0].interactionButtonText || 'error';
-      this.manager.events.emit('show-interaction', string);
+      this.manager.events.emit('changeTextInteract', string);
     } else {
-      this.manager.events.emit('show-interaction', '');
+      this.manager.events.emit('changeTextInteract', '');
     }
   }
 
@@ -533,7 +534,8 @@ class NPC extends BaseCharacterSprite {
         if (path === null) {
           console.warn("Path was not found.");
         } else {
-          this.path = simplifyPath(path);
+          // this.path = simplifyPath(path);
+          this.path = path;
 
           if (DEBUG) {
             if (this.scene.hasOwnProperty('debugPath')) {
@@ -562,7 +564,7 @@ class NPC extends BaseCharacterSprite {
 
     let dist = Phaser.Math.Distance.Between(this.x, this.y, targetX, targetY);
 
-    if (dist > this.scene.registry.values.tileSize / 2) {
+    if (dist > 1) {
       // seek the target
       let vecToTarget = new Phaser.Math.Vector2(targetX, targetY).subtract(new Phaser.Math.Vector2(this.x, this.y));
       vecToTarget.normalize();
@@ -695,7 +697,7 @@ class Vendor extends NPC {
         callbacks: [
           ()=> {
             // tell the inventory manager that the interaction button shows "info"
-            this.manager.events.emit('show-interaction', 'buy');
+            this.manager.events.emit('changeTextInteract', 'buy');
     
             // switch scenes
             this.scene.scene.pause();
@@ -707,7 +709,7 @@ class Vendor extends NPC {
           },
           ()=> { 
             // tell the inventory manager that the interaction button shows "info"
-            this.manager.events.emit('show-interaction', 'sell');
+            this.manager.events.emit('changeTextInteract', 'sell');
     
             // switch scenes
             this.scene.scene.pause();
@@ -842,8 +844,6 @@ class Crop extends Phaser.GameObjects.Image {
   }
 
   onNewDay() {
-    // this.age += 1;
-
     // plant grows faster when it's properly watered
     if (
       this.scene.arableMap[this.mapIndex].waterLevel > 0 

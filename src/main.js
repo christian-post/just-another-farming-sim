@@ -5,7 +5,7 @@ const COLOR_BACKGROUND = 0x000000;
 // const COLOR_BACKGROUND = 0x006022;
 
 // debug settings
-const DEBUG = true;
+const DEBUG = false;
 const SCENEWATCHER = false;
 
 // RexUI Plugin File path

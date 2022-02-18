@@ -47,8 +47,11 @@ class DialogueScene extends Phaser.Scene {
     if (this.options.length > 0) {
       this.optionPositions = [];
       this.currentOptionIndex = 0;
-      // message contains optiosn
+      // message contains options
       this.message.on('complete', ()=> {
+        // change the action key text
+        this.manager.events.emit('changeTextInteract', 'select');
+
         this.options.forEach( (option, index) => {
 
           let margin = this.message.width / (this.options.length + 1);
@@ -74,11 +77,20 @@ class DialogueScene extends Phaser.Scene {
       });
     }
 
-    this.keys.interact.on('down', this.interactButtonCallback, this);
-
     this.buttonCallbacks = {
-      interact: this.interactButtonCallback.bind(this)
+      interact: this.interactButtonCallback.bind(this),
+      inventory: ()=> {
+        this.message.destroy();
+        this.manager.events.emit('changeTextInventory', 'inventory');
+        if (this.data.callback) { this.data.callback(); }
+      }
     };
+
+    this.keys.interact.on('down', this.buttonCallbacks.interact, this);
+    this.keys.inventory.on('down', this.buttonCallbacks.inventory, this);
+
+    this.manager.events.emit('changeTextInventory', 'exit');
+
   }
   
   interactButtonCallback() {
@@ -89,9 +101,12 @@ class DialogueScene extends Phaser.Scene {
     } else {
       if (this.cursor) {
         this.manager.scene.stop('Dialogue');  // TODO: does this always work?
+
+        // change the text back
+        this.manager.events.emit('changeTextInteract', '');
+
         // options and stuff
         this.options[this.currentOptionIndex].callback();
-        // currentScene.scene.resume(currentScene.scene.key);
       } else {
         // normal text
         if (this.message.isLastPage) {

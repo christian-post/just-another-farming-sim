@@ -191,12 +191,11 @@ class InventoryManager extends Phaser.Scene {
       this.setBarValue(this.staminaBar, value);
     }, this);
 
-    this.manager.events.on('show-interaction', string => {
+    this.manager.events.on('changeTextInteract', string => {
       this.interactionText.setText(string);
     });
 
-    this.manager.events.on('show-inventory', string => {
-      console.log(string)
+    this.manager.events.on('changeTextInventory', string => {
       this.inventoryText.setText(string);
     });
 
@@ -501,7 +500,7 @@ class InventoryDisplay extends Phaser.Scene {
         this.scene.sleep(this.scene.key);
         this.scene.resume(this.manager.currentGameScene);
 
-        this.manager.events.emit('show-inventory', 'inventory');
+        this.manager.events.emit('changeTextInventory', 'inventory');
 
         this.manager.toggleDaytimePause();
       },
@@ -598,8 +597,8 @@ class InventoryDisplay extends Phaser.Scene {
     this.invElements.push(this.currentItemText);
 
     // change the text on the button UI
-    this.manager.events.emit('show-interaction', 'info');
-    this.manager.events.emit('show-inventory', 'exit');
+    this.manager.events.emit('changeTextInteract', 'info');
+    this.manager.events.emit('changeTextInventory', 'exit');
   }
 
   fillSidebar() {
@@ -694,6 +693,7 @@ class ShopDisplay extends Phaser.Scene {
     this.buttonCallbacks = {
       inventory: ()=> {
         showMessage(this, 'npc-dialogue.shopping.goodbye', null, ()=> {
+          this.manager.events.emit('changeTextInventory', 'inventory');
           this.scene.stop(this.scene.key);
           this.scene.run(this.parentScene);
         });
@@ -763,18 +763,6 @@ class ShopDisplay extends Phaser.Scene {
       w: this.background.width / (this.inventoryDimensions.w + 1),
       h: this.background.height / (this.inventoryDimensions.h + 1)
     };
-
-    // show how to close the inventory
-    // TODO: gamepad
-
-    if (this.manager.getCurrentGameScene().pad) {
-      // pass
-    } else {
-      let button = this.registry.values.keymap[this.keys.inventory.keyCode];
-      this.add.text(this.background.x, this.background.y - this.background.height, 
-        `${button}: EXIT`, this.textStyles.sidebar)
-        .setOrigin(1, 0);
-    }
 
     this.constructInventory();
   }
