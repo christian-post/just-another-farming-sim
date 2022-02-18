@@ -57,13 +57,16 @@ class OverworldScene extends Phaser.Scene {
         this.scene.run('InventoryDisplay', this.scene.key);
       },
       interact: () => {
-        this.events.emit('player-interacts');
+        this.manager.events.emit('player-interacts');
       },
       item1: () => {
-        this.events.emit('itemUsed', 'item1');
+        this.manager.events.emit('itemUsed', 'item1');
       },
       item2: () => {
-        this.events.emit('itemUsed', 'item2');
+        this.manager.events.emit('itemUsed', 'item2');
+      },
+      menu: () => {
+        this.manager.events.emit('menuOpen');
       }
     }
 

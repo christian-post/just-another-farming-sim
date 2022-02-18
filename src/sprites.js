@@ -112,17 +112,17 @@ class Player extends BaseCharacterSprite {
 
     // ##  Controls  ##
 
-    // remove listeners from previous overworld scenes (if there are any)
-    this.scene.events.removeListener('player-interacts');
-    this.scene.events.removeListener('itemUsed');
-
     // interaction button event
-    this.scene.events.on('player-interacts', this.interactButton, this);
+    if (this.manager.events.listeners('player-interacts').length === 0) {
+      this.manager.events.on('player-interacts', this.interactButton, this);
+    }
 
     // Item usage event
-    this.scene.events.on('itemUsed', button => {
-      this.itemUseButton(button);
-    });
+    if (this.manager.events.listeners('itemUsed').length === 0) {
+      this.manager.events.on('itemUsed', button => {
+        this.itemUseButton(button);
+      });
+    }
 
     // cooldown flag for seed usage (TODO: make an object if more flags are needed)
     this.isSowing = false;
@@ -134,9 +134,11 @@ class Player extends BaseCharacterSprite {
     // the tool that is currently being used
     this.tool = null; 
 
-    this.manager.events.on('refillStamina', amount => {
-      this.changeStamina(amount);
-    });
+    if (this.manager.events.listeners('refillStamina').length === 0) {
+      this.manager.events.on('refillStamina', amount => {
+        this.changeStamina(amount);
+      });
+    }
   }
 
   update(time, delta) {

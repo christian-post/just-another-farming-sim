@@ -274,6 +274,11 @@ class GameManager extends Phaser.Scene {
           func = scene.buttonCallbacks.inventory;
           if (func !== undefined) func();
           break;
+
+        case this.gamepadMapping.menu:
+          func = scene.buttonCallbacks.menu;
+          if (func !== undefined) func();
+          break;
       }
     });
   }
@@ -281,7 +286,7 @@ class GameManager extends Phaser.Scene {
   configureKeys(scene) {
     scene.keys = addKeysToScene(scene, this.keyMapping);
 
-    let keys = ['interact', 'inventory', 'item1', 'item2'];
+    let keys = Object.keys(scene.buttonCallbacks);
     keys.forEach(key => {
       scene.keys[key].on('down', scene.buttonCallbacks[key], scene);
     });

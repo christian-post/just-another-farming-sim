@@ -174,38 +174,6 @@
                  "width":16,
                  "x":624,
                  "y":272
-                }, 
-                {
-                 "height":16,
-                 "id":12,
-                 "name":"Random Guy 1",
-                 "properties":[
-                        {
-                         "name":"behaviour",
-                         "type":"string",
-                         "value":"followEvent"
-                        }, 
-                        {
-                         "name":"dialogue",
-                         "type":"string",
-                         "value":"[\"generic.greet-1\", \"generic.greet-2\", \"generic.nothing-to-say\"]"
-                        }, 
-                        {
-                         "name":"multipleDialogue",
-                         "type":"bool",
-                         "value":true
-                        }, 
-                        {
-                         "name":"texture",
-                         "type":"string",
-                         "value":"npc-man-1"
-                        }],
-                 "rotation":0,
-                 "type":"sprite",
-                 "visible":true,
-                 "width":16,
-                 "x":368,
-                 "y":224
                 }],
          "opacity":1,
          "type":"objectgroup",

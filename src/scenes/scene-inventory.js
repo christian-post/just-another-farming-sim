@@ -513,7 +513,8 @@ class InventoryDisplay extends Phaser.Scene {
       },
       item2: () => {
         this.scene.get('InventoryManager').equipItem(this.currentIndex, 'item2');
-      }
+      },
+      menu: ()=> {}
     }
  
     // bind keyboard functionality 
