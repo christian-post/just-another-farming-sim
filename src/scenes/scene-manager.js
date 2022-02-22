@@ -83,12 +83,65 @@ class GameManager extends Phaser.Scene {
       );
     });
 
-    // start the first scene
+    // configure the save/quit/options menu
+    this.events.on('menuOpen', ()=> {
+      this.scene.pause(this.scene.key);
+      this.scene.pause(this.currentGameScene);
 
-    // this.loadSaveFile();
+      this.scene.run('Menu', {
+        x: this.registry.values.windowWidth * 0.4,
+        y: this.registry.values.windowHeight * 0.5,
+        height: this.registry.values.windowHeight * 0.5,
+        background: {
+          x: this.registry.values.windowWidth * 0.5,
+          y: this.registry.values.windowHeight * 0.65,
+          w: 140, 
+          h: 120,
+          color: 0x000000,
+          alpha: 0.75
+        },
+        options: getNestedKey(this.cache.json.get('dialogue'), 'save-menu.options'),
+        callbacks: [
+          ()=> { 
+            // back to game
+            this.scene.resume(this.currentGameScene);
+            this.scene.resume(this.scene.key);
+          },
+          ()=> { 
+            // save
+            this.saveGame('save0');
+            showMessage(this.getCurrentGameScene(), 'game-saved');
+            this.scene.resume(this.scene.key);
+          },
+          ()=> { 
+            // quit game TODO: make seperate function "endGame" 
+
+            this.overworldScenes.forEach(scene => {
+              if (scene !== this.currentGameScene) {
+                this.scene.stop(scene);
+              }
+            });
+
+            this.switchScenes(this.currentGameScene, 'Title', {}, true, true);
+            this.scene.get(this.currentGameScene).events.on('shutdown', ()=> {
+              this.scene.sleep('InventoryManager');
+              this.scene.resume(this.scene.key);
+              this.events.removeAllListeners();
+            });
+          }
+        ]
+      });
+    });
+
+    // start the first scene
 
     this.currentGameScene = 'Title';
     this.scene.run(this.currentGameScene);
+
+    this.overworldScenes = [
+      'FarmScene',
+      'VillageScene'
+    ];
 
 
     // ############ only for debugging #########################################
@@ -110,7 +163,7 @@ class GameManager extends Phaser.Scene {
       });
 
       this.input.on('pointerdown', pointer => {
-        if (DEBUG) {
+        if (DEBUG && this.getCurrentGameScene().cameras.main !== undefined) {
           let worldPoint = this.getCurrentGameScene().cameras.main.getWorldPoint(pointer.x, pointer.y);
           let tileSize = this.registry.values.tileSize;
 
@@ -196,7 +249,7 @@ class GameManager extends Phaser.Scene {
         let displayHour = parseInt(this.minutes / 60).toString().padStart(2, '0');
         let displayMinutes = parseInt(this.minutes % 60).toString().padStart(2, '0');
 
-        this.events.emit('setClock', {hour: displayHour, minutes: displayMinutes});
+        this.events.emit('setClock', { hour: displayHour, minutes: displayMinutes });
         
         // reset the timer
         this.timer = this.timer - 60000;
@@ -292,7 +345,7 @@ class GameManager extends Phaser.Scene {
     });
   }
 
-  switchScenes(current, next, createConfig, playTransitionAnim=true) {
+  switchScenes(current, next, createConfig, playTransitionAnim=true, stopScene=false) {
 
     console.log(`Switching from ${current} to ${next}`);
 
@@ -302,11 +355,16 @@ class GameManager extends Phaser.Scene {
         sceneFrom: current,
         sceneTo: next, 
         callback: null,
-        createConfig: createConfig
+        createConfig: createConfig,
+        stopScene: stopScene
       });
       
     } else {
-      this.scene.stop(current);
+      if (stopScene) {
+        this.scene.stop(current);
+      } else {
+        this.scene.sleep(current);
+      }
       this.currentGameScene = next;
       this.scene.run(next, createConfig);
     }
@@ -318,11 +376,21 @@ class GameManager extends Phaser.Scene {
         x: this.player.x,
         y: this.player.y
       },
+      day: this.day,
       daytime: this.minutes,
       money: this.registry.values.money,
       inventory: this.scene.get('InventoryManager').inventory,
-      gameScene: this.currentGameScene
+      gameScene: this.currentGameScene,
+      arableMapData: {}
     };
+
+    // loop through scenes, if they have arable map --> store
+    this.overworldScenes.forEach(scene => {
+      if (this.scene.get(scene).hasArableLand) {
+        // transform arable Map into binary array
+        saveData.arableMapData[scene] = this.scene.get(scene).arableMap.map(elem => { return elem ? 1 : 0; });
+      }
+    });
 
     localStorage.setItem(key, JSON.stringify(saveData));
   }
@@ -342,8 +410,27 @@ class GameManager extends Phaser.Scene {
     // overworld scene
     this.scene.get(saveData.gameScene).events.on('create', ()=> {
       this.player.setPosition(saveData.playerPos.x, saveData.playerPos.y);
+      // ingame values
+      this.day = saveData.day;
       this.setTime(saveData.daytime);
-      this.registry.vaules.money = saveData.money;
+      this.registry.values.money = saveData.money;
+    });
+
+    // create the arable maps
+    this.overworldScenes.forEach(scene => {
+      this.scene.get(scene).events.on('create', ()=> {
+        if (this.scene.get(scene).hasArableLand) {
+
+          saveData.arableMapData[scene].forEach((elem, index) => {
+            if (elem) {
+              let pos = convertIndexTo2D(index, this.scene.get(scene).currentMap.width);
+              this.scene.get(scene).createSoilPatch(index, pos.x, pos.y);
+            }
+          });
+
+          this.scene.get(scene).rebuildArableLayer();
+        }
+      });
     });
 
     // items

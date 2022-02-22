@@ -1,12 +1,12 @@
 const WINDOW_WIDTH = 426;
 const WINDOW_HEIGHT = 240;
 
-const COLOR_BACKGROUND = 0x000000;
-// const COLOR_BACKGROUND = 0x006022;
+// const COLOR_BACKGROUND = 0x000000;
+const COLOR_BACKGROUND = 0x006022;
 
 // debug settings
 const DEBUG = false;
-const SCENEWATCHER = false;
+const SCENEWATCHER = true;
 
 // RexUI Plugin File path
 // URL_REXUI = 'plugins/rexuiplugin.js'
@@ -68,7 +68,7 @@ game.registry.merge({
   globalFontFamily: 'Verdana',
   // in-game settings
   // ingameTimeSpeed: 1000,  // in-game seconds per real-time second
-  ingameTimeSpeed: 20,  // in-game seconds per real-time second
+  ingameTimeSpeed: 60,  // in-game seconds per real-time second
   startingDaytime: {
     hour: 12,
     minutes: 0
@@ -85,8 +85,6 @@ game.scene.add('Preload', PreloadingScene, false);
 game.scene.add('GameManager', GameManager, false);
 game.scene.add('Title', TitleScene, false);
 // In Game scenes
-game.scene.add('Test', TestScene, false);
-
 game.scene.add('FarmScene', FarmScene, false);
 game.scene.add('VillageScene', VillageScene, false);
 
@@ -95,6 +93,7 @@ game.scene.add('InventoryDisplay', InventoryDisplay, false);
 game.scene.add('ShopDisplay', ShopDisplay, false);
 game.scene.add('Dialogue', DialogueScene, false);
 game.scene.add('Transition', TransitionScene, false);
+game.scene.add('Menu', GenericMenu, false);
 
 
 // load the font

@@ -376,9 +376,6 @@ class FarmScene extends OverworldScene {
 
     this.arableMap = new Array(this.currentMap.width * this.currentMap.height).fill(null);
 
-    // acre that the player has from the start
-    this.makeAcre(9, 15, 10, 4);
-
     // day and night tint
     this.setupDaytimeOverlay();
 
@@ -468,11 +465,14 @@ class FarmScene extends OverworldScene {
         let indexY = acreStartY + y;
 
         let index = convertIndexTo1D(indexX, indexY, this.currentMap.width);
-        this.arableMap[index] = new SoilPatch(this, indexX * this.registry.values.tileSize, indexY * this.registry.values.tileSize, index);
-
-        this.rebuildArableLayer();
+        this.createSoilPatch(index, indexX, indexY);
       }
     }
+    this.rebuildArableLayer();
+  }
+
+  createSoilPatch(index, x, y) {
+    this.arableMap[index] = new SoilPatch(this, x * this.registry.values.tileSize, y * this.registry.values.tileSize, index);
   }
 
   update(time, delta) {

@@ -104,6 +104,7 @@ class DialogueScene extends Phaser.Scene {
 
         // change the text back
         this.manager.events.emit('changeTextInteract', '');
+        this.manager.events.emit('changeTextInventory', 'inventory');
 
         // options and stuff
         this.options[this.currentOptionIndex].callback();
@@ -111,6 +112,7 @@ class DialogueScene extends Phaser.Scene {
         // normal text
         if (this.message.isLastPage) {
           this.message.destroy();
+          this.manager.events.emit('changeTextInventory', 'inventory');
           if (this.data.callback) { this.data.callback(); }
         } else {
           this.message.typeNextPage();
@@ -232,4 +234,126 @@ const formatProperties = function(object, string) {
   });
 
   return string;
+}
+
+
+class GenericMenu extends Phaser.Scene {
+  preload() {
+    // Rex UI
+    this.load.scenePlugin({
+      key: 'rexuiplugin',
+      url: URL_REXUI,
+      sceneKey: 'rexUI'
+    });
+  }
+
+  create(config) {
+    /* config contains:
+    x, y,     // screen positions
+    height,   // defines the upper and lower bounds of the items
+    background: {
+      x, y, w, h, color, alpha
+    },
+    options: ['foo', 'bar'],
+    callbacks: [function(){}, function(){}],
+    fontStyle: TextStyle object
+    */
+    this.manager = this.scene.get('GameManager');
+    
+    this.currentOptionIndex = 0;
+
+    if ('background' in config) {
+      this.background = this.add.rectangle(
+        config.background.x, config.background.y,
+        config.background.w, config.background.h,
+        config.background.color, config.background.alpha
+      );
+    }
+
+    this.options = config.options;
+    this.callbacks = config.callbacks;
+    if (this.options.length !== this.callbacks.length) {
+      console.warn('Mismatching number of options and callbacks.', this.options);
+    }
+
+    // set the position of options based on their number
+    this.optionPositions = [];
+
+    let fontStyle;
+    if ('fontStyle' in config) {
+      fontStyle = config.fontStyle;
+    } else {
+      fontStyle = { 
+        fontSize: '12px', 
+        color: '#fff', 
+        padding: { y: 2 }, 
+        fontFamily: this.registry.values.globalFontFamily, 
+      };
+    }
+
+    let margin = config.height / (this.options.length + 1);
+
+    for (let i = 0; i < this.options.length; i++) {
+      let y = config.y + margin * i;
+      let x = config.x;
+      let text = this.add.text(x, y, this.options[i], fontStyle).setOrigin(0);
+
+      this.optionPositions[i] = { x: text.getLeftCenter().x - 4, y: text.getLeftCenter().y };
+    }
+
+    this.cursor = this.add.image(
+      this.optionPositions[this.currentOptionIndex].x, this.optionPositions[this.currentOptionIndex].y, 'ui-images', 0
+    ).setOrigin(1, 0.5);
+
+    // Button configuration
+    this.keys = addKeysToScene(this, this.manager.keyMapping);
+    this.manager.checkForGamepad(this);
+
+    this.buttonCallbacks = {
+      interact: ()=> {
+        // select the current option
+        if (this.callbacks[this.currentOptionIndex]) {
+          this.scene.stop(this.scene.key);
+
+          // change the text back
+          this.manager.events.emit('changeTextInteract', '');
+          this.manager.events.emit('changeTextInventory', 'inventory');
+
+          // options and stuff
+          this.callbacks[this.currentOptionIndex]();
+        } else {
+          console.warn('no callback for index ' + this.currentOptionIndex);
+        }
+      },
+      inventory: ()=> {
+        // exit the Menu preemptively
+        this.scene.stop(this.scene.key);
+        this.scene.resume(this.manager.currentGameScene);
+        this.manager.events.emit('changeTextInventory', 'inventory');
+      }
+    };
+
+    this.keys.interact.on('down', this.buttonCallbacks.interact, this);
+    this.keys.inventory.on('down', this.buttonCallbacks.inventory, this);
+
+    this.manager.events.emit('changeTextInventory', 'exit');
+  }
+
+  update(time, delta) {
+    if (this.cursor) {
+      // move the cursor
+      let dir = getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+      if (dir.y !== 0) {
+        if (dir.y > 0) {
+          this.currentOptionIndex = (this.currentOptionIndex + 1) % this.options.length;
+        } else {
+          this.currentOptionIndex--;
+          if (this.currentOptionIndex < 0) {
+            this.currentOptionIndex = this.options.length - 1;
+          }
+        }
+        this.cursor.setY(this.optionPositions[this.currentOptionIndex].y);
+      }
+    }
+  } 
 }

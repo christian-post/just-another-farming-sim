@@ -14,6 +14,15 @@
     "economy": "Next to the right is the shop. Here you can buy and sell any items. The controls are the same as in your inventory.",
     "other": "Working is hard. On the top left corner of the screen, below the current time, is a green bar. It indicates your stamina. Every action depletes a part of it. Once it is completely drained, you have to rest. Wait a bit, or go to your house to sleep until the next morning. This will refill your stamina completely."
   },
+  "save-menu": {
+    "text": "what do you want to do?",
+    "options": [
+      "back to game",
+      "save",
+      "quit"
+    ]
+  },
+  "game-saved": "Game saved successfully.",
   "error": "I AM ERROR",
   "not-implemented": "Whoops, seems like I haven't implemented this yet :(",
   "general": {

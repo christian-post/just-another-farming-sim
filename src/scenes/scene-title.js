@@ -71,24 +71,55 @@ class TitleScene extends Phaser.Scene {
     // check if there is a saved game
     let saveData = this.manager.loadSaveFile('save0');
 
+    let options;
+    let callbacks;
+
     if (saveData) {
-      this.manager.loadGameFromSave(saveData);
+      options = ['New Game', 'Load Game', 'Quit'];    // TODO: get from dialogue.json
+      callbacks = [
+        this.newGame.bind(this),
+        ()=> { this.manager.loadGameFromSave(saveData); },
+        ()=> { console.log('TODO: quit the game (back to last page?)'); },
+      ];
     } else {
-      // give the player some items for the start
-      let inventoryManager = this.scene.get('InventoryManager');
-      let itemData = this.cache.json.get('itemData');
-
-      inventoryManager.events.on('create', ()=> {
-        inventoryManager.addItem(itemData.tools.scytheL1);
-        inventoryManager.addItem(itemData.tools.wateringCan);
-        inventoryManager.addItem(itemData.seeds.wheat, 20);
-        inventoryManager.addItem(itemData.tools.fertilizer, 10);
-        inventoryManager.addItem(itemData.tools.sodaStamina, 10);
-        inventoryManager.addItem(itemData.tools.hoeL1);
-      });
-
-      this.manager.switchScenes(this.scene.key, this.nextScene, {playerPos: { x: 256, y: 200 }}, false);
+      options = ['New Game', 'Quit'];    // TODO: get from dialogue.json
+      callbacks = [
+        this.newGame.bind(this),
+        ()=> { console.log('TODO: quit the game (back to last page?)'); },
+      ];
     }
+
+    this.scene.stop(this.scene.key);
+    this.scene.run('Menu', {
+      x: this.registry.values.windowWidth * 0.4,
+      y: this.registry.values.windowHeight * 0.5,
+      height: this.registry.values.windowHeight * 0.5,
+      options: options,
+      callbacks: callbacks
+    });
+  }
+
+  newGame() {
+    // execute when there is no save game
+    // give the player some items for the start
+    let inventoryManager = this.scene.get('InventoryManager');
+    let itemData = this.cache.json.get('itemData');
+
+    inventoryManager.events.on('create', ()=> {
+      inventoryManager.addItem(itemData.tools.scytheL1);
+      inventoryManager.addItem(itemData.tools.wateringCan);
+      inventoryManager.addItem(itemData.seeds.wheat, 20);
+      inventoryManager.addItem(itemData.tools.fertilizer, 10);
+      inventoryManager.addItem(itemData.tools.sodaStamina, 10);
+      inventoryManager.addItem(itemData.tools.hoeL1);
+    });
+
+    this.manager.switchScenes(this.scene.key, this.nextScene, {playerPos: { x: 256, y: 200 }}, false, true);
+
+    // create a small acre for start
+    this.scene.get('FarmScene').events.once('create', scene => {
+      scene.makeAcre(9, 15, 10, 4);
+    });
   }
 }
 

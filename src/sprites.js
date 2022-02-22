@@ -113,16 +113,12 @@ class Player extends BaseCharacterSprite {
     // ##  Controls  ##
 
     // interaction button event
-    if (this.manager.events.listeners('player-interacts').length === 0) {
-      this.manager.events.on('player-interacts', this.interactButton, this);
-    }
+    this.manager.events.on('player-interacts', this.interactButton, this);
 
     // Item usage event
-    if (this.manager.events.listeners('itemUsed').length === 0) {
-      this.manager.events.on('itemUsed', button => {
-        this.itemUseButton(button);
-      });
-    }
+    this.manager.events.on('itemUsed', button => {
+      this.itemUseButton(button);
+    });
 
     // cooldown flag for seed usage (TODO: make an object if more flags are needed)
     this.isSowing = false;
@@ -134,11 +130,11 @@ class Player extends BaseCharacterSprite {
     // the tool that is currently being used
     this.tool = null; 
 
-    if (this.manager.events.listeners('refillStamina').length === 0) {
-      this.manager.events.on('refillStamina', amount => {
-        this.changeStamina(amount);
-      });
-    }
+    // stamina refill
+    this.manager.events.on('refillStamina', amount => {
+      this.changeStamina(amount);
+    });
+
   }
 
   update(time, delta) {
@@ -254,7 +250,7 @@ class Player extends BaseCharacterSprite {
           if (collisions.length === 0) {
             let index = convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
             if (this.scene.arableMap[index]) {
-              if (this.checkExhausted()) { return; }
+              if (this.checkExhausted(item)) { return; }
               // plant something
               // get crop type from inventory
       
@@ -269,6 +265,7 @@ class Player extends BaseCharacterSprite {
 
                 // reduce the player's stamina by a bit
                 this.changeStamina(-item.stamina);
+                console.log(item.stamina)
 
                 // set a timer as a cooldown
                 // TODO: placeholder for sowing animation
@@ -290,7 +287,7 @@ class Player extends BaseCharacterSprite {
           collisions = checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
           if (collisions.length > 0) {
             // check for stamina only if there would be something to interact with
-            if (this.checkExhausted()) { return; }
+            if (this.checkExhausted(item)) { return; }
           }
           // use the tool
           this.createTool(
@@ -339,7 +336,7 @@ class Player extends BaseCharacterSprite {
         }
         break;
       case 'hoe':
-        if (this.checkExhausted()) { return; }
+        if (this.checkExhausted(item)) { return; }
 
         this.tool = new Hoe(this.scene, this.x, this.y, item.frame);
         // TODO: make a property in Tiled where land can be dug over
@@ -406,9 +403,9 @@ class Player extends BaseCharacterSprite {
     }
   }
 
-  checkExhausted() {
+  checkExhausted(item) {
     // you can only use items if you have stamina left
-    if (this.stamina === 0) {
+    if (this.stamina < item.stamina) {
       showMessage(this.scene, 'general.stamina-low');
       return true;
     } else {
@@ -970,6 +967,35 @@ class Hoe extends Phaser.GameObjects.Image {
           scene.player.tool = null;
         }
     });
+
+    scene.time.addEvent({
+      delay: 250, 
+      callback: () => {
+        // reverse direction (bouncing effect)
+        this.rotationDir *= -1;
+
+        // particle effect
+        let particleStartPos = this.player.interactionRect.getCenter();
+
+        let particles = this.scene.add.particles('particles', 2);
+        particles.setDepth(3);
+
+        let emitter = particles.createEmitter({
+          x: particleStartPos.x,
+          y: particleStartPos.y,
+          quantity: { min: 3, max: 8 },
+          radial: true,
+          active: true,
+          lifespan: 200,
+          speed: 50,
+          gravityY: 100,
+          alpha: 1,
+          tint: 0x3d300b
+        });
+
+        emitter.explode();
+      }
+  });
 
     this.player = scene.player;
 

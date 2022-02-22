@@ -113,6 +113,7 @@ class PreloadingScene extends Phaser.Scene {
       { key: 'seeds', file: 'sprites/seed_packs.png', w: 16, h: 16 },
       { key: 'leaf-particles', file: 'sprites/leaf_particles.png', w: 16, h: 16 },
       { key: 'tools', file: 'sprites/tools.png', w: 16, h: 16},
+      { key: 'particles', file: 'sprites/misc_particles.png', w: 8, h: 8 },
       { key: 'inventory-items', file: 'sprites/inventory_items.png', w: 16, h: 16 },
       { key: 'ui-images', file: 'ui/ui_stuff.png', w: 16, h: 16 },
       { key: 'gamepad-buttons', file: 'ui/gamepad_buttons.png', w: 16, h: 16 }

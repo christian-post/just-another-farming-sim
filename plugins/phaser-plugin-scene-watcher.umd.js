@@ -55,7 +55,7 @@
   };
   var SPACE = ' ';
   var VIEW_STYLE = {
-    position: 'absolute',
+    position: 'relative',
     left: '0',
     top: '0',
     margin: '0',

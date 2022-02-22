@@ -85,8 +85,8 @@ class InventoryManager extends Phaser.Scene {
 
     // action buttons
     if (this.manager.getCurrentGameScene().pad) {
-      const buttonOffsetX = 8;
-      const buttonOffsetY = 24;
+      const buttonOffsetX = 4;
+      const buttonOffsetY = 28;
 
       this.buttonLabels = {
         item1: this.add.image(
@@ -101,17 +101,17 @@ class InventoryManager extends Phaser.Scene {
           'gamepad-buttons',
           1
         ),
+        inventory: this.add.image(
+          pos.inventory.x - this.actionButtonSpots.inventory.width + buttonOffsetX, 
+          pos.inventory.y + buttonOffsetY, 
+          'gamepad-buttons',
+          3
+        ),
         interact: this.add.image(
           pos.interact.x - this.actionButtonSpots.interact.width + buttonOffsetX, 
           pos.interact.y + buttonOffsetY, 
           'gamepad-buttons',
           2
-        ),
-        inventory: this.add.image(
-          pos.interact.x - this.actionButtonSpots.inventory.width + buttonOffsetX, 
-          pos.interact.y + buttonOffsetY, 
-          'gamepad-buttons',
-          3
         )
       }
     } else {

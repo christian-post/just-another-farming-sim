@@ -3,7 +3,9 @@ class TransitionScene extends Phaser.Scene {
     this.sceneFrom = data.sceneFrom;
     this.sceneTo = data.sceneTo;
     this.callback = data.callback;
+    this.stopScene = data.stopScene;
     this.createConfig = data.createConfig || {};
+
 
     this.effectWidth = this.registry.values.windowWidth;
     this.effectHeight = this.registry.values.windowHeight;
@@ -49,7 +51,8 @@ class TransitionScene extends Phaser.Scene {
       cameraMask
     );
 
-    this.duration = 1000;
+    this.duration = 600;  // time until fully black
+    this.delay = 100;  // time between the two tweens
 
     this.scene.pause(this.sceneFrom);
 
@@ -66,13 +69,15 @@ class TransitionScene extends Phaser.Scene {
   
   onExpand() {
     // this happens when it's all black
-    // this.scene.stop(this.sceneFrom);
-    this.scene.sleep(this.sceneFrom);
+    if (this.stopScene) {
+      this.scene.stop(this.sceneFrom);
+    } else {
+      this.scene.sleep(this.sceneFrom);
+    }
     this.scene.run(this.sceneTo, this.createConfig);
     this.scene.get('GameManager').currentGameScene = this.sceneTo;
 
     // if scene was paused and is resumed, change the player's position
-    // TODO: might not be needed?
     this.scene.get(this.sceneTo).events.on('wake', ()=> {
       let player = this.scene.get(this.sceneTo).player;
       if ('playerPos' in this.createConfig) {
@@ -90,7 +95,7 @@ class TransitionScene extends Phaser.Scene {
     }
 
     this.add.tween({
-      delay: 200,
+      delay: this.delay,
       targets: this.mask,
       duration: this.duration,
       displayWidth: this.effectWidth,
