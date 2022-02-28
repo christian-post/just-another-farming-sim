@@ -55,10 +55,12 @@ class InventoryManager extends Phaser.Scene {
 
     this.selectedItemQuantities = {
       item1: this.add.text(
-        pos.item1.x - 2, pos.item1.y + 30, '', { color: '#fff', fontSize: '10px' }
+        pos.item1.x - 2, pos.item1.y + 30, '', 
+        { color: '#fff', fontSize: '10px', fontFamily: this.registry.values.globalFontFamily }
       ).setOrigin(1).setDepth(2),
       item2: this.add.text(
-        pos.item2.x - 2, pos.item2.y + 30, '', { color: '#fff', fontSize: '10px' }
+        pos.item2.x - 2, pos.item2.y + 30, '', 
+        { color: '#fff', fontSize: '10px', fontFamily: this.registry.values.globalFontFamily }
       ).setOrigin(1).setDepth(2)
     }
 
@@ -161,7 +163,7 @@ class InventoryManager extends Phaser.Scene {
 
     // stamina bar
     this.staminaBar = this.makeBar(8, 42, 0x00dd00);
-    this.setBarValue(this.staminaBar, 100);
+    this.setBarValue(100);
 
 
     // Inventory and Items
@@ -181,14 +183,13 @@ class InventoryManager extends Phaser.Scene {
 
     this.itemMaxQuantity = 255;
 
-
     // events that change the UI contents
     this.manager.events.on('newDay', ()=> {
       this.day.setText(`Day ${this.manager.day}`);
     }, this);
 
-    this.manager.events.on('stamina-change', value => {
-      this.setBarValue(this.staminaBar, value);
+    this.manager.events.on('stamina-bar-change', value => {
+      this.setBarValue(value);
     }, this);
 
     this.manager.events.on('changeTextInteract', string => {
@@ -411,26 +412,30 @@ class InventoryManager extends Phaser.Scene {
   }
 
   makeBar(x, y, color) {
-    //draw the bar
-    let bar = this.add.graphics();
+    let w = 64;
+    let h = 8;
+    let background = this.add.rectangle(x, y, w, h, 0xaaaaaa, 0.75).setOrigin(0);
+    let bar = this.add.rectangle(x, y, w, h, color, 1).setOrigin(0);
 
-    //color the bar
-    bar.fillStyle(color, 1);
-
-    //fill the bar with a rectangle
-    bar.fillRect(0, 0, 64, 8);
-    
-    //position the bar
-    bar.x = x;
-    bar.y = y;
-
-    //return the bar
-    return bar;
+    // return an object
+    return { bar: bar, background: background };
   }
 
-  setBarValue(bar, percentage) {
-    //scale the bar
-    bar.scaleX = percentage / 100;
+  setBarValue(percentage) {
+    // scale the bar
+    this.tweens.add({
+      targets: this.staminaBar.bar,
+      scaleX: percentage / 100,
+      duration: 500
+    });
+
+    if (percentage >= 50) {
+      this.staminaBar.bar.setFillStyle(0x00ff00);
+    } else if (percentage >= 25) {
+      this.staminaBar.bar.setFillStyle(0xffff00);
+    } else {
+      this.staminaBar.bar.setFillStyle(0xff0000);
+    }
   }
 }
 

@@ -1,7 +1,17 @@
 class TransitionScene extends Phaser.Scene {
   create(data) {
-    this.sceneFrom = data.sceneFrom;
-    this.sceneTo = data.sceneTo;
+    if (typeof data.sceneFrom === 'string') {
+      this.sceneFrom = this.scene.get(data.sceneFrom);
+    } else {
+      this.sceneFrom = data.sceneFrom;
+    }
+
+    if (typeof data.sceneTo === 'string') {
+      this.sceneTo = this.scene.get(data.sceneTo);
+    } else {
+      this.sceneTo = data.sceneTo;
+    }
+
     this.callback = data.callback;
     this.stopScene = data.stopScene;
     this.createConfig = data.createConfig || {};
@@ -75,7 +85,7 @@ class TransitionScene extends Phaser.Scene {
       this.scene.sleep(this.sceneFrom);
     }
     this.scene.run(this.sceneTo, this.createConfig);
-    this.scene.get('GameManager').currentGameScene = this.sceneTo;
+    this.scene.get('GameManager').currentGameScene = this.sceneTo.scene.key;
 
     // if scene was paused and is resumed, change the player's position
     this.scene.get(this.sceneTo).events.on('wake', ()=> {

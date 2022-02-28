@@ -67,17 +67,18 @@ game.registry.merge({
   globalSoundeffectsVolume: 0.5,
   globalFontFamily: 'Verdana',
   // in-game settings
-  // ingameTimeSpeed: 1000,  // in-game seconds per real-time second
+  // ingameTimeSpeed: 10000,  // in-game seconds per real-time second
   ingameTimeSpeed: 60,  // in-game seconds per real-time second
   startingDaytime: {
     hour: 12,
     minutes: 0
   },
-  playerStaminaRechargeRate: 1,
+  playerStaminaRechargeRate: 25,
+  playerStaminaRechargeDelay: 10,  // ingame minutes until stamina is refilled by the given amount
   startingMoney: 2000,
   startingMaxStamina: 100,
-  wateringCanAmount: 5,  // how much the watering can raises the soil's water level
-  maxWateringLevel: 10
+  wateringCanAmount: 2,  // how much the watering can raises the soil's water level
+  maxWateringLevel: 4
 });
 
 // define the scenes

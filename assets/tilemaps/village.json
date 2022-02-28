@@ -141,7 +141,7 @@
                         {
                          "name":"items",
                          "type":"string",
-                         "value":"[\"seeds.wheat\", \"seeds.potato\", \"seeds.maize\", \"seeds.sugarbeet\", \"tools.fertilizer\", \"tools.scytheL1\", \"tools.scytheL2\", \"tools.scytheL3\", \"tools.hoeL1\", \"tools.hoeL2\", \"tools.hoeL3\", \"tools.wateringCan\", \"tools.sodaStamina\"]"
+                         "value":"[\"seeds.wheat\", \"seeds.potato\", \"seeds.maize\", \"seeds.sugarbeet\", \"tools.fertilizer\", \"tools.scytheL1\", \"tools.scytheL2\", \"tools.scytheL3\", \"tools.hoeL1\", \"tools.hoeL2\", \"tools.hoeL3\", \"tools.wateringCan\"]"
                         }, 
                         {
                          "name":"texture",
@@ -9721,7 +9721,6 @@
                  "objectgroup":
                     {
                      "draworder":"index",
-                     "id":2,
                      "name":"",
                      "objects":[
                             {

@@ -87,12 +87,13 @@ class SoilPatch extends Phaser.GameObjects.Rectangle {
     this.scene.interactables.add(this);
     this.setOrigin(0);
 
+    // TODO: create a seperate varaible for alpha
     this.setFillStyle(0x000000, 0);
 
     this.index = index;  // refers to 1D index of arable Map
 
+    
     this.fertilizationLevel = 0;
-
     // water level
     // Plants have to be watered regularly, watering increases the water by a certain value
     // as well as raining.
@@ -106,15 +107,23 @@ class SoilPatch extends Phaser.GameObjects.Rectangle {
 
     // define what happens on a new day
     this.scene.manager.events.on('newDay', ()=> {
-      // TODO check for rain here?
-      this.waterLevel = Math.max(this.waterLevel - 1, 0);
-      this.setFillStyle(0x000000, 0);
+      // check for rain
+      if (this.scene.manager.weatherManager.currentWeather.rain) {
+        this.waterLevel = this.scene.registry.values.maxWateringLevel;
+        this.setFillStyle(0x000000, 0.3);
+      } else {
+        // dry out
+        this.waterLevel = Math.max(this.waterLevel - 1, 0);
+        this.setFillStyle(0x000000, 0);
+      }
+      
     });
   }
 
-  plantCrop(scene, group, cropX, cropY, name, index) {
+  plantCrop(scene, cropX, cropY, name, index) {
     // keep a reference to the crop sprite
-    this.crop = new Crop(scene, group, cropX, cropY, name, index);
+    this.crop = new Crop(scene, cropX, cropY, name, index);
+    return this.crop;
   }
 
   reset() {

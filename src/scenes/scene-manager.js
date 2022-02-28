@@ -42,13 +42,17 @@ class GameManager extends Phaser.Scene {
     this.isNight = true;
     this.timerPaused = false;
 
+    this.staminaRefillTimer = 0;  // measured in ingame minutes
+
     this.hasControl = true;   // flage for whether input is processed
 
     this.events.on('newDay', this.onNewDay, this);
 
     // ressource data
     this.registry.merge({
-      money: this.registry.values.startingMoney
+      money: this.registry.values.startingMoney,
+      maxStamina: this.registry.values.startingMaxStamina,
+      stamina: this.registry.values.startingMaxStamina
     });
 
     // Music and Sounds
@@ -83,7 +87,43 @@ class GameManager extends Phaser.Scene {
       );
     });
 
-    // configure the save/quit/options menu
+    // global weather
+    this.weatherManager = new WeatherManager(this);
+
+
+    // define the first scene
+
+    this.currentGameScene = 'Title';
+    this.scene.run(this.currentGameScene);
+
+    this.overworldScenes = [
+      'FarmScene',
+      'VillageScene'
+    ];
+
+    this.scene.get(this.overworldScenes[0]).events.on('create', ()=> {
+      // configure player controls and events
+      this.events.on('player-interacts', ()=> {
+        this.player.interactButton()
+      });
+      this.events.on('itemUsed', button => {
+        this.player.itemUseButton(button);
+      });
+
+      this.events.on('staminaChange', amount => {
+        let stamina = this.registry.values.stamina;
+        let maxStamina = this.registry.values.maxStamina;
+
+        this.registry.values.stamina = Math.min(maxStamina, Math.max(stamina + amount, 0));
+        let percentage = (this.registry.values.stamina / maxStamina) * 100;
+        // send data to the UI
+        this.events.emit('stamina-bar-change', percentage);
+
+        // reset the timer
+        this.staminaRefillTimer = 0;
+      });
+
+      // configure the save/quit/options menu
     this.events.on('menuOpen', ()=> {
       this.scene.pause(this.scene.key);
       this.scene.pause(this.currentGameScene);
@@ -129,27 +169,48 @@ class GameManager extends Phaser.Scene {
               this.events.removeAllListeners();
             });
           }
-        ]
+        ],
+        exitCallback: ()=> { 
+          this.scene.resume(this.currentGameScene);
+          this.scene.resume(this.scene.key);
+          this.events.emit('changeTextInventory', 'inventory');
+         }
       });
     });
-
-    // start the first scene
-
-    this.currentGameScene = 'Title';
-    this.scene.run(this.currentGameScene);
-
-    this.overworldScenes = [
-      'FarmScene',
-      'VillageScene'
-    ];
-
+    });
 
     // ############ only for debugging #########################################
 
     if (DEBUG) {
+      // let minimap;
+
+      // // minimap testing
+      // this.scene.get('FarmScene').events.on('create', scene => {
+      //   minimap = scene.cameras.add(this.registry.values.windowWidth - 80, this.registry.values.windowHeight - 60, 80, 60);
+      //   minimap.setBounds(0, 0, scene.mapLayers.layer0.width, scene.mapLayers.layer0.height);
+      //   minimap.setZoom(0.1);
+
+      //   minimap.on('pointerdown', pointer => {
+      //     console.log(pointer)
+      //   });
+      // })
+      
+
       this.input.keyboard.on('keydown-P', ()=> {
-        if (!this.getCurrentGameScene().pathfinder) { return; }
-        this.events.emit('path-test');
+        // TEST
+        if (this.getCurrentGameScene().testGroup.getLength() === 0) {
+          for (let i=0; i<100; i++) {
+            let sprite = this.getCurrentGameScene().add.sprite(
+              Phaser.Math.Between(0, 800),
+              Phaser.Math.Between(0, 800),
+              'test'
+            )
+              .setDepth(6);
+            this.getCurrentGameScene().testGroup.add(sprite);
+          }
+        } else {
+          this.getCurrentGameScene().testGroup.clear(true, true)
+        }      
       });
 
       this.input.keyboard.on('keydown-T', ()=> {
@@ -166,10 +227,19 @@ class GameManager extends Phaser.Scene {
         if (DEBUG && this.getCurrentGameScene().cameras.main !== undefined) {
           let worldPoint = this.getCurrentGameScene().cameras.main.getWorldPoint(pointer.x, pointer.y);
           let tileSize = this.registry.values.tileSize;
-
           console.log(`screen: ${Math.floor(pointer.x)}, ${Math.floor(pointer.y)}  world: ${Math.floor(worldPoint.x)}, ${Math.floor(worldPoint.y)}  tile: ${Math.floor(worldPoint.x / tileSize)}, ${Math.floor(worldPoint.y / tileSize)}`)
         }
       });
+      // this.input.on('pointerdown', pointer => {
+      //   if (DEBUG && minimap !== undefined) {
+      //     if (new Phaser.Geom.Rectangle(this.registry.values.windowWidth - 80, this.registry.values.windowHeight - 60, 80, 60).contains(pointer.x, pointer.y)) {
+      //       let worldPoint = minimap.getWorldPoint(pointer.x, pointer.y);
+
+      //       this.player.x = worldPoint.x;
+      //       this.player.y = worldPoint.y;
+      //     } 
+      //   }
+      // });
 
       this.input.keyboard.on('keydown-M', ()=> {
         if (this.currentGameScene === 'FarmScene') {
@@ -230,9 +300,6 @@ class GameManager extends Phaser.Scene {
       if (this.timer > 60000) {
         this.minutes += 1;
 
-        // refill player stamina
-        this.events.emit('refillStamina', this.registry.values.playerStaminaRechargeRate);
-
         // check if midnight
         if (this.minutes >= 1440) {
           this.minutes = this.minutes - 1440;
@@ -250,10 +317,23 @@ class GameManager extends Phaser.Scene {
         let displayMinutes = parseInt(this.minutes % 60).toString().padStart(2, '0');
 
         this.events.emit('setClock', { hour: displayHour, minutes: displayMinutes });
+
+        // refill stamina after some time
+
+        this.staminaRefillTimer += 1;
+        if (this.staminaRefillTimer > this.registry.values.playerStaminaRechargeDelay) {
+          // refill player stamina
+          this.events.emit('staminaChange', this.registry.values.playerStaminaRechargeRate);
+
+          this.staminaRefillTimer = 0;
+        }
         
         // reset the timer
         this.timer = this.timer - 60000;
       }
+
+      
+
     }
   }
 
@@ -291,16 +371,8 @@ class GameManager extends Phaser.Scene {
   onNewDay(minutes=360) {
     // defines what happens on a new day
     this.day += 1;
-    // refill the player's stamina
-    // TODO: make this an event that the UI listenes for
-    let player = this.scene.get(this.currentGameScene).player;
-    if (player) {
-      player.changeStamina(player.maxStamina);
-    }
     // set time of day
     this.minutes = minutes;
-
-    // showMessage(this.getCurrentGameScene(), 'general.newDay');
   }
 
   configurePad(scene) {
@@ -360,6 +432,7 @@ class GameManager extends Phaser.Scene {
       });
       
     } else {
+      // no effect
       if (stopScene) {
         this.scene.stop(current);
       } else {
@@ -381,14 +454,35 @@ class GameManager extends Phaser.Scene {
       money: this.registry.values.money,
       inventory: this.scene.get('InventoryManager').inventory,
       gameScene: this.currentGameScene,
-      arableMapData: {}
+      arableMapData: {},
+      soilData: {},
+      cropData: {}
     };
 
-    // loop through scenes, if they have arable map --> store
+    // loop through scenes, if they have arable map --> store data
     this.overworldScenes.forEach(scene => {
       if (this.scene.get(scene).hasArableLand) {
-        // transform arable Map into binary array
-        saveData.arableMapData[scene] = this.scene.get(scene).arableMap.map(elem => { return elem ? 1 : 0; });
+        saveData.arableMapData[scene] = [];
+        saveData.soilData[scene] = {};
+        this.scene.get(scene).arableMap.forEach((elem, index) => {
+          if (elem) {
+            // transform arable Map into binary array
+            saveData.arableMapData[scene].push(1);
+            // SoilPatch data
+            saveData.soilData[scene][index] = {
+              fertilizationLevel: elem.fertilizationLevel,
+              waterLevel: elem.waterLevel
+            }
+          } else {
+            saveData.arableMapData[scene].push(0);
+          }
+          
+        });
+        // data to create crops from
+        saveData.cropData[scene] = [];
+        this.scene.get(scene).crops.getChildren().forEach(crop => {
+          saveData.cropData[scene].push(crop.saveData);
+        });
       }
     });
 
@@ -405,7 +499,7 @@ class GameManager extends Phaser.Scene {
   }
 
   loadGameFromSave(saveData) {
-    this.switchScenes(this.currentGameScene, saveData.gameScene, {playerPos: { x: 0, y: 0 }}, false);
+    this.switchScenes(this.currentGameScene, saveData.gameScene, { playerPos: { x: 0, y: 0 } }, false);
 
     // overworld scene
     this.scene.get(saveData.gameScene).events.on('create', ()=> {
@@ -423,12 +517,33 @@ class GameManager extends Phaser.Scene {
 
           saveData.arableMapData[scene].forEach((elem, index) => {
             if (elem) {
+              // create a SoilPatch object based on the 1D map index
               let pos = convertIndexTo2D(index, this.scene.get(scene).currentMap.width);
-              this.scene.get(scene).createSoilPatch(index, pos.x, pos.y);
+              let patch = this.scene.get(scene).createSoilPatch(index, pos.x, pos.y);
+
+              // restore SoilPatch object attributes
+              patch.fertilizationLevel = saveData.soilData[scene][index].fertilizationLevel;
+              patch.waterLevel = saveData.soilData[scene][index].waterLevel;
             }
           });
 
           this.scene.get(scene).rebuildArableLayer();
+
+          // create the crops
+          saveData.cropData[scene].forEach(elem => {
+            let crop = this.scene.get(scene).arableMap[elem.constructor.mapIndex].plantCrop(
+              this.scene.get(scene), 
+              elem.constructor.x, 
+              elem.constructor.y, 
+              elem.constructor.name, 
+              elem.constructor.mapIndex
+            );
+
+            // set attributes of the crop
+            for (let [key, value] of Object.entries(elem.attributes)) {
+              crop[key] = value;
+            }
+          });
         }
       });
     });

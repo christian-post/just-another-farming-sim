@@ -256,6 +256,7 @@ class GenericMenu extends Phaser.Scene {
     },
     options: ['foo', 'bar'],
     callbacks: [function(){}, function(){}],
+    exitCallback: function(){},
     fontStyle: TextStyle object
     */
     this.manager = this.scene.get('GameManager');
@@ -328,8 +329,12 @@ class GenericMenu extends Phaser.Scene {
       inventory: ()=> {
         // exit the Menu preemptively
         this.scene.stop(this.scene.key);
-        this.scene.resume(this.manager.currentGameScene);
-        this.manager.events.emit('changeTextInventory', 'inventory');
+        if ('exitCallback' in config) {
+          config.exitCallback();
+        } else {
+          this.scene.run(this.manager.currentGameScene);
+          this.manager.events.emit('changeTextInventory', 'inventory');
+        } 
       }
     };
 

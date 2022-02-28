@@ -10,6 +10,7 @@ CALLBACKS = {
           sceneTo: scene, 
           callback: ()=> {
             scene.manager.events.emit('newDay');
+            scene.manager.events.emit('staminaChange', scene.registry.values.maxStamina);
             }
         });
     },

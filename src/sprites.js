@@ -110,31 +110,13 @@ class Player extends BaseCharacterSprite {
 
     this.scene.physics.add.existing(this.interactionRect);
 
-    // ##  Controls  ##
-
-    // interaction button event
-    this.manager.events.on('player-interacts', this.interactButton, this);
-
-    // Item usage event
-    this.manager.events.on('itemUsed', button => {
-      this.itemUseButton(button);
-    });
-
-    // cooldown flag for seed usage (TODO: make an object if more flags are needed)
-    this.isSowing = false;
-
-    // resources
-    this.maxStamina = this.manager.registry.values.startingMaxStamina;
-    this.stamina = this.maxStamina;
+    this.flags = {
+      isSowing: false,  // cooldown flag for seed usage
+      staminaMessageShown: false
+    };
 
     // the tool that is currently being used
     this.tool = null; 
-
-    // stamina refill
-    this.manager.events.on('refillStamina', amount => {
-      this.changeStamina(amount);
-    });
-
   }
 
   update(time, delta) {
@@ -145,7 +127,7 @@ class Player extends BaseCharacterSprite {
       this.setVelocity(0);
       // TODO: tool usage animation
       this.anims.play('player-idle-' + this.lastDir, true);
-    } else if (this.isSowing) {
+    } else if (this.flags.isSowing) {
       this.setVelocity(0);
       // TODO: sowing animation
       this.anims.play('player-idle-' + this.lastDir, true);
@@ -259,20 +241,19 @@ class Player extends BaseCharacterSprite {
                 let cropX = this.scene.registry.values.tileSize * interactX;
                 let cropY = this.scene.registry.values.tileSize * interactY;
 
-                this.scene.arableMap[index].plantCrop(this.scene, this.scene.crops, cropX, cropY, item.name, index);
+                this.scene.arableMap[index].plantCrop(this.scene, cropX, cropY, item.name, index);
       
                 this.inventory.events.emit('itemConsumed', item, button);              
 
                 // reduce the player's stamina by a bit
-                this.changeStamina(-item.stamina);
-                console.log(item.stamina)
+                this.manager.events.emit('staminaChange', -item.stamina);
 
                 // set a timer as a cooldown
                 // TODO: placeholder for sowing animation
-                this.isSowing = true;
+                this.flags.isSowing = true;
                 this.scene.time.addEvent({
                     delay: 500, callback: ()=> {
-                      this.isSowing = false;
+                      this.flags.isSowing = false;
                     }
                   });
               } else {
@@ -308,11 +289,21 @@ class Player extends BaseCharacterSprite {
     }
   }
 
-  changeStamina(value) {
-    this.stamina = Math.min(this.maxStamina, Math.max(this.stamina + value, 0));
-    let percentage = (this.stamina / this.maxStamina) * 100;
-    this.manager.events.emit('stamina-change', percentage);
+  checkExhausted(item) {
+    // you can only use items if you have stamina left
+    if (this.scene.registry.values.stamina < item.stamina) {
+
+      if (!this.flags.staminaMessageShown) {
+        showMessage(this.scene, 'general.stamina-low');
+        this.flags.staminaMessageShown = true;
+      }
+      
+      return true;
+    } else {
+      return false;
+    }
   }
+
 
   createTool(item, config) {
     if (this.tool) {
@@ -328,7 +319,7 @@ class Player extends BaseCharacterSprite {
         if (config.collisions.length > 0) {
           for (let col of config.collisions) {
             if (col['harvest']) {
-              this.changeStamina(-item.stamina);
+              this.manager.events.emit('staminaChange', -item.stamina);
               col.harvest();
               break;
             }
@@ -340,12 +331,11 @@ class Player extends BaseCharacterSprite {
 
         this.tool = new Hoe(this.scene, this.x, this.y, item.frame);
         // TODO: make a property in Tiled where land can be dug over
-        // TODO when hoe is selected, show interact rect everywhere
 
         // check if there is arable land
         if (!this.scene.arableMap[config.mapIndex]) {
           this.scene.makeAcre(config.x, config.y, 1, 1);
-          this.changeStamina(-item.stamina);
+          this.manager.events.emit('staminaChange', -item.stamina);
         }
         
         break;
@@ -359,7 +349,7 @@ class Player extends BaseCharacterSprite {
               if (col.waterLevel == this.scene.registry.values.maxWateringLevel) {
                 showMessage(this.scene, 'general.maxWaterLevelReached')
               } else {
-                this.changeStamina(-item.stamina);
+                this.manager.events.emit('staminaChange', -item.stamina);
                 col.water(this.scene.registry.values.wateringCanAmount);
               }
               break;
@@ -373,7 +363,7 @@ class Player extends BaseCharacterSprite {
           if (this.stamina >= this.maxStamina) {
             showMessage(this.scene, 'general.stamina-full');
           } else {
-            this.changeStamina(this.maxStamina * item.refillStamina);
+            this.manager.events.emit('staminaChange', this.scene.registry.values.maxStamina * item.refillStamina);
             this.inventory.events.emit('itemConsumed', item, config.button);
           }
         }
@@ -400,16 +390,6 @@ class Player extends BaseCharacterSprite {
         break;
       default:
         console.warn('function for tool not implemented: ', item.name);
-    }
-  }
-
-  checkExhausted(item) {
-    // you can only use items if you have stamina left
-    if (this.stamina < item.stamina) {
-      showMessage(this.scene, 'general.stamina-low');
-      return true;
-    } else {
-      return false;
     }
   }
 }
@@ -729,24 +709,24 @@ class Vendor extends NPC {
 
 
 class Crop extends Phaser.GameObjects.Image {
-  constructor(scene, group, x, y, name, mapIndex) {
+  constructor(scene, x, y, name, mapIndex) {
     let data = deepcopy(scene.cache.json.get('cropData').croplist[name]);
     super(scene, x, y, 'crops', data.frames[0]);
     this.setData(data);
 
-    // reference to the arable Map of the gameplay scene
-    this.mapIndex = mapIndex;
+    this.name = name; // key for json data
+    this.mapIndex = mapIndex;  // reference to the arable Map of the gameplay scene
 
     // reference to game manager
     this.manager = this.scene.scene.get('GameManager');
     
     // add to GameObjects group and scene
     // TODO: this is getting messy....
-    group.add(this);
     this.scene.add.existing(this);
     this.scene.allSprites.add(this);
     this.scene.physics.add.existing(this);
     this.scene.interactables.add(this);
+    this.scene.crops.add(this);
     
     this.depthSortY = this.getBounds().top + 8;
     this.scene.depthSortedSprites.add(this);
@@ -758,7 +738,6 @@ class Crop extends Phaser.GameObjects.Image {
 
     // variables for growth and harvesting
     this.growthPhase = 0;
-    // this.age = 0;
     this.growth = 0;
     this.harvestReady = false;
     this.fertilizedLevel = 0;  // TODO: add soil class that holds the fertilization
@@ -779,10 +758,26 @@ class Crop extends Phaser.GameObjects.Image {
     return this.scene.arableMap[this.mapIndex].waterLevel;
   }
 
+  get saveData () {
+    return {
+      constructor: {
+        x: this.x,
+        y: this.y,
+        name: this.name,
+        mapIndex: this.mapIndex
+      },
+      attributes: {
+        growthPhase: this.growthPhase,
+        growth: this.growth,
+        harvestReady: this.harvestReady,
+        fertilizedLevel: this.fertilizedLevel
+      }
+    };
+  }
+
   harvest() {
     if (this.harvestReady) {
-      // create a particle effect
-      // let particles = this.scene.add.particles(this.data.values.particles, 0);
+      // create a particle effect when the plant gets harvested
       let particles = this.scene.add.particles('leaf-particles', 0);
       particles.setDepth(3);
 
@@ -810,7 +805,7 @@ class Crop extends Phaser.GameObjects.Image {
       let data = deepcopy(this.scene.cache.json.get('itemData').harvest[this.data.values.harvest]);
 
       // effect of fertillizer
-      // TODO: better calculation
+      // TODO: more sophisticated calculation
       data.quantity *= this.fertilizedLevel + 1;
 
       let cb = new Collectible(

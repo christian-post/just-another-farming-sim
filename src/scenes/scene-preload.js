@@ -103,6 +103,10 @@ class PreloadingScene extends Phaser.Scene {
     this.load.image('player-shadow', 'assets/images/sprites/shadow.png');
     this.load.image('water-droplet', 'assets/images/sprites/water-droplet.png');
 
+    // this.load.image('testy-tile', 'assets/images/sprites/testy.png')
+    //   .on('filecomplete', file => { console.log(file + ' loaded successfully.')})
+    //   .on('loaderror', file => { console.error('failed to load ' + file)});
+
     this.load.image('test-tile', 'assets/images/sprites/test.png');
 
     let spritesheetList = [
@@ -114,9 +118,10 @@ class PreloadingScene extends Phaser.Scene {
       { key: 'leaf-particles', file: 'sprites/leaf_particles.png', w: 16, h: 16 },
       { key: 'tools', file: 'sprites/tools.png', w: 16, h: 16},
       { key: 'particles', file: 'sprites/misc_particles.png', w: 8, h: 8 },
+      { key: 'raindrop', file: 'sprites/raindrop.png', w: 8, h: 8 },
       { key: 'inventory-items', file: 'sprites/inventory_items.png', w: 16, h: 16 },
       { key: 'ui-images', file: 'ui/ui_stuff.png', w: 16, h: 16 },
-      { key: 'gamepad-buttons', file: 'ui/gamepad_buttons.png', w: 16, h: 16 }
+      { key: 'gamepad-buttons', file: 'ui/gamepad_buttons.png', w: 16, h: 16 },
     ];
 
     spritesheetList.forEach(elem => {

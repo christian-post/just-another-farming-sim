@@ -75,10 +75,9 @@ class OverworldScene extends Phaser.Scene {
     // Gamepad functionality
     this.manager.checkForGamepad(this);
 
-    // start the Inventory Scene and User Interface
-    this.scene.run('InventoryManager');
-
-
+    // weather manager object
+    this.weatherDisplayManager = new WeatherDisplayManager(this);
+    this.hasWeather = false;
 
     // visual overlays for debugging
     if (DEBUG) {
@@ -131,9 +130,7 @@ class OverworldScene extends Phaser.Scene {
       
       rawObjects.forEach(obj => {
         // convert properties array to object
-        let properties = {}
         obj.properties.forEach(p => {
-          // properties[p.name] = p.value;
           obj[p.name] = p.value;
         });
   
@@ -293,6 +290,10 @@ class OverworldScene extends Phaser.Scene {
         sprite.setDepth(sprite.y);
       }
     });
+
+    if (this.hasWeather) {
+      this.weatherDisplayManager.update(delta);
+    }
   }
 }
 
@@ -302,6 +303,7 @@ class FarmScene extends OverworldScene {
     super.create(config);
 
     this.hasArableLand = true;  // flag that indicates whether the player can create farmland
+    this.hasWeather = true;
     
     // physics callback for collectible items
     this.physics.add.overlap(this.player, this.collectibles, (player, collectible)=> {
@@ -384,6 +386,7 @@ class FarmScene extends OverworldScene {
 
     // Start the background music
     this.manager.playMusic('overworld');
+
   }
 
 
@@ -473,6 +476,7 @@ class FarmScene extends OverworldScene {
 
   createSoilPatch(index, x, y) {
     this.arableMap[index] = new SoilPatch(this, x * this.registry.values.tileSize, y * this.registry.values.tileSize, index);
+    return this.arableMap[index];
   }
 
   update(time, delta) {
@@ -484,6 +488,8 @@ class FarmScene extends OverworldScene {
 class VillageScene extends OverworldScene {
   create(config) {
     super.create(config);
+
+    this.hasWeather = true;
     
     // physics callback for collectible items
     this.physics.add.overlap(this.player, this.collectibles, (player, collectible)=> {
