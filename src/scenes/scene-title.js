@@ -1,8 +1,8 @@
-class TitleScene extends Phaser.Scene {
+export class TitleScene extends Phaser.Scene {
   preload () {
     this.load.scenePlugin({
       key: 'rexuiplugin',
-      url: URL_REXUI,
+      url: this.registry.values.rexui_url,
       sceneKey: 'rexUI'
     });
   }
@@ -113,7 +113,6 @@ class TitleScene extends Phaser.Scene {
       this.helpTextElements.add(textKey2);
     }
 
-
     this.helpTextElements.setVisible(false);
   }
 
@@ -162,6 +161,10 @@ class TitleScene extends Phaser.Scene {
   }
 
   newGame() {
+
+    // reset some variables in the manager
+    this.manager.configureIngameVariables();
+
     // start the Inventory Scene and User Interface
     this.scene.run('InventoryManager');
 
@@ -170,20 +173,19 @@ class TitleScene extends Phaser.Scene {
     let inventoryManager = this.scene.get('InventoryManager');
     let itemData = this.cache.json.get('itemData');
 
-    inventoryManager.events.on('create', ()=> {
+    inventoryManager.events.once('create', ()=> {
       inventoryManager.addItem(itemData.tools.scytheL1);
       inventoryManager.addItem(itemData.tools.wateringCan);
       inventoryManager.addItem(itemData.seeds.wheat, 20);
       inventoryManager.addItem(itemData.tools.fertilizer, 10);
       inventoryManager.addItem(itemData.tools.hoeL1);
-
-      // this.scene.setVisible(false, 'InventoryManager');
     });
 
     this.manager.switchScenes(this.scene.key, this.nextScene, {playerPos: { x: 256, y: 200 }}, false, true);
 
     // create a small acre for start
     this.scene.get('FarmScene').events.once('create', scene => {
+      this.manager.timerPaused = false;
       scene.makeAcre(9, 15, 10, 4);
     });
   }

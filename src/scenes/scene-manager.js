@@ -1,3 +1,8 @@
+import { WeatherManager } from './scene-weather.js';
+import * as Utils from '../utils.js';
+import { showMessage } from '../user-interface.js';
+
+
 let XBOXMAPPING = {
   0: 'A',
   1: 'B',
@@ -18,7 +23,7 @@ let XBOXMAPPING = {
 };
 
 
-class GameManager extends Phaser.Scene {
+export class GameManager extends Phaser.Scene {
   /* 
   Handles code that is persistent between game scenes
   */
@@ -31,32 +36,14 @@ class GameManager extends Phaser.Scene {
     this.keyMapping = this.cache.json.get('controls').default;
     this.gamepadMapping = this.cache.json.get('controls').defaultGamepad;
 
-    // gameplay variables and functions that are persistent between scenes
-    this.day = 1;
-    // ingame daytime (a day has 1,440 minutes): float
-    this.minutes = this.registry.values.startingDaytime.hour * 60 + 
-                     this.registry.values.startingDaytime.minutes;
-
-    // timer in ms
-    this.timer = 0.0;
-    this.isNight = true;
-    this.timerPaused = false;
-
-    this.staminaRefillTimer = 0;  // measured in ingame minutes
-
+    
     this.hasControl = true;   // flage for whether input is processed
 
     this.events.on('newDay', this.onNewDay, this);
 
-    // ressource data
-    this.registry.merge({
-      money: this.registry.values.startingMoney,
-      maxStamina: this.registry.values.startingMaxStamina,
-      stamina: this.registry.values.startingMaxStamina
-    });
+    this.configureIngameVariables();
 
     // Music and Sounds
-
     let music = [
       'overworld'
     ];
@@ -91,8 +78,7 @@ class GameManager extends Phaser.Scene {
     this.weatherManager = new WeatherManager(this);
 
 
-    // define the first scene
-
+    // define the first scene (title)
     this.currentGameScene = 'Title';
     this.scene.run(this.currentGameScene);
 
@@ -101,6 +87,7 @@ class GameManager extends Phaser.Scene {
       'VillageScene'
     ];
 
+    // stuff that happens when the first overworld scene is created
     this.scene.get(this.overworldScenes[0]).events.on('create', ()=> {
       // configure player controls and events
       this.events.on('player-interacts', ()=> {
@@ -124,78 +111,65 @@ class GameManager extends Phaser.Scene {
       });
 
       // configure the save/quit/options menu
-    this.events.on('menuOpen', ()=> {
-      this.scene.pause(this.scene.key);
-      this.scene.pause(this.currentGameScene);
+      this.events.on('menuOpen', ()=> {
+        this.scene.pause(this.scene.key);
+        this.scene.pause(this.currentGameScene);
 
-      this.scene.run('Menu', {
-        x: this.registry.values.windowWidth * 0.4,
-        y: this.registry.values.windowHeight * 0.5,
-        height: this.registry.values.windowHeight * 0.5,
-        background: {
-          x: this.registry.values.windowWidth * 0.5,
-          y: this.registry.values.windowHeight * 0.65,
-          w: 140, 
-          h: 120,
-          color: 0x000000,
-          alpha: 0.75
-        },
-        options: getNestedKey(this.cache.json.get('dialogue'), 'save-menu.options'),
-        callbacks: [
-          ()=> { 
-            // back to game
+        this.scene.run('Menu', {
+          x: this.registry.values.windowWidth * 0.4,
+          y: this.registry.values.windowHeight * 0.5,
+          height: this.registry.values.windowHeight * 0.5,
+          background: {
+            x: this.registry.values.windowWidth * 0.5,
+            y: this.registry.values.windowHeight * 0.65,
+            w: 140, 
+            h: 120,
+            color: 0x000000,
+            alpha: 0.75
+          },
+          options: Utils.getNestedKey(this.cache.json.get('dialogue'), 'save-menu.options'),
+          callbacks: [
+            ()=> { 
+              // back to game
+              this.scene.resume(this.currentGameScene);
+              this.scene.resume(this.scene.key);
+            },
+            ()=> { 
+              // save
+              this.saveGame('save0');
+              showMessage(this.getCurrentGameScene(), 'game-saved');
+              this.scene.resume(this.scene.key);
+            },
+            ()=> { 
+              // quit game TODO: make seperate function "endGame" 
+
+              this.overworldScenes.forEach(scene => {
+                if (scene !== this.currentGameScene) {
+                  this.scene.stop(scene);
+                }
+              });
+
+              this.switchScenes(this.currentGameScene, 'Title', {}, true, true);
+              this.scene.get(this.currentGameScene).events.on('shutdown', ()=> {
+                this.scene.stop('InventoryManager');
+                this.scene.stop('InventoryDisplay');
+                this.scene.resume(this.scene.key);
+                this.events.removeAllListeners();
+              });
+            }
+          ],
+          exitCallback: ()=> { 
             this.scene.resume(this.currentGameScene);
             this.scene.resume(this.scene.key);
-          },
-          ()=> { 
-            // save
-            this.saveGame('save0');
-            showMessage(this.getCurrentGameScene(), 'game-saved');
-            this.scene.resume(this.scene.key);
-          },
-          ()=> { 
-            // quit game TODO: make seperate function "endGame" 
-
-            this.overworldScenes.forEach(scene => {
-              if (scene !== this.currentGameScene) {
-                this.scene.stop(scene);
-              }
-            });
-
-            this.switchScenes(this.currentGameScene, 'Title', {}, true, true);
-            this.scene.get(this.currentGameScene).events.on('shutdown', ()=> {
-              this.scene.sleep('InventoryManager');
-              this.scene.resume(this.scene.key);
-              this.events.removeAllListeners();
-            });
+            this.events.emit('changeTextInventory', 'inventory');
           }
-        ],
-        exitCallback: ()=> { 
-          this.scene.resume(this.currentGameScene);
-          this.scene.resume(this.scene.key);
-          this.events.emit('changeTextInventory', 'inventory');
-         }
+        });
       });
-    });
     });
 
     // ############ only for debugging #########################################
 
-    if (DEBUG) {
-      // let minimap;
-
-      // // minimap testing
-      // this.scene.get('FarmScene').events.on('create', scene => {
-      //   minimap = scene.cameras.add(this.registry.values.windowWidth - 80, this.registry.values.windowHeight - 60, 80, 60);
-      //   minimap.setBounds(0, 0, scene.mapLayers.layer0.width, scene.mapLayers.layer0.height);
-      //   minimap.setZoom(0.1);
-
-      //   minimap.on('pointerdown', pointer => {
-      //     console.log(pointer)
-      //   });
-      // })
-      
-
+    if (this.registry.values.debug) {
       this.input.keyboard.on('keydown-P', ()=> {
         // TEST
         if (this.getCurrentGameScene().testGroup.getLength() === 0) {
@@ -224,14 +198,14 @@ class GameManager extends Phaser.Scene {
       });
 
       this.input.on('pointerdown', pointer => {
-        if (DEBUG && this.getCurrentGameScene().cameras.main !== undefined) {
+        if (this.registry.values.debug && this.getCurrentGameScene().cameras.main !== undefined) {
           let worldPoint = this.getCurrentGameScene().cameras.main.getWorldPoint(pointer.x, pointer.y);
           let tileSize = this.registry.values.tileSize;
           console.log(`screen: ${Math.floor(pointer.x)}, ${Math.floor(pointer.y)}  world: ${Math.floor(worldPoint.x)}, ${Math.floor(worldPoint.y)}  tile: ${Math.floor(worldPoint.x / tileSize)}, ${Math.floor(worldPoint.y / tileSize)}`)
         }
       });
       // this.input.on('pointerdown', pointer => {
-      //   if (DEBUG && minimap !== undefined) {
+      //   if (this.registry.values.debug && minimap !== undefined) {
       //     if (new Phaser.Geom.Rectangle(this.registry.values.windowWidth - 80, this.registry.values.windowHeight - 60, 80, 60).contains(pointer.x, pointer.y)) {
       //       let worldPoint = minimap.getWorldPoint(pointer.x, pointer.y);
 
@@ -263,6 +237,30 @@ class GameManager extends Phaser.Scene {
         }
       });
     }
+  }
+
+  configureIngameVariables() {
+    // what happens at the start of a new game
+
+    // gameplay variables and functions that are persistent between scenes
+    this.day = 1;
+    // ingame daytime (a day has 1,440 minutes): float
+    this.minutes = this.registry.values.startingDaytime.hour * 60 + 
+                    this.registry.values.startingDaytime.minutes;
+
+    // timer in ms
+    this.timer = 0.0;
+    this.isNight = true;
+    this.timerPaused = true;
+
+    this.staminaRefillTimer = 0;  // measured in ingame minutes
+
+    // ressource data
+    this.registry.merge({
+      money: this.registry.values.startingMoney,
+      maxStamina: this.registry.values.startingMaxStamina,
+      stamina: this.registry.values.startingMaxStamina
+    });
   }
 
   checkForGamepad(scene) {
@@ -409,7 +407,7 @@ class GameManager extends Phaser.Scene {
   }
 
   configureKeys(scene) {
-    scene.keys = addKeysToScene(scene, this.keyMapping);
+    scene.keys = Utils.addKeysToScene(scene, this.keyMapping);
 
     let keys = Object.keys(scene.buttonCallbacks);
     keys.forEach(key => {
@@ -499,7 +497,10 @@ class GameManager extends Phaser.Scene {
   }
 
   loadGameFromSave(saveData) {
-    this.switchScenes(this.currentGameScene, saveData.gameScene, { playerPos: { x: 0, y: 0 } }, false);
+    this.switchScenes(this.currentGameScene, saveData.gameScene, { playerPos: { x: 0, y: 0 } }, false, true);
+
+    // wake up the inventory manager
+    this.scene.run('InventoryManager');
 
     // overworld scene
     this.scene.get(saveData.gameScene).events.on('create', ()=> {
@@ -518,7 +519,7 @@ class GameManager extends Phaser.Scene {
           saveData.arableMapData[scene].forEach((elem, index) => {
             if (elem) {
               // create a SoilPatch object based on the 1D map index
-              let pos = convertIndexTo2D(index, this.scene.get(scene).currentMap.width);
+              let pos = Utils.convertIndexTo2D(index, this.scene.get(scene).currentMap.width);
               let patch = this.scene.get(scene).createSoilPatch(index, pos.x, pos.y);
 
               // restore SoilPatch object attributes

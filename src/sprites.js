@@ -1,4 +1,7 @@
-class BaseCharacterSprite extends Phaser.Physics.Arcade.Sprite {
+import * as Utils from './utils.js';
+import { showMessage } from './user-interface.js';
+
+export class BaseCharacterSprite extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, key) {
     super(scene, x, y, key);
     this.scene.physics.add.existing(this);
@@ -78,7 +81,7 @@ class BaseCharacterSprite extends Phaser.Physics.Arcade.Sprite {
 
 
 
-class Player extends BaseCharacterSprite {
+export class Player extends BaseCharacterSprite {
   constructor(scene, x, y) {
     super(scene, x, y, 'player');
 
@@ -132,7 +135,7 @@ class Player extends BaseCharacterSprite {
       // TODO: sowing animation
       this.anims.play('player-idle-' + this.lastDir, true);
     } else {
-      let dir = getCursorDirections(this.scene, 0, delta);
+      let dir = Utils.getCursorDirections(this.scene, 0, delta);
       this.move(dir);
     }
 
@@ -164,7 +167,7 @@ class Player extends BaseCharacterSprite {
     // TODO: this is checked twice when a button is pressed
     let interactX = parseInt(this.interactionRect.x / this.scene.registry.values.tileSize);
     let interactY = parseInt(this.interactionRect.y / this.scene.registry.values.tileSize);
-    let index = convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
+    let index = Utils.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
 
     // check for arable Land
     if (this.scene.hasArableLand) {
@@ -181,7 +184,7 @@ class Player extends BaseCharacterSprite {
     }
 
     // check if rectangle is colliding with any interactable sprites
-    let collisions = checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
+    let collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
     if (collisions.length > 0 && collisions[0] != this) {
       let string = collisions[0].interactionButtonText || 'error';
       this.manager.events.emit('changeTextInteract', string);
@@ -194,11 +197,11 @@ class Player extends BaseCharacterSprite {
     let interactX = parseInt(this.interactionRect.x / this.scene.registry.values.tileSize);
     let interactY = parseInt(this.interactionRect.y / this.scene.registry.values.tileSize);
 
-    if (DEBUG) {
+    if (this.scene.registry.values.debug) {
       console.log(interactX, interactY);
     }
 
-    let collisions = checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
+    let collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
 
     // check for interactible if any collisions happen
     if (collisions.length > 0) {
@@ -216,7 +219,7 @@ class Player extends BaseCharacterSprite {
     let interactX = parseInt(this.interactionRect.x / this.scene.registry.values.tileSize);
     let interactY = parseInt(this.interactionRect.y / this.scene.registry.values.tileSize);
 
-    if (DEBUG) {
+    if (this.scene.registry.values.debug) {
       console.log(interactX, interactY);
     }
 
@@ -227,10 +230,14 @@ class Player extends BaseCharacterSprite {
       // check the item type
       switch (item.type) {
         case 'seed':
-          collisions = checkCollisionGroup(this.interactionRect, this.scene.crops.getChildren());
+          // exit if scene has no arable land
+          // TODO. indicate that you can't use this
+          if (!this.scene.hasArableLand) break;
+
+          collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.crops.getChildren());
 
           if (collisions.length === 0) {
-            let index = convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
+            let index = Utils.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
             if (this.scene.arableMap[index]) {
               if (this.checkExhausted(item)) { return; }
               // plant something
@@ -243,7 +250,7 @@ class Player extends BaseCharacterSprite {
 
                 this.scene.arableMap[index].plantCrop(this.scene, cropX, cropY, item.name, index);
       
-                this.inventory.events.emit('itemConsumed', item, button);              
+                this.manager.events.emit('itemConsumed', item, button);              
 
                 // reduce the player's stamina by a bit
                 this.manager.events.emit('staminaChange', -item.stamina);
@@ -256,16 +263,13 @@ class Player extends BaseCharacterSprite {
                       this.flags.isSowing = false;
                     }
                   });
-              } else {
-                console.log('nothing equipped');
               }
             }
           } 
           break;
 
         case 'tool':
-          // collisions = checkCollisionGroup(this.interactionRect, this.scene.crops.getChildren());
-          collisions = checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
+          collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
           if (collisions.length > 0) {
             // check for stamina only if there would be something to interact with
             if (this.checkExhausted(item)) { return; }
@@ -275,7 +279,7 @@ class Player extends BaseCharacterSprite {
             item, { 
               collisions: collisions,
               button: button,
-              mapIndex: convertIndexTo1D(interactX, interactY, this.scene.currentMap.width),
+              mapIndex: Utils.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width),
               x: interactX,
               y: interactY
           });
@@ -292,12 +296,10 @@ class Player extends BaseCharacterSprite {
   checkExhausted(item) {
     // you can only use items if you have stamina left
     if (this.scene.registry.values.stamina < item.stamina) {
-
       if (!this.flags.staminaMessageShown) {
         showMessage(this.scene, 'general.stamina-low');
         this.flags.staminaMessageShown = true;
       }
-      
       return true;
     } else {
       return false;
@@ -395,7 +397,7 @@ class Player extends BaseCharacterSprite {
 }
 
 
-class NPC extends BaseCharacterSprite {
+export class NPC extends BaseCharacterSprite {
   constructor(scene, x, y, key) {
     super(scene, x, y, key);
 
@@ -415,8 +417,8 @@ class NPC extends BaseCharacterSprite {
       { key: 'walk-left', frames: this.anims.generateFrameNumbers(this.key, {frames: [3, 4, 5, 4]}), repeat: -1 },
     ]);
 
-    this.body.pushable = true;
-    this.speed = 50;
+    this.body.pushable = false;
+    this.speed = 40;
 
     this.scene.physics.add.collider(this, this.scene.player, (npc, player) => { 
       npc.stop(); 
@@ -465,7 +467,7 @@ class NPC extends BaseCharacterSprite {
             // flip a coin
             if (Math.random() < 0.5) {
               // choose one of four direction, or stop
-              let choice = chooseWeighted([
+              let choice = Utils.chooseWeighted([
                 { x: 1, y: 0 },
                 { x: 0, y: 1 },
                 { x: -1, y: 0 },
@@ -477,7 +479,7 @@ class NPC extends BaseCharacterSprite {
               // look in a random direction that the NPC is not already facing
               this.stop();
               let dirs = ['up', 'down', 'left', 'right'];
-              this.lastDir = choose(dirs.filter(value => { return value !== this.lastDir; }));
+              this.lastDir = Utils.choose(dirs.filter(value => { return value !== this.lastDir; }));
             }
           }
         });
@@ -516,7 +518,7 @@ class NPC extends BaseCharacterSprite {
           // this.path = simplifyPath(path);
           this.path = path;
 
-          if (DEBUG) {
+          if (this.scene.registry.values.debug) {
             if (this.scene.hasOwnProperty('debugPath')) {
               this.scene.debugPath.destroy();
             }
@@ -649,7 +651,7 @@ class NPC extends BaseCharacterSprite {
 }
 
 
-class Vendor extends NPC {
+export class Vendor extends NPC {
   constructor(scene, x, y, textureKey, items=null) {
     super(scene, x, y, textureKey);
 
@@ -708,9 +710,9 @@ class Vendor extends NPC {
 }
 
 
-class Crop extends Phaser.GameObjects.Image {
+export class Crop extends Phaser.GameObjects.Image {
   constructor(scene, x, y, name, mapIndex) {
-    let data = deepcopy(scene.cache.json.get('cropData').croplist[name]);
+    let data = Utils.deepcopy(scene.cache.json.get('cropData').croplist[name]);
     super(scene, x, y, 'crops', data.frames[0]);
     this.setData(data);
 
@@ -743,7 +745,7 @@ class Crop extends Phaser.GameObjects.Image {
     this.fertilizedLevel = 0;  // TODO: add soil class that holds the fertilization
 
     // calculate the color of particles that appear when the crop is cut
-    this.avgColor = getAvgColorButFaster(
+    this.avgColor = Utils.getAvgColor(
       this.scene, this.texture.key, this.data.values.frames[this.data.values.numPhases - 1]
     );
 
@@ -802,7 +804,7 @@ class Crop extends Phaser.GameObjects.Image {
       // spawn something to collect
       let spawnPos = { x: this.body.center.x, y: this.body.center.y - 8};
       let targetPos = { x: this.body.center.x, y: this.body.center.y};
-      let data = deepcopy(this.scene.cache.json.get('itemData').harvest[this.data.values.harvest]);
+      let data = Utils.deepcopy(this.scene.cache.json.get('itemData').harvest[this.data.values.harvest]);
 
       // effect of fertillizer
       // TODO: more sophisticated calculation
@@ -874,7 +876,7 @@ class Crop extends Phaser.GameObjects.Image {
 }
 
 
-class Collectible extends Phaser.GameObjects.Image {
+export class Collectible extends Phaser.GameObjects.Image {
   constructor(scene, group, x, y, itemToAdd) {
     super(scene, x, y, itemToAdd.spritesheet, itemToAdd.frame);
     group.add(this);
@@ -885,7 +887,7 @@ class Collectible extends Phaser.GameObjects.Image {
 
     this.manager = this.scene.scene.get('GameManager');
 
-    this.itemToAdd = deepcopy(itemToAdd);
+    this.itemToAdd = Utils.deepcopy(itemToAdd);
 
     // interaction with player
     this.interactionButtonText = 'inspect';

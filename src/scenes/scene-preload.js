@@ -1,12 +1,12 @@
-class PreloadingScene extends Phaser.Scene {
+export class PreloadingScene extends Phaser.Scene {
   // scene for loading data before the game begins
   preload () {
     // https://gamedevacademy.org/creating-a-preloading-screen-in-phaser-3/?a=13
 
     let rectWidth = 200;
     let rectHeight = 24;
-    let rectX = WINDOW_WIDTH / 2 - rectWidth / 2;
-    let rectY = WINDOW_HEIGHT / 2 - rectHeight / 2;
+    let rectX = this.registry.values.windowWidth / 2 - rectWidth / 2;
+    let rectY = this.registry.values.windowHeight / 2 - rectHeight / 2;
     
     let progressBoxColor = 0x084010;
     let progressBarColor = 0x10bb30;
@@ -17,8 +17,8 @@ class PreloadingScene extends Phaser.Scene {
     progressBox.fillRect(rectX, rectY, rectWidth, rectHeight);
 
     var loadingText = this.make.text({
-        x: WINDOW_WIDTH / 2,
-        y: WINDOW_HEIGHT / 4,
+        x: this.registry.values.windowWidth / 2,
+        y: this.registry.values.windowHeight / 4,
         text: 'Loading...',
         style: {
             fontSize: '20px',
@@ -28,8 +28,8 @@ class PreloadingScene extends Phaser.Scene {
     loadingText.setOrigin(0.5, 0.5);
     
     var percentText = this.make.text({
-        x: WINDOW_WIDTH / 2,
-        y: WINDOW_HEIGHT / 2,
+        x: this.registry.values.windowWidth / 2,
+        y: this.registry.values.windowHeight / 2,
         text: '0%',
         style: {
             fontSize: '18px',
@@ -39,8 +39,8 @@ class PreloadingScene extends Phaser.Scene {
     percentText.setOrigin(0.5, 0.5);
     
     var assetText = this.make.text({
-        x: WINDOW_WIDTH / 2,
-        y: WINDOW_HEIGHT * 0.75,
+        x: this.registry.values.windowWidth / 2,
+        y: this.registry.values.windowHeight * 0.75,
         text: '',
         style: {
             fontSize: '18px',
@@ -70,7 +70,7 @@ class PreloadingScene extends Phaser.Scene {
     });
     
 
-    // TODO: testing the loading screen
+    // TODO: stressing the loading screen
     // for (var i = 0; i < 500; i++) {
     //   this.load.image('logo'+i, 'assets/images/sprites/test.png');
     // }
@@ -78,15 +78,20 @@ class PreloadingScene extends Phaser.Scene {
     // Tilesets and Tilemaps
     this.load.tilemapTiledJSON('farm', 'assets/tilemaps/farm.json');
     this.load.tilemapTiledJSON('village', 'assets/tilemaps/village.json');
+    this.load.tilemapTiledJSON('barns', 'assets/tilemaps/barns.json');
 
     this.load.image('overworld', 'assets/images/tilesets/!CL_DEMO.png');
     this.load.image('village', 'assets/images/tilesets/village.png');
+    this.load.image('interior', 'assets/images/tilesets/tileset_16x16_interior.png');
+    this.load.image('barnInterior', 'assets/images/tilesets/farm_interior.png');
 
     // store data that indicates which tilesets belong to which tilemap
+    // tilemap key : image key
     this.registry.merge({
       tilemapImages: {
         farm: 'overworld',
-        village: 'village'
+        village: 'village',
+        barns: 'barnInterior'
       }
     });
 
@@ -103,16 +108,13 @@ class PreloadingScene extends Phaser.Scene {
     this.load.image('player-shadow', 'assets/images/sprites/shadow.png');
     this.load.image('water-droplet', 'assets/images/sprites/water-droplet.png');
 
-    // this.load.image('testy-tile', 'assets/images/sprites/testy.png')
-    //   .on('filecomplete', file => { console.log(file + ' loaded successfully.')})
-    //   .on('loaderror', file => { console.error('failed to load ' + file)});
-
     this.load.image('test-tile', 'assets/images/sprites/test.png');
 
     let spritesheetList = [
       { key: 'player', file: 'sprites/farmer_own_24.png', w: 24, h: 32 },
       { key: 'npc-man-1', file: 'sprites/npc_man_1.png', w: 24, h: 32 },
       { key: 'npc-woman-1', file: 'sprites/npc_woman_1.png', w: 24, h: 32 },
+      { key: 'pig', file: 'sprites/pig.png', w: 24, h: 24 },
       { key: 'crops', file: 'sprites/crops_test.png', w: 16, h: 32 },
       { key: 'seeds', file: 'sprites/seed_packs.png', w: 16, h: 16 },
       { key: 'leaf-particles', file: 'sprites/leaf_particles.png', w: 16, h: 16 },

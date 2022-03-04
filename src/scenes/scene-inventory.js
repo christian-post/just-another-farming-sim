@@ -1,9 +1,12 @@
-class InventoryManager extends Phaser.Scene {
+import * as Utils from '../utils.js';
+import { showMessage } from '../user-interface.js';
+
+export class InventoryManager extends Phaser.Scene {
   create() {
     // add reference to game manager
     this.manager = this.scene.get('GameManager');
 
-    this.keys = addKeysToScene(this, this.manager.keyMapping);
+    this.keys = Utils.addKeysToScene(this, this.manager.keyMapping);
 
     // TODO: placeholders, change to pixel art
 
@@ -200,7 +203,7 @@ class InventoryManager extends Phaser.Scene {
       this.inventoryText.setText(string);
     });
 
-    this.events.on('itemEquipped', button => {
+    this.manager.events.on('itemEquipped', button => {
       // check if an item is already there
       if (this.itemSelectedSprites[button]) {
         this.itemSelectedSprites[button].destroy();
@@ -231,7 +234,7 @@ class InventoryManager extends Phaser.Scene {
       }
     });
 
-    this.events.on('itemConsumed', (item, button) => {
+    this.manager.events.on('itemConsumed', (item, button) => {
       // fires if a non-unique item is used
       item.quantity -= 1;
       if (item.quantity > 0) {
@@ -291,16 +294,22 @@ class InventoryManager extends Phaser.Scene {
     });
 
     // debugging
-    if (DEBUG) {
-      this.fpsInfo = this.add.text(
-        2, 2, '', 
-      { fontSize: '18px', fill: '#f00', stroke: '#f00', strokeThickness: 1 }
-      );
-    }
+    this.fpsInfo = this.add.text(
+      2, 2, '', 
+    { fontSize: '18px', fill: '#f00', stroke: '#f00', strokeThickness: 1 }
+    )
+      .setVisible(false)
+      .setDataEnabled(true);
+
+    this.registry.events.on('changedata', (_, key, value) => {
+      if (key === 'debug') {
+        this.fpsInfo.setVisible(value);
+      }
+    });
   }
 
   update() {
-    if (DEBUG) {
+    if (this.registry.values.debug) {
       this.fpsInfo.setText(this.game.loop.actualFps.toFixed(0));
     }
   }
@@ -347,7 +356,7 @@ class InventoryManager extends Phaser.Scene {
     // quantity is a modifier for the original item data quantity
     if (typeof itemToAdd === 'undefined') { console.warn('Item is undefined'); }
 
-    itemToAdd = deepcopy(itemToAdd);
+    itemToAdd = Utils.deepcopy(itemToAdd);
 
     if (quantity) {
       itemToAdd.quantity = quantity;
@@ -381,7 +390,7 @@ class InventoryManager extends Phaser.Scene {
           this.inventory[index] = itemToAdd;
         } else {
           // add 255 of the item to this slot
-          let newItem = deepcopy(itemToAdd);
+          let newItem = Utils.deepcopy(itemToAdd);
           newItem.quantity = this.itemMaxQuantity;
           this.inventory[index] = newItem;
 
@@ -403,7 +412,7 @@ class InventoryManager extends Phaser.Scene {
   equipItem(inventoryIndex, button) {
     // TODO: is an "event" necessary because this isn't communicated between scenes...
     this.itemSelected[button] = inventoryIndex;
-    this.events.emit('itemEquipped', button);
+    this.manager.events.emit('itemEquipped', button);
   }
 
   removeItem(button) {
@@ -440,7 +449,7 @@ class InventoryManager extends Phaser.Scene {
 }
 
 
-class InventoryDisplay extends Phaser.Scene {
+export class InventoryDisplay extends Phaser.Scene {
   /*
   this scene is responsible for handling the display of the main inventory
   that shows up when  the player presses the "I" key
@@ -531,10 +540,10 @@ class InventoryDisplay extends Phaser.Scene {
 
   update(time, delta) {
     // move the cursor
-    let dir = getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+    let dir = Utils.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
 
     if (dir.x !== 0 || dir.y !== 0) {
-      let increment = convertIndexTo1D(dir.x, dir.y, this.inventoryDimensions.w);
+      let increment = Utils.convertIndexTo1D(dir.x, dir.y, this.inventoryDimensions.w);
       this.currentIndex = (this.currentIndex + increment) % this.scene.get('InventoryManager').inventorySize;
       // wrap around
       if (this.currentIndex < 0) {
@@ -662,7 +671,7 @@ class InventoryDisplay extends Phaser.Scene {
 
     this.addToSidebar(moneyInformation);
 
-    if (DEBUG) {
+    if (this.registry.values.debug) {
       let bounds = moneyInformation.getBounds();
       bounds.x = moneyInformation.x;
       bounds.y = moneyInformation.y;
@@ -678,7 +687,7 @@ class InventoryDisplay extends Phaser.Scene {
 
   itemPositionFromIndex(index) {
     // returns the 2D position on the inventory for a given index
-    let pos = convertIndexTo2D(index, this.inventoryDimensions.w);
+    let pos = Utils.convertIndexTo2D(index, this.inventoryDimensions.w);
     let x = this.background.getTopLeft().x + pos.x * this.cellSize.w + this.cellSize.w / 2;
     let y = this.background.getTopLeft().y + pos.y * this.cellSize.h + this.cellSize.h / 2;
     return { x: x, y: y };
@@ -686,7 +695,7 @@ class InventoryDisplay extends Phaser.Scene {
 }
 
 
-class ShopDisplay extends Phaser.Scene {
+export class ShopDisplay extends Phaser.Scene {
   /*
   TODO docstring
   scene where you buy stuff
@@ -830,10 +839,10 @@ class ShopDisplay extends Phaser.Scene {
     // add the items
     // "data.items" is an array of keys that corresponds to objects in items.json
     if (this.type === 'buy') {
-      let itemData = deepcopy(this.cache.json.get('itemData'));
+      let itemData = Utils.deepcopy(this.cache.json.get('itemData'));
 
       this.data.items.forEach((key, index) => {
-        let item = getNestedKey(itemData, key);
+        let item = Utils.getNestedKey(itemData, key);
         let itemPos = this.itemPositionFromIndex(index);
   
         let img = this.add.image(itemPos.x, itemPos.y, item.spritesheet, item.frame)
@@ -897,7 +906,7 @@ class ShopDisplay extends Phaser.Scene {
 
   itemPositionFromIndex(index) {
     // returns the 2D position on the inventory for a given index
-    let pos = convertIndexTo2D(index, this.inventoryDimensions.w);
+    let pos = Utils.convertIndexTo2D(index, this.inventoryDimensions.w);
     let x = this.background.getTopLeft().x + pos.x * this.cellSize.w + this.cellSize.w / 2;
     let y = this.background.getTopLeft().y + pos.y * this.cellSize.h + this.cellSize.h / 2;
     return {x: x, y: y};
@@ -930,10 +939,10 @@ class ShopDisplay extends Phaser.Scene {
 
   update(time, delta) {
     // move the cursor
-    let dir = getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+    let dir = Utils.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
 
     if (dir.x !== 0 || dir.y !== 0) {
-      let increment = convertIndexTo1D(dir.x, dir.y, this.inventoryDimensions.w);
+      let increment = Utils.convertIndexTo1D(dir.x, dir.y, this.inventoryDimensions.w);
       this.currentIndex = (this.currentIndex + increment) % this.inventorySize;
       // wrap around
       if (this.currentIndex < 0) {

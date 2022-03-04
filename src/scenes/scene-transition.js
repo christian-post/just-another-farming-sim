@@ -1,4 +1,4 @@
-class TransitionScene extends Phaser.Scene {
+export class TransitionScene extends Phaser.Scene {
   create(data) {
     if (typeof data.sceneFrom === 'string') {
       this.sceneFrom = this.scene.get(data.sceneFrom);

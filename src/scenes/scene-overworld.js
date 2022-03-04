@@ -1,4 +1,9 @@
-class OverworldScene extends Phaser.Scene {
+import { Player, NPC, Vendor } from '../sprites.js';
+import { WeatherDisplayManager } from './scene-weather.js';
+import { DialogueTrigger, TeleportTrigger, SoilPatch } from '../game-objects.js';
+import * as Utils from '../utils.js';
+
+export class OverworldScene extends Phaser.Scene {
   // Parent class for all overworld (in-game) scenes
   create(config) {
     // reference to the game manager scene
@@ -35,6 +40,9 @@ class OverworldScene extends Phaser.Scene {
     // sprites that move around and should change their depth based on their y-position
     this.depthSortedSprites = this.add.layer();
     this.depthSortedSprites.setDepth(this.depthValues.sprites);
+
+    // TODO: remove, just for testing
+    this.testGroup = this.add.group();
 
     // create the Player sprite for this scene
     this.player = new Player(this, 0, 0);
@@ -76,21 +84,35 @@ class OverworldScene extends Phaser.Scene {
     this.manager.checkForGamepad(this);
 
     // weather manager object
-    this.weatherDisplayManager = new WeatherDisplayManager(this);
+    this.WeatherDisplayManager = new WeatherDisplayManager(this);
     this.hasWeather = false;
 
-    // visual overlays for debugging
-    if (DEBUG) {
-      this.events.on('create', ()=> {
-        this.add.grid(
-          0, 0, this.mapLayers.layer1.width, this.mapLayers.layer1.height, 
-          this.registry.values.tileSize, this.registry.values.tileSize, null, null, 0x333333, 0.25
-          ).setOrigin(0);
+
+    // #### visual overlays for debugging  ######################################
+
+    this.events.on('create', ()=> {
+      let grid = this.add.grid(
+        0, 0, this.mapLayers.layer1.width, this.mapLayers.layer1.height, 
+        this.registry.values.tileSize, this.registry.values.tileSize, null, null, 0x333333, 0.25
+      )
+        .setOrigin(0)
+        .setVisible(this.registry.value.debug);
   
-        debugDraw(this.mapLayers.layer2, this);
-        debugDraw(this.mapLayers.layer1, this);
+      this.debugGfx = [
+        Utils.debugDraw(this.mapLayers.layer0, this, this.registry.value.debug),
+        Utils.debugDraw(this.mapLayers.layer1, this, this.registry.value.debug),
+        Utils.debugDraw(this.mapLayers.layer2, this, this.registry.value.debug)
+      ];
+  
+      this.registry.events.on('changedata', (_, key, value) => {
+        if (key === 'debug') {
+          this.debugGfx.forEach(gfx => {
+            gfx.setVisible(value);
+          });
+          grid.setVisible(value);
+        }
       });
-    }
+    });
   }
 
   makeTilemap(mapKey, numLayers, collisionLayers, layersDrawnAbove) {
@@ -103,6 +125,8 @@ class OverworldScene extends Phaser.Scene {
 
     this.currentMap = this.make.tilemap({ key: mapKey });
     const tileset = this.currentMap.addTilesetImage(this.registry.values.tilemapImages[mapKey]);
+
+    console.log(mapKey, this.registry.values.tilemapImages[mapKey])
 
     this.currentMapKey = mapKey;
 
@@ -185,7 +209,7 @@ class OverworldScene extends Phaser.Scene {
 
   addPathfinding() {
     // adds the Easystar pathfinding to this overworld scene
-    this.pathfinder = new EasyStar.js();
+    this.pathfinder = new EasyStar.js();   // TODO module import
     this.pathfinder.setGrid(this.getTilemapCollisionArray('layer1'));
     this.pathfinder.setAcceptableTiles([false]);
   }
@@ -292,13 +316,13 @@ class OverworldScene extends Phaser.Scene {
     });
 
     if (this.hasWeather) {
-      this.weatherDisplayManager.update(delta);
+      this.WeatherDisplayManager.update(delta);
     }
   }
 }
 
 
-class FarmScene extends OverworldScene {
+export class FarmScene extends OverworldScene {
   create(config) {
     super.create(config);
 
@@ -386,13 +410,13 @@ class FarmScene extends OverworldScene {
 
     // Start the background music
     this.manager.playMusic('overworld');
-
+    
   }
 
 
   isArable(x, y) {
     // helper function, might delete
-    let patch = this.arableMap[convertIndexTo1D(x, y, this.currentMap.width)];
+    let patch = this.arableMap[Utils.convertIndexTo1D(x, y, this.currentMap.width)];
     return patch !== undefined && patch !== null;
   }
 
@@ -467,7 +491,7 @@ class FarmScene extends OverworldScene {
         let indexX = acreStartX + x;
         let indexY = acreStartY + y;
 
-        let index = convertIndexTo1D(indexX, indexY, this.currentMap.width);
+        let index = Utils.convertIndexTo1D(indexX, indexY, this.currentMap.width);
         this.createSoilPatch(index, indexX, indexY);
       }
     }
@@ -485,7 +509,7 @@ class FarmScene extends OverworldScene {
   }
 }
 
-class VillageScene extends OverworldScene {
+export class VillageScene extends OverworldScene {
   create(config) {
     super.create(config);
 
@@ -509,5 +533,26 @@ class VillageScene extends OverworldScene {
   update(time, delta) {
     super.update(time, delta);
     this.updateLightcones();
+  }
+}
+
+
+export class BarnInteriorScene extends OverworldScene {
+  create(config) {
+    super.create(config);
+
+    this.hasWeather = false;
+    
+    // physics callback for collectible items
+    this.physics.add.overlap(this.player, this.collectibles, (player, collectible)=> {
+      collectible.collect();
+    }); 
+
+    this.makeTilemap('barns', 3, ['layer0', 'layer1'], ['layer2']);
+    this.setupCamera();
+  }
+
+  update(time, delta) {
+    super.update(time, delta);
   }
 }

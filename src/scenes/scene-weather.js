@@ -1,4 +1,7 @@
-class WeatherManager {
+import * as Utils from '../utils.js';
+
+
+export class WeatherManager {
   constructor(scene) {
     this.scene = scene;
 
@@ -34,15 +37,13 @@ class WeatherManager {
 
       // add a new day of forecast
       this.forecast.push(this.makeForecast());
-
-      console.log(this.forecast);
     });
   }
 
 
   makeForecast() {
     return {
-      rain: Math.random() < 1 ? true : false,
+      rain: Math.random() < 0.4 ? true : false,
       storm: Math.random() < 0.1 ? true : false
     };
   }
@@ -77,7 +78,7 @@ class WeatherManager {
 
 
 
-class WeatherDisplayManager {
+export class WeatherDisplayManager {
   // responsible for displaying the weather effects, part of each overworld Scene
   constructor(scene) {
     this.scene = scene;
@@ -104,17 +105,22 @@ class WeatherDisplayManager {
 
     // fog effect
     this.fog = this.scene.add.graphics();
-    let color = 0xaaaacc;
-    this.fog.fillGradientStyle(color, color, color, color, 0.8, 0.8, 0, 0);
-    this.fog.fillRect(-10, -10, this.scene.registry.values.windowWidth + 20, this.scene.registry.values.windowHeight + 20);
+    let color = 0x666688;
+    this.fog.fillGradientStyle(color, color, color, color, 0.9, 0.9, 0.2, 0.2);
+    this.fog.fillRect(-2, -2, this.scene.registry.values.windowWidth + 4, this.scene.registry.values.windowHeight + 4);
     this.fog.setDepth(10);
     this.fog.setVisible(false);
     this.fog.setAlpha(0);
 
+    // exclude from camera
+    this.fog.setScrollFactor(0);
+
 
     // kill all effects etc on scene change
     this.scene.events.on('sleep', scene => {
-      this.rainEffects.clear(true, true);
+      if (this.rainEffects.children) {
+        this.rainEffects.clear(true, true);
+      }
     });
 
     this.gameManager.events.on('startRaining', ()=> {
@@ -131,8 +137,8 @@ class WeatherDisplayManager {
       this.raindropTimer += delta;
 
       // change fog effect visibility
-      let cam = this.scene.cameras.main;
-      this.fog.setPosition(cam.worldView.x, cam.worldView.y);
+      // let cam = this.scene.cameras.main;
+      // this.fog.setPosition(cam.worldView.x, cam.worldView.y);
       this.fog.setAlpha(Math.min(1, this.gameManager.weatherManager.rainIntensity));
 
       // assert that fog is visible (could have been skipped due to scene change)
@@ -187,7 +193,7 @@ class RainDroplet extends Phaser.GameObjects.GameObject {
     
     let lowerY = this.scene.cameras.main.worldView.y - this.manager.bounds.top;
     let upperY = this.scene.cameras.main.worldView.y + this.scene.cameras.main.worldView.height + this.manager.bounds.bottom;
-    this.alpha = map(y, lowerY, upperY, 0.2, 1);
+    this.alpha = Utils.map(y, lowerY, upperY, 0.2, 1);
   }
 
   update(time, delta) {

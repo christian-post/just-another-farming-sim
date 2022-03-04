@@ -1,3 +1,11 @@
+import { DialogueScene, GenericMenu } from './user-interface.js';
+import { InventoryManager, InventoryDisplay, ShopDisplay } from './scenes/scene-inventory.js';
+import { FarmScene, VillageScene, BarnInteriorScene } from './scenes/scene-overworld.js';
+import { PreloadingScene } from './scenes/scene-preload.js';
+import { TitleScene } from './scenes/scene-title.js';
+import { TransitionScene } from './scenes/scene-transition.js';
+import { GameManager } from './scenes/scene-manager.js';
+
 const WINDOW_WIDTH = 426;
 const WINDOW_HEIGHT = 240;
 
@@ -8,10 +16,7 @@ const COLOR_BACKGROUND = 0x006022;
 const DEBUG = false;
 const SCENEWATCHER = true;
 
-// RexUI Plugin File path
-// URL_REXUI = 'plugins/rexuiplugin.js'
-URL_REXUI = 'plugins/rexuiplugin.min.js'
-URL_SCENEWATCHER = 'plugins/phaser-plugin-scene-watcher.umd.js'
+const URL_SCENEWATCHER = 'plugins/phaser-plugin-scene-watcher.umd.js'
 
 
 let config = {
@@ -59,6 +64,8 @@ const game = new Phaser.Game(config);
 // additional configuration to be added to the game registry
 game.registry.merge({
   // technical settings
+  rexui_url: 'plugins/rexuiplugin.min.js',
+  debug: DEBUG,
   windowWidth: WINDOW_WIDTH,
   windowHeight: WINDOW_HEIGHT,
   tileSize: 16,
@@ -67,13 +74,13 @@ game.registry.merge({
   globalSoundeffectsVolume: 0.5,
   globalFontFamily: 'Verdana',
   // in-game settings
-  // ingameTimeSpeed: 10000,  // in-game seconds per real-time second
+  // ingameTimeSpeed: 1000,  // in-game seconds per real-time second
   ingameTimeSpeed: 60,  // in-game seconds per real-time second
   startingDaytime: {
     hour: 12,
     minutes: 0
   },
-  playerStaminaRechargeRate: 25,
+  playerStaminaRechargeRate: 50,  // how much stamina is refilled
   playerStaminaRechargeDelay: 10,  // ingame minutes until stamina is refilled by the given amount
   startingMoney: 2000,
   startingMaxStamina: 100,
@@ -88,6 +95,7 @@ game.scene.add('Title', TitleScene, false);
 // In Game scenes
 game.scene.add('FarmScene', FarmScene, false);
 game.scene.add('VillageScene', VillageScene, false);
+game.scene.add('BarnInteriorScene', BarnInteriorScene, false);
 
 game.scene.add('InventoryManager', InventoryManager, false); 
 game.scene.add('InventoryDisplay', InventoryDisplay, false);

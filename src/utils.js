@@ -5,16 +5,16 @@
 
 // ------------ Math stuff -------------------- //
 
-const map = function(value, low1, high1, low2, high2) {
+export const map = function(value, low1, high1, low2, high2) {
   return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
 }
 
-const choose = function(choices){
+export const choose = function(choices){
   var index = Math.floor(Math.random() * choices.length);
   return choices[index];
 }
 
-const chooseWeighted = function(choices, weights) {
+export const chooseWeighted = function(choices, weights) {
   // https://blobfolio.com/2019/randomizing-weighted-choices-in-javascript/
 
   if (choices.length != weights.length) {
@@ -53,22 +53,22 @@ const _boxMullerTransform = function() {
 }
 
 
-const getNormallyDistributedRandomNumber = function(mean, stddev) {
+export const getNormallyDistributedRandomNumber = function(mean, stddev) {
   const { z0, _ } = _boxMullerTransform();
   return z0 * stddev + mean;
 }
 
 
-const isNumeric = function(n) { 
+export const isNumeric = function(n) { 
   return !isNaN(parseFloat(n)) && isFinite(n); 
 }
 
-const convertIndexTo1D = function(x, y, width) {
+export const convertIndexTo1D = function(x, y, width) {
   // converts a 2D index to 1D
   return x + y * width;
 }
 
-const convertIndexTo2D = function(index, width) {
+export const convertIndexTo2D = function(index, width) {
   // converts a 1D index to 2D
   return {x: index % width, y: parseInt(index / width)};
 }
@@ -76,7 +76,7 @@ const convertIndexTo2D = function(index, width) {
 
 // // -------------- Formatting ------------------------------------ //
 
-const toUTF16 = function(codePoint) {
+export const toUTF16 = function(codePoint) {
   // converts unicode code points (hex values) to utf-16 surrogate pairs
   // used for emojis etc.
   // http://www.2ality.com/2013/09/javascript-unicode.html
@@ -100,44 +100,49 @@ const toUTF16 = function(codePoint) {
 }
 
 
-const hexColor = function(number) {
+export const hexColor = function(number) {
   // takes a Number and converts it to a hexadecimal color string
   // e.g. 7970919 becomes '#79a067'
   return '#' + parseInt(number).toString(16);
 }
 
 
-// // -------------- Monkey patches -------------------------------- //
+// // -------------- Monkey patch -------------------------------- //
 
-String.prototype.format = function() {
-  // string formatting similar to pythons str.format
-  // usage: '{0} {1}'.format('hello', 'world')
-  // CAUTION: much slower than ES6 template strings, use only when absolutely necessary
-  a = this;
-  for (k in arguments) {
-    a = a.replace("{" + k + "}", arguments[k])
-  }
-  return a
-}
+// String.prototype.format = function() {
+//   // string formatting similar to pythons str.format
+//   // usage: '{0} {1}'.format('hello', 'world')
+//   // CAUTION: much slower than ES6 template strings, use only when absolutely necessary
+//   a = this;
+//   for (k in arguments) {
+//     a = a.replace("{" + k + "}", arguments[k])
+//   }
+//   return a
+// }
 
-const sumArray = function(array) {
+export const sumArray = function(array) {
   return array.reduce((a, b) => { return a + b }, 0);
 }
 
 
-const debugDraw = (layer, scene) => {
+export const debugDraw = (layer, scene, visible=true) => {
   // https://github.com/ourcade/phaser3-dungeon-crawler-starter/blob/master/src/utils/debug.ts
   // add to create() after the map layer
-	const debugGraphics = scene.add.graphics().setAlpha(0.7)
+	const debugGraphics = scene.add.graphics()
+    .setAlpha(0.5)
+    .setVisible(visible);
+
 	layer.renderDebug(debugGraphics, {
 		tileColor: null,
 		collidingTileColor: new Phaser.Display.Color(243, 234, 48, 255),
-		faceColor: new Phaser.Display.Color(40, 39, 37, 255)
-	})
+		faceColor: new Phaser.Display.Color(255, 0, 0, 255)
+	});
+
+  return debugGraphics;
 }
 
 
-const checkCollisionGroup = function(object, groupArray) {
+export const checkCollisionGroup = function(object, groupArray) {
   let collisions = [];
   groupArray.forEach(child => {
     let rect1 = object.getBounds();
@@ -151,7 +156,7 @@ const checkCollisionGroup = function(object, groupArray) {
 }
 
 
-const getNestedKey = function(json, key) {
+export const getNestedKey = function(json, key) {
   const [k, ...rest] = key instanceof Array ? key : key.split('.');
   if(rest.length === 0 || typeof json[k] === 'undefined' || json[k] === null)
     return json[k];
@@ -159,35 +164,7 @@ const getNestedKey = function(json, key) {
 }
 
 
-const getAvgColor = function(scene, key, frame=null) {
-  let texture = scene.textures.getFrame(key, frame);
-  let sumRed = 0;
-  let sumGreen = 0;
-  let sumBlue = 0;
-
-  let pixelCount = 0;  // doesn't count fully transparent pixels
-
-  for (let i = 0; i < texture.width; i++) {
-    for (let j = 0; j < texture.height; j++) {
-      let color = scene.textures.getPixel(i, j, key, frame);
-      // console.log(color.red, color.green, color.blue, color.alpha);
-      if (color.alpha > 0) {
-        sumRed += Math.pow(color.red, 2);
-        sumGreen += Math.pow(color.green, 2);
-        sumBlue += Math.pow(color.blue, 2);
-        pixelCount++;
-      }
-    }
-  }
-  return new Phaser.Display.Color(
-    parseInt(Math.sqrt(sumRed / pixelCount)),
-    parseInt(Math.sqrt(sumGreen / pixelCount)),
-    parseInt(Math.sqrt(sumBlue / pixelCount)),
-    255
-  );
-}
-
-const getAvgColorButFaster = function(scene, key, frame=null) {
+export const getAvgColor = function(scene, key, frame=null) {
   const { width, height } = scene.textures.getFrame(key, frame);
   let newTexture = scene.textures.createCanvas(key + '-new', width, height);
   newTexture.drawFrame(key, frame);
@@ -223,7 +200,7 @@ const getAvgColorButFaster = function(scene, key, frame=null) {
 }
 
 
-const deepcopy = function(object) {
+export const deepcopy = function(object) {
   return JSON.parse(JSON.stringify(object));
 }
 
@@ -231,7 +208,7 @@ const deepcopy = function(object) {
 var DELAYTIMER = 100;   // TODO: temporary solution!!
 
 
-const getCursorDirections = function(scene, delay=null, delta) {
+export const getCursorDirections = function(scene, delay=null, delta) {
 
   if (!scene.manager.hasControl) { 
     // return { x: 0, y: 0 }; 
@@ -277,7 +254,7 @@ const getCursorDirections = function(scene, delay=null, delta) {
 }
 
 
-const addKeysToScene = function(scene, keyMapping) {
+export const addKeysToScene = function(scene, keyMapping) {
   let keys = {};
   for (const key in keyMapping) {
     keys[key] = scene.input.keyboard.addKey(keyMapping[key]);
@@ -286,7 +263,7 @@ const addKeysToScene = function(scene, keyMapping) {
 }
 
 
-const vec2 = function(x, y) {
+export const vec2 = function(x, y) {
   // wrapper for Vector2, because less typing ;)
   if (typeof x === 'object') {
     return new Phaser.Math.Vector2(x.x, x.y);
@@ -296,7 +273,7 @@ const vec2 = function(x, y) {
 }
 
 
-const simplifyPath = function(path) {
+export const simplifyPath = function(path) {
   // reduceds an array of Vector2s to the corner points
   // e.g.
   /*
@@ -336,7 +313,7 @@ const simplifyPath = function(path) {
 }
 
 
-const drawDebugPath = function(scene, path) {
+export const drawDebugPath = function(scene, path) {
   let graphics = scene.add.graphics();
   let tilesize = scene.registry.values.tileSize;
 
@@ -354,7 +331,7 @@ const drawDebugPath = function(scene, path) {
 }
 
 
-const getScreenPoint = function(camera, x, y) {
+export const getScreenPoint = function(camera, x, y) {
   // translates a position from world to screen coordinates
   let cameraView = camera.worldView;
   let screenX = (x - cameraView.x) * camera.zoom;

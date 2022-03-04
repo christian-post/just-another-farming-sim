@@ -1,9 +1,11 @@
-class DialogueScene extends Phaser.Scene {
+import * as Utils from './utils.js';
+
+export class DialogueScene extends Phaser.Scene {
   preload() {
     // Rex UI
     this.load.scenePlugin({
       key: 'rexuiplugin',
-      url: URL_REXUI,
+      url: this.registry.values.rexui_url,
       sceneKey: 'rexUI'
     });
   }
@@ -12,16 +14,16 @@ class DialogueScene extends Phaser.Scene {
     this.manager = this.scene.get('GameManager');
     this.data = data;
 
-    this.keys = addKeysToScene(this, this.manager.keyMapping);
+    this.keys = Utils.addKeysToScene(this, this.manager.keyMapping);
 
     this.manager.checkForGamepad(this);  
 
     let json = this.cache.json.get('dialogue');
-    let messageText = getNestedKey(json, data.key);
+    let messageText = Utils.getNestedKey(json, data.key);
   
     if (!messageText) {
       console.log(`No matching text for "${data.key}"`);
-      messageText = getNestedKey(json, 'error');
+      messageText = Utils.getNestedKey(json, 'error');
     }
 
     // format message text
@@ -30,7 +32,7 @@ class DialogueScene extends Phaser.Scene {
     this.options = [];
     // if data has options, format and store that
     if (data.options.callbacks.length > 0) {
-      let optionTexts = getNestedKey(json, data.options.key);
+      let optionTexts = Utils.getNestedKey(json, data.options.key);
       optionTexts.forEach((text, index) => {
         this.options[index] = {
           text: formatProperties(data.object, text),
@@ -124,7 +126,7 @@ class DialogueScene extends Phaser.Scene {
   update(time, delta) {
     if (this.cursor) {
       // move the cursor if the dialogue has options
-      let dir = getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+      let dir = Utils.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
       if (dir.x !== 0) {
         if (dir.x > 0) {
           this.currentOptionIndex = (this.currentOptionIndex + 1) % this.options.length;
@@ -193,7 +195,7 @@ const GetBBcodeText = function(scene, wrapWidth, fixedWidth, fixedHeight, fontSi
   })
 }
 
-const showMessage = function(currentScene, key, object=null, onEndCallback=null, options=null) {
+export const showMessage = function(currentScene, key, object=null, onEndCallback=null, options=null) {
   // helper function that pauses the current scene and starts the dialogue scene with the give key
   // if another dialogue is running, quit that
   currentScene.scene.pause(currentScene.scene.key);
@@ -230,19 +232,19 @@ const formatProperties = function(object, string) {
 
   matches.forEach(elem => {
     let key = elem.replaceAll(/\{|\}/g, '');
-    string = string.replace(elem, getNestedKey(object, key));
+    string = string.replace(elem, Utils.getNestedKey(object, key));
   });
 
   return string;
 }
 
 
-class GenericMenu extends Phaser.Scene {
+export class GenericMenu extends Phaser.Scene {
   preload() {
     // Rex UI
     this.load.scenePlugin({
       key: 'rexuiplugin',
-      url: URL_REXUI,
+      url: this.registry.values.rexui_url,
       sceneKey: 'rexUI'
     });
   }
@@ -307,7 +309,7 @@ class GenericMenu extends Phaser.Scene {
     ).setOrigin(1, 0.5);
 
     // Button configuration
-    this.keys = addKeysToScene(this, this.manager.keyMapping);
+    this.keys = Utils.addKeysToScene(this, this.manager.keyMapping);
     this.manager.checkForGamepad(this);
 
     this.buttonCallbacks = {
@@ -347,7 +349,7 @@ class GenericMenu extends Phaser.Scene {
   update(time, delta) {
     if (this.cursor) {
       // move the cursor
-      let dir = getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+      let dir = Utils.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
       if (dir.y !== 0) {
         if (dir.y > 0) {
           this.currentOptionIndex = (this.currentOptionIndex + 1) % this.options.length;

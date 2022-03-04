@@ -1,4 +1,10 @@
-class DialogueTrigger extends Phaser.GameObjects.Rectangle {
+import { showMessage } from './user-interface.js';
+import * as Utils from './utils.js';
+import { callbacks } from './callbacks.js';
+import { Crop } from './sprites.js';
+
+
+export class DialogueTrigger extends Phaser.GameObjects.Rectangle {
   constructor(scene, x, y, width, height, dialogueKey, options=null, optionsAreCallbacks){
     // TODO: color and alpha only for testing
     super(scene, x, y, width, height);
@@ -10,7 +16,7 @@ class DialogueTrigger extends Phaser.GameObjects.Rectangle {
 
     this.interactionButtonText = 'read';
 
-    if (DEBUG) {
+    if (this.scene.registry.values.debug) {
       this.setFillStyle(0xff0000, 0.3);
     }
 
@@ -27,7 +33,7 @@ class DialogueTrigger extends Phaser.GameObjects.Rectangle {
       // TODO: grab callbacks from js file
       if (optionsAreCallbacks) {
         options.forEach(option => {
-          let callback = getNestedKey(CALLBACKS, option);
+          let callback = Utils.getNestedKey(callbacks, option);
             this.optionsCallbacks.push(
               callback ? ()=> { callback(this.scene) } : ()=>{}
             );
@@ -50,7 +56,7 @@ class DialogueTrigger extends Phaser.GameObjects.Rectangle {
   }
 }
 
-class TeleportTrigger extends Phaser.GameObjects.Rectangle {
+export class TeleportTrigger extends Phaser.GameObjects.Rectangle {
   constructor(scene, x, y, width, height, targetScene, playerX, playerY){
     super(scene, x, y, width, height);
     this.scene.add.existing(this);
@@ -58,7 +64,7 @@ class TeleportTrigger extends Phaser.GameObjects.Rectangle {
     this.scene.physics.add.existing(this);
     this.setOrigin(0);
 
-    if (DEBUG) {
+    if (this.scene.registry.values.debug) {
       this.setFillStyle(0xff0000, 0.3);
     }
 
@@ -78,7 +84,7 @@ class TeleportTrigger extends Phaser.GameObjects.Rectangle {
 }
 
 
-class SoilPatch extends Phaser.GameObjects.Rectangle {
+export class SoilPatch extends Phaser.GameObjects.Rectangle {
   constructor(scene, x, y, index) {
     super(scene, x, y, scene.registry.values.tileSize, scene.registry.values.tileSize);
     this.scene.add.existing(this);
