@@ -16,6 +16,8 @@ const COLOR_BACKGROUND = 0x006022;
 const DEBUG = false;
 const SCENEWATCHER = true;
 
+const URL_SCENEWATCHER = 'plugins/phaser-plugin-scene-watcher.umd.js'
+
 
 let config = {
   type: Phaser.AUTO,

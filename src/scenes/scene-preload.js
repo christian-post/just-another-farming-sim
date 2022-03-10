@@ -17,35 +17,35 @@ export class PreloadingScene extends Phaser.Scene {
     progressBox.fillRect(rectX, rectY, rectWidth, rectHeight);
 
     var loadingText = this.make.text({
-        x: this.registry.values.windowWidth / 2,
-        y: this.registry.values.windowHeight / 4,
-        text: 'Loading...',
-        style: {
-            fontSize: '20px',
-            fill: '#ffffff'
-        }
+      x: this.registry.values.windowWidth / 2,
+      y: this.registry.values.windowHeight / 4,
+      text: 'Loading...',
+      style: {
+        fontSize: '20px',
+        fill: '#ffffff'
+      }
     });
     loadingText.setOrigin(0.5, 0.5);
     
     var percentText = this.make.text({
-        x: this.registry.values.windowWidth / 2,
-        y: this.registry.values.windowHeight / 2,
-        text: '0%',
-        style: {
-            fontSize: '18px',
-            fill: '#ffffff'
-        }
+      x: this.registry.values.windowWidth / 2,
+      y: this.registry.values.windowHeight / 2,
+      text: '0%',
+      style: {
+        fontSize: '18px',
+        fill: '#ffffff'
+      }
     });
     percentText.setOrigin(0.5, 0.5);
     
     var assetText = this.make.text({
-        x: this.registry.values.windowWidth / 2,
-        y: this.registry.values.windowHeight * 0.75,
-        text: '',
-        style: {
-            fontSize: '18px',
-            fill: '#ffffff'
-        }
+      x: this.registry.values.windowWidth / 2,
+      y: this.registry.values.windowHeight * 0.75,
+      text: '',
+      style: {
+        fontSize: '18px',
+        fill: '#ffffff'
+      }
     });
     assetText.setOrigin(0.5, 0.5);
 
@@ -79,10 +79,12 @@ export class PreloadingScene extends Phaser.Scene {
     this.load.tilemapTiledJSON('farm', 'assets/tilemaps/farm.json');
     this.load.tilemapTiledJSON('village', 'assets/tilemaps/village.json');
     this.load.tilemapTiledJSON('barns', 'assets/tilemaps/barns.json');
+    this.load.tilemapTiledJSON('houses', 'assets/tilemaps/houses.json');
 
     this.load.image('overworld', 'assets/images/tilesets/!CL_DEMO.png');
     this.load.image('village', 'assets/images/tilesets/village.png');
-    this.load.image('interior', 'assets/images/tilesets/tileset_16x16_interior.png');
+    this.load.image('villageNight', 'assets/images/tilesets/village_night.png');
+    this.load.image('houseInterior', 'assets/images/tilesets/tileset_16x16_interior.png');
     this.load.image('barnInterior', 'assets/images/tilesets/farm_interior.png');
 
     // store data that indicates which tilesets belong to which tilemap
@@ -91,7 +93,8 @@ export class PreloadingScene extends Phaser.Scene {
       tilemapImages: {
         farm: 'overworld',
         village: 'village',
-        barns: 'barnInterior'
+        barns: 'barnInterior',
+        houses: 'houseInterior'
       }
     });
 
@@ -107,6 +110,7 @@ export class PreloadingScene extends Phaser.Scene {
     this.load.image('lightcone-lamp', 'assets/images/sprites/lightcone_lamp.png');
     this.load.image('player-shadow', 'assets/images/sprites/shadow.png');
     this.load.image('water-droplet', 'assets/images/sprites/water-droplet.png');
+    this.load.image('staminaOverlay', 'assets/images/ui/stamina_overlay.png');
 
     this.load.image('test-tile', 'assets/images/sprites/test.png');
 

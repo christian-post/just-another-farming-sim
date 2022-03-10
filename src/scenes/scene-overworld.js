@@ -1,7 +1,8 @@
 import { Player, NPC, Vendor } from '../sprites.js';
 import { WeatherDisplayManager } from './scene-weather.js';
-import { DialogueTrigger, TeleportTrigger, SoilPatch } from '../game-objects.js';
+import { DialogueTrigger, TeleportTrigger, SoilPatch, InteractTrigger } from '../game-objects.js';
 import * as Utils from '../utils.js';
+
 
 export class OverworldScene extends Phaser.Scene {
   // Parent class for all overworld (in-game) scenes
@@ -24,6 +25,7 @@ export class OverworldScene extends Phaser.Scene {
 
     // groups that all game scenes have
     this.allSprites = this.add.group(); 
+    this.allSprites.runChildUpdate = true;
 
     // objects that trigger a dialogue
     this.interactables = this.add.group();
@@ -96,13 +98,15 @@ export class OverworldScene extends Phaser.Scene {
         this.registry.values.tileSize, this.registry.values.tileSize, null, null, 0x333333, 0.25
       )
         .setOrigin(0)
-        .setVisible(this.registry.value.debug);
+        .setVisible(this.registry.values.debug);
   
       this.debugGfx = [
-        Utils.debugDraw(this.mapLayers.layer0, this, this.registry.value.debug),
-        Utils.debugDraw(this.mapLayers.layer1, this, this.registry.value.debug),
-        Utils.debugDraw(this.mapLayers.layer2, this, this.registry.value.debug)
+        Utils.debugDraw(this.mapLayers.layer0, this, this.registry.values.debug),
+        Utils.debugDraw(this.mapLayers.layer1, this, this.registry.values.debug),
+        Utils.debugDraw(this.mapLayers.layer2, this, this.registry.values.debug)
       ];
+
+      let physicsDebugGfx = null;
   
       this.registry.events.on('changedata', (_, key, value) => {
         if (key === 'debug') {
@@ -110,12 +114,19 @@ export class OverworldScene extends Phaser.Scene {
             gfx.setVisible(value);
           });
           grid.setVisible(value);
+
+          this.physics.world.drawDebug = value;
+          if (value) {
+            physicsDebugGfx = this.physics.world.createDebugGraphic();
+          } else {
+            if (physicsDebugGfx) { physicsDebugGfx.destroy(); }
+          }
         }
       });
     });
   }
 
-  makeTilemap(mapKey, numLayers, collisionLayers, layersDrawnAbove) {
+  makeTilemap(mapKey, collisionLayers, layersDrawnAbove) {
     /* 
     mapKey: string -> tilemap key
     numLayers: int -> number of tile layers in Tilemap data
@@ -124,15 +135,13 @@ export class OverworldScene extends Phaser.Scene {
     */
 
     this.currentMap = this.make.tilemap({ key: mapKey });
-    const tileset = this.currentMap.addTilesetImage(this.registry.values.tilemapImages[mapKey]);
-
-    console.log(mapKey, this.registry.values.tilemapImages[mapKey])
+    this.currentTileset = this.currentMap.addTilesetImage(this.registry.values.tilemapImages[mapKey]);
 
     this.currentMapKey = mapKey;
 
     // create map layers
-    for (var i = 0; i < numLayers; i++) {
-      this.mapLayers[`layer${i}`] = this.currentMap.createLayer(`layer${i}`, tileset);
+    for (var i = 0; i < this.currentMap.layers.length; i++) {
+      this.mapLayers[`layer${i}`] = this.currentMap.createLayer(`layer${i}`, this.currentTileset);
     }
 
     // create collision
@@ -170,9 +179,14 @@ export class OverworldScene extends Phaser.Scene {
       case 'dialogue':
         let options = object.hasOptions ? JSON.parse(object.options) : null;
         let optionsAreCallbacks = object.optionsAreCallbacks ? true : false;
-        new DialogueTrigger(
+        let trigger = new DialogueTrigger(
           this, object.x, object.y, object.width, object.height, object.dialogueKey, options, optionsAreCallbacks
         );
+
+        if ('interactionText' in object) {
+          trigger.interactionButtonText = object.interactionText;
+        }
+
         break;
 
       case 'light':
@@ -200,6 +214,10 @@ export class OverworldScene extends Phaser.Scene {
 
       case 'teleport':
         new TeleportTrigger(this, object.x, object.y, object.width, object.height, object.target, object.targetX, object.targetY);
+        break;
+
+      case 'interact':
+        new InteractTrigger(this, object.x, object.y, object.width, object.height, object.callbackKey, object.interactionText);
         break;
 
       default:
@@ -301,10 +319,6 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   update(time, delta) {
-    if (this.player) {
-      this.player.update(delta);
-    }
-
     // depth sort of sprites
     let sprites = this.depthSortedSprites.getChildren();
     sprites.forEach(sprite => {
@@ -394,7 +408,7 @@ export class FarmScene extends OverworldScene {
       255 : 887   // 11111111
     };
 
-    this.makeTilemap('farm', 4, ['layer1', 'layer2'], ['layer3']);
+    this.makeTilemap('farm', ['layer1', 'layer2'], ['layer3', 'layer4']);
     this.setupCamera();
 
     // pathfinding for the NPCs
@@ -514,13 +528,14 @@ export class VillageScene extends OverworldScene {
     super.create(config);
 
     this.hasWeather = true;
+    this.isNight = false;  // flag to change the tileset once
     
     // physics callback for collectible items
     this.physics.add.overlap(this.player, this.collectibles, (player, collectible)=> {
       collectible.collect();
     }); 
 
-    this.makeTilemap('village', 4, ['layer1', 'layer2'], ['layer3']);
+    this.makeTilemap('village', ['layer1', 'layer2'], ['layer3', 'layer4']);
     this.setupCamera();
 
     // day and night tint
@@ -533,6 +548,19 @@ export class VillageScene extends OverworldScene {
   update(time, delta) {
     super.update(time, delta);
     this.updateLightcones();
+
+    // change tileset at night
+    if (this.manager.isNight && !this.isNight) {
+      this.isNight = true;
+
+      this.currentTileset.setImage(this.textures.get('villageNight'));
+
+    } else if (!this.manager.isNight && this.isNight) {
+      this.isNight = false;
+
+      this.currentTileset.setImage(this.textures.get('village'));
+
+    }
   }
 }
 
@@ -548,7 +576,40 @@ export class BarnInteriorScene extends OverworldScene {
       collectible.collect();
     }); 
 
-    this.makeTilemap('barns', 3, ['layer0', 'layer1'], ['layer2']);
+    this.makeTilemap('barns', ['layer0', 'layer1', 'layer2'], ['layer3']);
+    this.setupCamera();
+
+
+    // TODO testing random pigs
+    for (let i = 0; i < 10; i++) {
+      let pig = new NPC(
+        this, 
+        Phaser.Math.Between(32, 239),
+        Phaser.Math.Between(1360, 1536),
+        'pig'
+      );
+      pig.setBehaviour('randomWalk');
+    }
+  }
+
+  update(time, delta) {
+    super.update(time, delta);
+  }
+}
+
+
+export class HouseInteriorScene extends OverworldScene {
+  create(config) {
+    super.create(config);
+
+    this.hasWeather = false;
+    
+    // physics callback for collectible items
+    this.physics.add.overlap(this.player, this.collectibles, (player, collectible)=> {
+      collectible.collect();
+    }); 
+
+    this.makeTilemap('houses', ['layer0', 'layer1', 'layer2'], ['layer3']);
     this.setupCamera();
   }
 

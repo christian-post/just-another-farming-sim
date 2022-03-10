@@ -16,9 +16,11 @@ export class DialogueTrigger extends Phaser.GameObjects.Rectangle {
 
     this.interactionButtonText = 'read';
 
-    if (this.scene.registry.values.debug) {
-      this.setFillStyle(0xff0000, 0.3);
-    }
+    this.scene.registry.events.on('changedata', (_, key, value) => {
+      if (key === 'debug') {
+        this.setFillStyle(0xff0000, 0.3 * + value);
+      }
+    });
 
     // TODO: more modular! (cutscenes etc)
     this.dialogueKey = dialogueKey;
@@ -56,6 +58,34 @@ export class DialogueTrigger extends Phaser.GameObjects.Rectangle {
   }
 }
 
+
+export class InteractTrigger extends Phaser.GameObjects.Rectangle {
+  constructor(scene, x, y, width, height, callbackKey, interactionText){
+    super(scene, x, y, width, height);
+    this.scene.add.existing(this);
+    this.scene.allSprites.add(this);
+    this.scene.physics.add.existing(this);
+    this.setOrigin(0);
+
+    this.callback = Utils.getNestedKey(callbacks, callbackKey);
+
+    this.interactionButtonText = interactionText;
+
+    // debug overlay
+    this.scene.registry.events.on('changedata', (_, key, value) => {
+      if (key === 'debug') {
+        this.setFillStyle(0xff0000, 0.3 * + value);
+      }
+    });
+  }
+
+  interact() {
+    this.callback(this.scene);
+  }
+}
+
+
+
 export class TeleportTrigger extends Phaser.GameObjects.Rectangle {
   constructor(scene, x, y, width, height, targetScene, playerX, playerY){
     super(scene, x, y, width, height);
@@ -64,9 +94,13 @@ export class TeleportTrigger extends Phaser.GameObjects.Rectangle {
     this.scene.physics.add.existing(this);
     this.setOrigin(0);
 
-    if (this.scene.registry.values.debug) {
-      this.setFillStyle(0xff0000, 0.3);
-    }
+    this.interactionButtonText = '';
+
+    this.scene.registry.events.on('changedata', (_, key, value) => {
+      if (key === 'debug') {
+        this.setFillStyle(0xff0000, 0.3 * + value);
+      }
+    });
 
     // collision results in change of tilemaps
     this.scene.physics.add.overlap(this.scene.player, this, ()=> {

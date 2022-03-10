@@ -169,74 +169,52 @@ export class GameManager extends Phaser.Scene {
 
     // ############ only for debugging #########################################
 
-    if (this.registry.values.debug) {
-      this.input.keyboard.on('keydown-P', ()=> {
-        // TEST
-        if (this.getCurrentGameScene().testGroup.getLength() === 0) {
-          for (let i=0; i<100; i++) {
-            let sprite = this.getCurrentGameScene().add.sprite(
-              Phaser.Math.Between(0, 800),
-              Phaser.Math.Between(0, 800),
-              'test'
-            )
-              .setDepth(6);
-            this.getCurrentGameScene().testGroup.add(sprite);
-          }
-        } else {
-          this.getCurrentGameScene().testGroup.clear(true, true)
-        }      
-      });
+    this.input.keyboard.on('keydown-P', ()=> {
+      // toggle debug mode
+      this.registry.set('debug', !this.registry.values.debug);
+    });
 
-      this.input.keyboard.on('keydown-T', ()=> {
-        this.saveGame('save0');
-        console.log('game saved');
-      });
+    this.input.keyboard.on('keydown-T', ()=> {
+      if (this.registry.values.debug) {
+        this.getCurrentGameScene().currentTileset.setImage(this.textures.get('villageNight'))
+      }
+    });
 
-      this.input.keyboard.on('keydown-U', ()=> {
-        this.eraseSave('save0');
-        console.log('game save erased');
-      });
+    //   this.input.keyboard.on('keydown-U', ()=> {
+    //     this.eraseSave('save0');
+    //     console.log('game save erased');
+    //   });
 
-      this.input.on('pointerdown', pointer => {
-        if (this.registry.values.debug && this.getCurrentGameScene().cameras.main !== undefined) {
-          let worldPoint = this.getCurrentGameScene().cameras.main.getWorldPoint(pointer.x, pointer.y);
-          let tileSize = this.registry.values.tileSize;
-          console.log(`screen: ${Math.floor(pointer.x)}, ${Math.floor(pointer.y)}  world: ${Math.floor(worldPoint.x)}, ${Math.floor(worldPoint.y)}  tile: ${Math.floor(worldPoint.x / tileSize)}, ${Math.floor(worldPoint.y / tileSize)}`)
-        }
-      });
-      // this.input.on('pointerdown', pointer => {
-      //   if (this.registry.values.debug && minimap !== undefined) {
-      //     if (new Phaser.Geom.Rectangle(this.registry.values.windowWidth - 80, this.registry.values.windowHeight - 60, 80, 60).contains(pointer.x, pointer.y)) {
-      //       let worldPoint = minimap.getWorldPoint(pointer.x, pointer.y);
+    //   this.input.on('pointerdown', pointer => {
+    //     if (this.registry.values.debug && this.getCurrentGameScene().cameras.main !== undefined) {
+    //       let worldPoint = this.getCurrentGameScene().cameras.main.getWorldPoint(pointer.x, pointer.y);
+    //       let tileSize = this.registry.values.tileSize;
+    //       console.log(`screen: ${Math.floor(pointer.x)}, ${Math.floor(pointer.y)}  world: ${Math.floor(worldPoint.x)}, ${Math.floor(worldPoint.y)}  tile: ${Math.floor(worldPoint.x / tileSize)}, ${Math.floor(worldPoint.y / tileSize)}`)
+    //     }
+    //   });
 
-      //       this.player.x = worldPoint.x;
-      //       this.player.y = worldPoint.y;
-      //     } 
-      //   }
-      // });
-
-      this.input.keyboard.on('keydown-M', ()=> {
-        if (this.currentGameScene === 'FarmScene') {
-          this.switchScenes(
-            this.currentGameScene, 'VillageScene', 
-            { 
-              playerPos: { x: 348, y: 300 }, 
-              lastDir: this.scene.get(this.currentGameScene).player.lastDir
-            },
-            true
-          );
-        } else {
-          this.switchScenes(
-            this.currentGameScene, 'FarmScene', 
-            { 
-              playerPos: { x: 320, y: 212 }, 
-              lastDir: this.scene.get(this.currentGameScene).player.lastDir
-            },
-            true
-          );
-        }
-      });
-    }
+    //   this.input.keyboard.on('keydown-M', ()=> {
+    //     if (this.currentGameScene === 'FarmScene') {
+    //       this.switchScenes(
+    //         this.currentGameScene, 'VillageScene', 
+    //         { 
+    //           playerPos: { x: 348, y: 300 }, 
+    //           lastDir: this.scene.get(this.currentGameScene).player.lastDir
+    //         },
+    //         true
+    //       );
+    //     } else {
+    //       this.switchScenes(
+    //         this.currentGameScene, 'FarmScene', 
+    //         { 
+    //           playerPos: { x: 320, y: 212 }, 
+    //           lastDir: this.scene.get(this.currentGameScene).player.lastDir
+    //         },
+    //         true
+    //       );
+    //     }
+    //   });
+    // }
   }
 
   configureIngameVariables() {
@@ -325,13 +303,9 @@ export class GameManager extends Phaser.Scene {
 
           this.staminaRefillTimer = 0;
         }
-        
         // reset the timer
         this.timer = this.timer - 60000;
       }
-
-      
-
     }
   }
 
@@ -544,6 +518,8 @@ export class GameManager extends Phaser.Scene {
             for (let [key, value] of Object.entries(elem.attributes)) {
               crop[key] = value;
             }
+            // update the texture
+            crop.setTexture('crops', crop.data.values.frames[crop.growthPhase]);
           });
         }
       });

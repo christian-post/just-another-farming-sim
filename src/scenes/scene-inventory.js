@@ -165,8 +165,12 @@ export class InventoryManager extends Phaser.Scene {
     ).setOrigin(0.5);
 
     // stamina bar
-    this.staminaBar = this.makeBar(8, 42, 0x00dd00);
+    this.staminaBar = this.makeBar(15, 45, 0x00dd00);
     this.setBarValue(100);
+
+    // overlay
+    this.add.image(2, 48, 'staminaOverlay')
+      .setOrigin(0, 0.5);
 
 
     // Inventory and Items
@@ -438,10 +442,14 @@ export class InventoryManager extends Phaser.Scene {
       duration: 500
     });
 
-    if (percentage >= 50) {
+    if (percentage >= 80) {
       this.staminaBar.bar.setFillStyle(0x00ff00);
-    } else if (percentage >= 25) {
+    } else if (percentage >= 60) {
+      this.staminaBar.bar.setFillStyle(0x80ff00);
+    } else if (percentage >= 40) {
       this.staminaBar.bar.setFillStyle(0xffff00);
+    } else if (percentage >= 20) {
+      this.staminaBar.bar.setFillStyle(0xff8000);
     } else {
       this.staminaBar.bar.setFillStyle(0xff0000);
     }

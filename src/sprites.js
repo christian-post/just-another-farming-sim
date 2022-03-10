@@ -17,6 +17,7 @@ export class BaseCharacterSprite extends Phaser.Physics.Arcade.Sprite {
     // TODO: more modular?
     this.setBodySize(16, 12, false);
     this.body.setOffset(5, this.height - this.body.height);
+
     this.debugShowBody = true;
 
     // Animations
@@ -126,7 +127,7 @@ export class Player extends BaseCharacterSprite {
     // check if a tool is being used
     // if so, the player can't move for that period
     if (this.tool) {
-      this.tool.update(delta);
+      this.tool.update(time, delta);
       this.setVelocity(0);
       // TODO: tool usage animation
       this.anims.play('player-idle-' + this.lastDir, true);
@@ -186,7 +187,8 @@ export class Player extends BaseCharacterSprite {
     // check if rectangle is colliding with any interactable sprites
     let collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
     if (collisions.length > 0 && collisions[0] != this) {
-      let string = collisions[0].interactionButtonText || 'error';
+      // let string = collisions[0].interactionButtonText || 'error';
+      let string = collisions[0].interactionButtonText;
       this.manager.events.emit('changeTextInteract', string);
     } else {
       this.manager.events.emit('changeTextInteract', '');
@@ -379,7 +381,7 @@ export class Player extends BaseCharacterSprite {
               if (col instanceof Crop) {
                 if (col.fertilizedLevel < col.data.values.maxFertilizer) {
                   col.fertilizedLevel++;
-                  this.inventory.events.emit('itemConsumed', item, config.button);
+                  this.manager.events.emit('itemConsumed', item, config.button);
                   this.scene.arableMap[config.mapIndex].fertilize(1);
                 } else {
                   showMessage(this.scene, 'interactibles.crops.enoughFertilizer');
@@ -940,8 +942,8 @@ class Scythe extends Phaser.GameObjects.Image {
     }
   }
 
-  update() {
-    this.angle += 10 * this.rotationDir;
+  update(time, delta) {
+    this.angle += 0.5 * this.rotationDir * delta;
 
     // set position relative to the player
     this.x = this.player.x;
@@ -1006,8 +1008,8 @@ class Hoe extends Phaser.GameObjects.Image {
     }
   }
 
-  update() {
-    this.angle += 10 * this.rotationDir;
+  update(time, delta) {
+    this.angle += 0.5 * this.rotationDir * delta;
 
     // set position relative to the player
     this.x = this.player.x;
