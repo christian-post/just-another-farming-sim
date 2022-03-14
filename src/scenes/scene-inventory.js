@@ -1,6 +1,7 @@
 import * as Utils from '../utils.js';
 import { showMessage } from '../user-interface.js';
 
+
 export class InventoryManager extends Phaser.Scene {
   create() {
     // add reference to game manager
@@ -14,12 +15,14 @@ export class InventoryManager extends Phaser.Scene {
     // day
     const dayBG = this.add.rectangle(
       8, 8, 64, 32, 0x000000, 0.5
-      ).setOrigin(0);
+    )
+      .setOrigin(0);
 
     // clock
     const clockBG = this.add.rectangle(
       80, 8, 64, 32, 0x000000, 0.5
-    ).setOrigin(0);
+    )
+      .setOrigin(0);
     
     // Action button position
     const pos = {
@@ -83,10 +86,14 @@ export class InventoryManager extends Phaser.Scene {
     const minutes = this.registry.values.startingDaytime.minutes.toString().padStart(2, '0');
 
     this.clock = this.add.text(
-      clockBG.getCenter().x, clockBG.getCenter().y, 
+      clockBG.getCenter().x + 10, clockBG.getCenter().y, 
       `${hours}:${minutes}`, 
       fontStyle
     ).setOrigin(0.5);
+
+    // overlay sprite for the clock
+    this.add.image(clockBG.x, clockBG.y, 'clockOverlay')
+      .setOrigin(0);
 
     // action buttons
     if (this.manager.getCurrentGameScene().pad) {
@@ -168,7 +175,7 @@ export class InventoryManager extends Phaser.Scene {
     this.staminaBar = this.makeBar(15, 45, 0x00dd00);
     this.setBarValue(100);
 
-    // overlay
+    // overlay sprite for the stamina bar
     this.add.image(2, 48, 'staminaOverlay')
       .setOrigin(0, 0.5);
 
@@ -457,6 +464,84 @@ export class InventoryManager extends Phaser.Scene {
 }
 
 
+class genericInventoryDisplay extends Phaser.Scene {
+  /*
+  Generic Scene that is used as a parent for the player's inventory,
+  shop inventories etc.
+  */
+  create() {
+    this.manager = this.scene.get('GameManager');
+
+    // width and height of the transparent background
+    let width = 338;
+    let height = 184;
+
+    this.background = this.add.rectangle(
+      80 + width * 0.5, 
+      48 + height * 0.5,
+      width, 
+      height, 
+      0x000000, 
+      0.75
+    )
+      .setDepth(-2);
+
+    // Side bar (additional space to display items)
+    this.sidebarBackground = this.add.rectangle(
+      8, 64,
+      64, 160, 
+      0x000000, 0.75
+    )
+      .setDepth(-2)
+      .setOrigin(0);
+    
+    this.numSidebarSlots = 6;  // TODO think about what to display here
+    this.sidebarSlots = [];
+    for (let i = 0; i < this.numSidebarSlots; i++) {
+      let yMargin = this.sidebarBackground.height / (this.numSidebarSlots + 1)
+
+      // empty sidebar slot
+      this.sidebarSlots[i] = {
+        x: this.sidebarBackground.getCenter().x,
+        y: this.sidebarBackground.y + yMargin + i * yMargin,
+        element: null
+      };
+    }
+
+    // display items in inventory
+    this.invElements = [];
+    // when in the inventory, shows which item is selected with the cursor
+    this.currentIndex = 0;
+    // how many cells the inventory has (maybe increase during game?)
+    this.inventoryDimensions = { w: 8, h: 4 };
+    // size of the single inventory cells in pixels
+    this.cellSize = {
+      w: this.background.width / (this.inventoryDimensions.w + 1),
+      h: this.background.height / (this.inventoryDimensions.h + 1)
+    };
+  }
+
+  addToSidebar(element, index) {
+    if (index >= 0) {
+      // if index is specified, put this element in that position
+      // change the x and y coordinates to match the sidebar slot
+      element.x = this.sidebarSlots[index].x;
+      element.y = this.sidebarSlots[index].y;
+      this.sidebarSlots[index].element = element;
+      this.invElements.push(element);
+    } else {
+      // get first free index
+      for (let i = 0; i < this.sidebarSlots.length; i++) {
+        if (!this.sidebarSlots[i].element) {
+          this.addToSidebar(element, i);
+          break;
+        }
+      }
+    }
+  }
+}
+
+
 export class InventoryDisplay extends Phaser.Scene {
   /*
   this scene is responsible for handling the display of the main inventory
@@ -488,8 +573,7 @@ export class InventoryDisplay extends Phaser.Scene {
 
     this.fillSidebar();
 
-    
-    //display items in inventory
+    // display items in inventory
     this.invElements = [];
     // when in the inventory, shows which item is selected with the cursor
     this.currentIndex = 0;
@@ -671,25 +755,11 @@ export class InventoryDisplay extends Phaser.Scene {
         fontFamily: this.registry.values.globalFontFamily 
       }
     ).setOrigin(0, 0.5);
-    // this.invElements.push(moneySprite);
-    // this.invElements.push(moneyText);
 
     let moneyInformation = this.add.container(0, 0, [ moneySprite, moneyText ]);
     this.invElements.push(moneyInformation);
 
     this.addToSidebar(moneyInformation);
-
-    if (this.registry.values.debug) {
-      let bounds = moneyInformation.getBounds();
-      bounds.x = moneyInformation.x;
-      bounds.y = moneyInformation.y;
-      this.add.rectangle(bounds.x, bounds.y, bounds.width, bounds.height, 
-        0xFF0000, 0.5);
-      
-      // add elements just to test that the placement works correctly
-      this.addToSidebar(this.add.image(0, 0, 'test-tile'));
-      this.addToSidebar(this.add.image(0, 0, 'test-tile'), 3);
-    }
   }
 
 
@@ -791,7 +861,7 @@ export class ShopDisplay extends Phaser.Scene {
   }
 
   interactionButtonCallback() {
-    // buy that stuff
+    // buy or sell the currently selected item
     let item = this.items[this.currentIndex];
     if (item) { 
       if (this.type === 'buy') {

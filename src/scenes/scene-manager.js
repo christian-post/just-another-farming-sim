@@ -180,10 +180,9 @@ export class GameManager extends Phaser.Scene {
       }
     });
 
-    //   this.input.keyboard.on('keydown-U', ()=> {
-    //     this.eraseSave('save0');
-    //     console.log('game save erased');
-    //   });
+      this.input.keyboard.on('keydown-U', ()=> {
+        this.minutes = 60 * 22;
+      });
 
     //   this.input.on('pointerdown', pointer => {
     //     if (this.registry.values.debug && this.getCurrentGameScene().cameras.main !== undefined) {

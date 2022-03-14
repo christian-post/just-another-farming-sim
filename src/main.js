@@ -87,7 +87,7 @@ game.registry.merge({
 });
 
 // define the scenes
-game.scene.add('Preload', PreloadingScene, true);   
+game.scene.add('Preload', PreloadingScene, false);   
 game.scene.add('GameManager', GameManager, false);
 game.scene.add('Title', TitleScene, false);
 // In Game scenes

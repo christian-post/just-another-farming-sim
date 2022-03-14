@@ -27,7 +27,7 @@ export class OverworldScene extends Phaser.Scene {
     this.allSprites = this.add.group(); 
     this.allSprites.runChildUpdate = true;
 
-    // objects that trigger a dialogue
+    // objects that trigger an event (dialogue etc)
     this.interactables = this.add.group();
 
     // light objects that are used for bitmasks
@@ -42,9 +42,6 @@ export class OverworldScene extends Phaser.Scene {
     // sprites that move around and should change their depth based on their y-position
     this.depthSortedSprites = this.add.layer();
     this.depthSortedSprites.setDepth(this.depthValues.sprites);
-
-    // TODO: remove, just for testing
-    this.testGroup = this.add.group();
 
     // create the Player sprite for this scene
     this.player = new Player(this, 0, 0);
@@ -93,22 +90,28 @@ export class OverworldScene extends Phaser.Scene {
     // #### visual overlays for debugging  ######################################
 
     this.events.on('create', ()=> {
+      // grid that matches the tiles
       let grid = this.add.grid(
-        0, 0, this.mapLayers.layer1.width, this.mapLayers.layer1.height, 
-        this.registry.values.tileSize, this.registry.values.tileSize, null, null, 0x333333, 0.25
+        0, 0, this.mapLayers.layer0.width, this.mapLayers.layer0.height, 
+        this.registry.values.tileSize, this.registry.values.tileSize, null, null, 0x333333, 0.20
       )
         .setOrigin(0)
+        .setDepth(1)
         .setVisible(this.registry.values.debug);
-  
-      this.debugGfx = [
-        Utils.debugDraw(this.mapLayers.layer0, this, this.registry.values.debug),
-        Utils.debugDraw(this.mapLayers.layer1, this, this.registry.values.debug),
-        Utils.debugDraw(this.mapLayers.layer2, this, this.registry.values.debug)
-      ];
 
+      // tilemap layer collision boundaries
+      this.debugGfx = [];
+      this.collisionLayers.forEach(layer => {
+        let gfx = Utils.debugDraw(this.mapLayers[layer], this, this.registry.values.debug)
+          .setDepth(9);
+        this.debugGfx.push(gfx);
+      });
+
+      // physics hitboxes
       let physicsDebugGfx = null;
-  
+
       this.registry.events.on('changedata', (_, key, value) => {
+        // what happens when the debug flag changes
         if (key === 'debug') {
           this.debugGfx.forEach(gfx => {
             gfx.setVisible(value);
@@ -134,6 +137,8 @@ export class OverworldScene extends Phaser.Scene {
     layersDrawnAbove: Array -> Layers that are drawn on top of the sprites
     */
 
+    this.collisionLayers = collisionLayers;
+
     this.currentMap = this.make.tilemap({ key: mapKey });
     this.currentTileset = this.currentMap.addTilesetImage(this.registry.values.tilemapImages[mapKey]);
 
@@ -145,7 +150,7 @@ export class OverworldScene extends Phaser.Scene {
     }
 
     // create collision
-    collisionLayers.forEach(layer => {
+    this.collisionLayers.forEach(layer => {
       this.mapLayers[layer].setCollisionByProperty({ 'collides': true });
       this.physics.add.collider(this.player, this.mapLayers[layer]);
     });
@@ -589,6 +594,8 @@ export class BarnInteriorScene extends OverworldScene {
         'pig'
       );
       pig.setBehaviour('randomWalk');
+      pig.body.pushable = true;
+      pig.changeHitbox(12, 8, pig.width / 2 - 6, pig.height - 8);
     }
   }
 

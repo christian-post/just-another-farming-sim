@@ -68,12 +68,12 @@
                         {
                          "name":"targetX",
                          "type":"int",
-                         "value":255
+                         "value":472
                         }, 
                         {
                          "name":"targetY",
                          "type":"int",
-                         "value":560
+                         "value":544
                         }],
                  "rotation":0,
                  "type":"teleport",

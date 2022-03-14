@@ -37,6 +37,14 @@ export class BaseCharacterSprite extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
+  changeHitbox(width, height, offsetX=null, offsetY=null) {
+    // change the hitbox after this sprite has been created
+    this.setBodySize(width, height);
+    if (offsetX || offsetY) {
+      this.body.setOffset(offsetX, offsetY);
+    }
+  }
+
   createAnimations(animations) {
     animations.forEach(data => {
       this.anims.create({
@@ -435,7 +443,12 @@ export class NPC extends BaseCharacterSprite {
     });
 
     // collision with walls etc
-    this.scene.physics.add.collider(this, this.scene.mapLayers.layer1, (npc, wall) => { npc.stop(); });
+    this.scene.collisionLayers.forEach(layer => {
+      this.scene.physics.add.collider(this, this.scene.mapLayers[layer], (npc, wall) => { 
+        // collision response, stops the walking animation
+        npc.stop(); 
+      });
+    });
 
     // pathfinding
     this.path = null;
