@@ -16,7 +16,7 @@ const COLOR_BACKGROUND = 0x006022;
 
 // debug settings
 const DEBUG = false;
-const SCENEWATCHER = true;
+const SCENEWATCHER = false;
 
 
 let config = {
@@ -41,7 +41,7 @@ let config = {
     target: 60
   },
   audio: {
-    noAudio: true  // set to "off" during testing
+    noAudio: false  // set to "off" during testing
   },
   input: {
     gamepad: true
