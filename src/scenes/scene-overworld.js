@@ -625,7 +625,7 @@ export class BarnInteriorScene extends OverworldScene {
     animal.changeHitbox(12, 8, animal.width / 2 - 6, animal.height - 8);
 
     this.animals.add(animal);
-    this.manager.livestock[type].push(animal);
+    this.manager.farmObjects.livestock[type].push(animal);
   }
 
   update(time, delta) {

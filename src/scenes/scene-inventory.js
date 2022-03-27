@@ -984,7 +984,7 @@ export class ShopDisplayBuy extends ShopDisplayTemplate {
         this.currentItemText.setText(`${item.screenName} : \$ ${item.buyPrice}\nIn inventory: ${ownedAmount}`);
       } else {
         if (item.type === 'livestock') {
-          ownedAmount = this.manager.livestock[item.name].length;
+          ownedAmount = this.manager.farmObjects.livestock[item.name].length;
           this.currentItemText.setText(`${item.screenName} : \$ ${item.buyPrice}\nOn the farm: ${ownedAmount}`);
         }
       }
