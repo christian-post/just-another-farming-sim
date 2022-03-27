@@ -128,7 +128,14 @@ export class Player extends BaseCharacterSprite {
     };
 
     // the tool that is currently being used
-    this.tool = null; 
+    this.tool = null;
+
+    this.scene.registry.events.on('changedata', (_, key, value) => {
+      // what happens when the debug flag changes
+      if (key === 'debug') {
+        this.body.checkCollision.none = value;
+      }
+    });
   }
 
   update(time, delta) {
@@ -197,9 +204,9 @@ export class Player extends BaseCharacterSprite {
     if (collisions.length > 0 && collisions[0] != this) {
       // let string = collisions[0].interactionButtonText || 'error';
       let string = collisions[0].interactionButtonText;
-      this.manager.events.emit('changeTextInteract', string);
+      this.manager.events.emit('changeButtonText', 'interact', string);
     } else {
-      this.manager.events.emit('changeTextInteract', '');
+      this.manager.events.emit('changeButtonText', 'interact', '');
     }
   }
 
@@ -208,6 +215,7 @@ export class Player extends BaseCharacterSprite {
     let interactY = parseInt(this.interactionRect.y / this.scene.registry.values.tileSize);
 
     if (this.scene.registry.values.debug) {
+      console.log(this.x, this.y)
       console.log(interactX, interactY);
     }
 
@@ -340,16 +348,19 @@ export class Player extends BaseCharacterSprite {
         break;
       case 'hoe':
         if (this.checkExhausted(item)) { return; }
-
-        this.tool = new Hoe(this.scene, this.x, this.y, item.frame);
         // TODO: make a property in Tiled where land can be dug over
 
         // check if there is arable land
-        if (!this.scene.arableMap[config.mapIndex]) {
-          this.scene.makeAcre(config.x, config.y, 1, 1);
-          this.manager.events.emit('staminaChange', -item.stamina);
+        if (this.scene.hasArableLand) {
+          this.tool = new Hoe(this.scene, this.x, this.y, item.frame);
+          if (!this.scene.arableMap[config.mapIndex]) {
+            // if this has not made arable yet
+            this.scene.makeAcre(config.x, config.y, 1, 1);
+            this.manager.events.emit('staminaChange', -item.stamina);
+          }
+        } else {
+          showMessage(this.scene, 'general.item-no-action');
         }
-        
         break;
 
       case 'wateringCan':
@@ -692,27 +703,22 @@ export class Vendor extends NPC {
         key: 'npc-dialogue.shopping.greeting-options.options', 
         callbacks: [
           ()=> {
-            // tell the inventory manager that the interaction button shows "info"
-            this.manager.events.emit('changeTextInteract', 'buy');
-    
+            // change the button texts
+            this.manager.events.emit('changeButtonText', 'interact', 'buy');
+            this.manager.events.emit('changeButtonText', 'inventory', 'exit');
+            
             // switch scenes
             this.scene.scene.pause();
-            this.scene.scene.run('ShopDisplay', {
-              parentScene: this.scene.scene.key,
-              items: this.items,
-              type: 'buy'
-            });
+            this.scene.scene.run('ShopDisplayBuy', this.items);
           },
           ()=> { 
-            // tell the inventory manager that the interaction button shows "info"
-            this.manager.events.emit('changeTextInteract', 'sell');
+            // change the button texts
+            this.manager.events.emit('changeButtonText', 'interact', 'sell');
+            this.manager.events.emit('changeButtonText', 'inventory', 'exit');
     
             // switch scenes
             this.scene.scene.pause();
-            this.scene.scene.run('ShopDisplay', {
-              parentScene: this.scene.scene.key,
-              type: 'sell'
-            });
+            this.scene.scene.run('ShopDisplaySell');
           },
           ()=> {
             // leave

@@ -112,6 +112,7 @@ export class PreloadingScene extends Phaser.Scene {
     this.load.image('water-droplet', 'assets/images/sprites/water-droplet.png');
     this.load.image('staminaOverlay', 'assets/images/ui/stamina_overlay.png');
     this.load.image('clockOverlay', 'assets/images/ui/clock_overlay.png');
+    this.load.image('gamepad', 'assets/images/other/xbox_pad.png');
 
     this.load.image('test-tile', 'assets/images/sprites/test.png');
 

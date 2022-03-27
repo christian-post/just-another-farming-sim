@@ -4,6 +4,7 @@ import { callbacks } from './callbacks.js';
 import { Crop } from './sprites.js';
 
 
+
 export class DialogueTrigger extends Phaser.GameObjects.Rectangle {
   constructor(scene, x, y, width, height, dialogueKey, options=null, optionsAreCallbacks){
     // TODO: color and alpha only for testing
@@ -114,6 +115,46 @@ export class TeleportTrigger extends Phaser.GameObjects.Rectangle {
         true  // start transition scene
       );
     });
+  }
+}
+
+
+export class TeleportInteractTrigger extends Phaser.GameObjects.Rectangle {
+  // Teleport, but you have to press the interact button instead of 
+  // just colliding with it
+  constructor(scene, x, y, width, height, targetScene, playerX, playerY){
+    super(scene, x, y, width, height);
+    this.scene.add.existing(this);
+    this.scene.allSprites.add(this);
+    this.scene.physics.add.existing(this);
+    this.setOrigin(0);
+
+    this.manager = this.scene.scene.get('GameManager');
+
+    this.interactionButtonText = 'Enter';
+    this.targetScene = targetScene;
+    this.playerPos = {
+      x: playerX,
+      y: playerY
+    };
+
+    this.scene.registry.events.on('changedata', (_, key, value) => {
+      if (key === 'debug') {
+        this.setFillStyle(0xff0000, 0.3 * + value);
+      }
+    });
+  }
+
+  interact() {
+    this.manager.switchScenes(
+      this.manager.currentGameScene,
+      this.targetScene,
+      { 
+        playerPos: this.playerPos,
+        lastDir: this.manager.getCurrentGameScene().player.lastDir
+      },
+      true
+    );
   }
 }
 

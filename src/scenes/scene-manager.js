@@ -78,13 +78,27 @@ export class GameManager extends Phaser.Scene {
     this.weatherManager = new WeatherManager(this);
 
 
+    // all the farm stuff that is owned by the player, but not part of the inventory scene
+    // TODO: work in progress
+    // TODO: make data Manager that emits events when data has changed?
+    this.farmObjects = {
+      livestock: {
+        pig: []
+      },
+      crops: {
+
+      }
+    };
+
     // define the first scene (title)
     this.currentGameScene = 'Title';
     this.scene.run(this.currentGameScene);
 
     this.overworldScenes = [
       'FarmScene',
-      'VillageScene'
+      'VillageScene',
+      'HouseInteriorScene',
+      'BarnInteriorScene'
     ];
 
     // stuff that happens when the first overworld scene is created
@@ -161,7 +175,7 @@ export class GameManager extends Phaser.Scene {
           exitCallback: ()=> { 
             this.scene.resume(this.currentGameScene);
             this.scene.resume(this.scene.key);
-            this.events.emit('changeTextInventory', 'inventory');
+            this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
           }
         });
       });
@@ -177,43 +191,38 @@ export class GameManager extends Phaser.Scene {
     this.input.keyboard.on('keydown-T', ()=> {
       if (this.registry.values.debug) {
         this.getCurrentGameScene().currentTileset.setImage(this.textures.get('villageNight'))
+      } else {
+        console.log('This is a debug function. Enable debug mode first by pressing P.');
       }
     });
 
-      this.input.keyboard.on('keydown-U', ()=> {
-        this.minutes = 60 * 22;
-      });
+    this.input.keyboard.on('keydown-U', ()=> {
+      let scene = this.getCurrentGameScene();
+      for (const [_, layer] of Object.entries(scene.mapLayers)) {
+        scene.tweens.add({
+          targets: layer,
+          alpha: 0,
+          yoyo: true,
+          duration: 200,
+          repeat: 5
+        });
+      }
+    });
 
-    //   this.input.on('pointerdown', pointer => {
-    //     if (this.registry.values.debug && this.getCurrentGameScene().cameras.main !== undefined) {
-    //       let worldPoint = this.getCurrentGameScene().cameras.main.getWorldPoint(pointer.x, pointer.y);
-    //       let tileSize = this.registry.values.tileSize;
-    //       console.log(`screen: ${Math.floor(pointer.x)}, ${Math.floor(pointer.y)}  world: ${Math.floor(worldPoint.x)}, ${Math.floor(worldPoint.y)}  tile: ${Math.floor(worldPoint.x / tileSize)}, ${Math.floor(worldPoint.y / tileSize)}`)
-    //     }
-    //   });
-
-    //   this.input.keyboard.on('keydown-M', ()=> {
-    //     if (this.currentGameScene === 'FarmScene') {
-    //       this.switchScenes(
-    //         this.currentGameScene, 'VillageScene', 
-    //         { 
-    //           playerPos: { x: 348, y: 300 }, 
-    //           lastDir: this.scene.get(this.currentGameScene).player.lastDir
-    //         },
-    //         true
-    //       );
-    //     } else {
-    //       this.switchScenes(
-    //         this.currentGameScene, 'FarmScene', 
-    //         { 
-    //           playerPos: { x: 320, y: 212 }, 
-    //           lastDir: this.scene.get(this.currentGameScene).player.lastDir
-    //         },
-    //         true
-    //       );
-    //     }
-    //   });
-    // }
+    this.input.keyboard.on('keydown-M', ()=> {
+      if (this.registry.values.debug) {
+        this.switchScenes(
+          this.currentGameScene, 'VillageScene', 
+          { 
+            playerPos: { x: 33 * 16, y: 18 * 16 }, 
+            lastDir: this.scene.get(this.currentGameScene).player.lastDir
+          },
+          true
+        );
+      } else {
+        console.log('This is a debug function. Enable debug mode first by pressing P.');
+      }
+    });
   }
 
   configureIngameVariables() {
@@ -431,6 +440,7 @@ export class GameManager extends Phaser.Scene {
     };
 
     // loop through scenes, if they have arable map --> store data
+    // TODO: this becomes obsolete once the crop data is decoupled from the overworld scenes
     this.overworldScenes.forEach(scene => {
       if (this.scene.get(scene).hasArableLand) {
         saveData.arableMapData[scene] = [];

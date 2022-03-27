@@ -3,6 +3,14 @@ import { showMessage } from '../user-interface.js';
 
 
 export class InventoryManager extends Phaser.Scene {
+  preload() {
+    this.load.scenePlugin({
+      key: 'rexuiplugin',
+      url: this.registry.values.rexui_url,
+      sceneKey: 'rexUI'
+    });
+  }
+
   create() {
     // add reference to game manager
     this.manager = this.scene.get('GameManager');
@@ -18,9 +26,8 @@ export class InventoryManager extends Phaser.Scene {
     )
       .setOrigin(0);
 
-    // clock
-    const clockBG = this.add.rectangle(
-      80, 8, 64, 32, 0x000000, 0.5
+    const clockBG = this.rexUI.add.roundRectangle(
+      80, 8, 64, 32, 8, 0x000000, 0.5
     )
       .setOrigin(0);
     
@@ -206,12 +213,27 @@ export class InventoryManager extends Phaser.Scene {
       this.setBarValue(value);
     }, this);
 
-    this.manager.events.on('changeTextInteract', string => {
-      this.interactionText.setText(string);
-    });
+    // TODO: make one event for all buttons and pass the button name
 
-    this.manager.events.on('changeTextInventory', string => {
-      this.inventoryText.setText(string);
+    // this.manager.events.on('changeTextInteract', string => {
+    //   this.interactionText.setText(string);
+    // });
+
+    // this.manager.events.on('changeTextInventory', string => {
+    //   this.inventoryText.setText(string);
+    // });
+
+    // TODO: make one object that holds all text objects
+    this.manager.events.on('changeButtonText', (button, string) => {
+      switch(button) {
+        case 'inventory':
+          this.inventoryText.setText(string);
+          break;
+        case 'interact':
+          this.interactionText.setText(string);
+          break;
+      }
+      
     });
 
     this.manager.events.on('itemEquipped', button => {
@@ -274,6 +296,7 @@ export class InventoryManager extends Phaser.Scene {
           this.selectedItemQuantities[button].setText(this.getSelectedItem(button).quantity);
         }
       }
+     
     });
 
     // event that removes an item
@@ -326,7 +349,11 @@ export class InventoryManager extends Phaser.Scene {
   }
 
   getSelectedItem(button) {
-    return this.inventory[this.itemSelected[button]];
+    if (this.itemSelected) {
+      return this.inventory[this.itemSelected[button]];
+    } else {
+      return null;
+    }
   }
 
   isEquipped(name) {
@@ -464,21 +491,49 @@ export class InventoryManager extends Phaser.Scene {
 }
 
 
-class genericInventoryDisplay extends Phaser.Scene {
+export class GenericInventoryDisplay extends Phaser.Scene {
   /*
   Generic Scene that is used as a parent for the player's inventory,
   shop inventories etc.
   */
-  create() {
+  create(config) {
+    /*
+    config contains:
+    x: 80,
+    y: 48,
+    width: 338,
+    height: 184,
+    sidebar: {
+      x: 8,
+      y: 64,
+      width: 64,
+      height: 160
+    },
+    inventoryWidth: 8,
+    inventoryHeight: 6,
+    cursor: {
+      size: this.registry.values.tileSize,
+      strokeSize: 1
+      strokeColor: 0xff0000,
+      strokeAlpha: 1
+    },
+    textStyles: {
+      sidebar: Phaser.Types.GameObjects.Text.TextStyle,
+      items: Phaser.Types.GameObjects.Text.TextStyle,
+      bottomText: Phaser.Types.GameObjects.Text.TextStyle
+    }
+    */
     this.manager = this.scene.get('GameManager');
 
+    this.textStyles = config.textStyles;
+
     // width and height of the transparent background
-    let width = 338;
-    let height = 184;
+    let width = config.width;
+    let height = config.height;
 
     this.background = this.add.rectangle(
-      80 + width * 0.5, 
-      48 + height * 0.5,
+      config.x + width * 0.5, 
+      config.y + height * 0.5,
       width, 
       height, 
       0x000000, 
@@ -488,15 +543,15 @@ class genericInventoryDisplay extends Phaser.Scene {
 
     // Side bar (additional space to display items)
     this.sidebarBackground = this.add.rectangle(
-      8, 64,
-      64, 160, 
+      config.sidebar.x, config.sidebar.y,
+      config.sidebar.width, config.sidebar.height, 
       0x000000, 0.75
     )
       .setDepth(-2)
       .setOrigin(0);
     
     this.numSidebarSlots = 6;  // TODO think about what to display here
-    this.sidebarSlots = [];
+    this.sidebarSlots = [];  // information about the position
     for (let i = 0; i < this.numSidebarSlots; i++) {
       let yMargin = this.sidebarBackground.height / (this.numSidebarSlots + 1)
 
@@ -513,509 +568,73 @@ class genericInventoryDisplay extends Phaser.Scene {
     // when in the inventory, shows which item is selected with the cursor
     this.currentIndex = 0;
     // how many cells the inventory has (maybe increase during game?)
-    this.inventoryDimensions = { w: 8, h: 4 };
+    this.inventoryDimensions = { w: config.inventoryWidth, h: config.inventoryHeight };
+    this.inventorySize = this.inventoryDimensions.w * this.inventoryDimensions.h;
     // size of the single inventory cells in pixels
     this.cellSize = {
       w: this.background.width / (this.inventoryDimensions.w + 1),
       h: this.background.height / (this.inventoryDimensions.h + 1)
     };
-  }
-
-  addToSidebar(element, index) {
-    if (index >= 0) {
-      // if index is specified, put this element in that position
-      // change the x and y coordinates to match the sidebar slot
-      element.x = this.sidebarSlots[index].x;
-      element.y = this.sidebarSlots[index].y;
-      this.sidebarSlots[index].element = element;
-      this.invElements.push(element);
-    } else {
-      // get first free index
-      for (let i = 0; i < this.sidebarSlots.length; i++) {
-        if (!this.sidebarSlots[i].element) {
-          this.addToSidebar(element, i);
-          break;
-        }
-      }
-    }
-  }
-}
-
-
-export class InventoryDisplay extends Phaser.Scene {
-  /*
-  this scene is responsible for handling the display of the main inventory
-  that shows up when  the player presses the "I" key
-  it also pauses the main game scene
-  */
-  create() {
-    this.manager = this.scene.get('GameManager');
-
-    let width = 338;
-    let height = 184;
-
-    this.background = this.add.rectangle(
-      80 + width * 0.5, 48 + height * 0.5,
-      width, height, 
-      0x000000, 0.75
-    ).setDepth(-2);
-
-    this.sidebarBackground = this.add.rectangle(
-      8, 64,
-      64, 160, 
-      0x000000, 0.75
-    )
-      .setDepth(-2)
-      .setOrigin(0);
-    
-    this.numSidebarSlots = 6;  // TODO think about what to display here
-    this.sidebarSlots = [];
-
-    this.fillSidebar();
-
-    // display items in inventory
-    this.invElements = [];
-    // when in the inventory, shows which item is selected with the cursor
-    this.currentIndex = 0;
-    // how many cells the inventory has (maybe increase during game?)
-    this.inventoryDimensions = { w: 8, h: 4 };
-    // size of the single inventory cells in pixels
-    this.cellSize = {
-      w: this.background.width / (this.inventoryDimensions.w + 1),
-      h: this.background.height / (this.inventoryDimensions.h + 1)
-    };
-
-    this.constructInventory();
-    this.constructSidebar();
-
-    this.events.on('wake', () => {
-      // rebuild when the inventory is accessed
-      // TODO: change so that the sprites are persistent, 
-      //       but only the numbers and positions are updated?
-      this.invElements.forEach(elem => {
-        elem.destroy();
-      });
-
-      this.constructInventory();
-      this.constructSidebar();
-    });
-
-    // Key and Button bindings
-    this.buttonCallbacks = {
-      inventory: ()=> {
-        this.scene.sleep(this.scene.key);
-        this.scene.resume(this.manager.currentGameScene);
-
-        this.manager.events.emit('changeTextInventory', 'inventory');
-
-        this.manager.toggleDaytimePause();
-      },
-      interact: () => {
-        let item = this.scene.get('InventoryManager').inventory[this.currentIndex];
-        if (item) { showMessage(this, 'tooltips.' + item.tooltip, item) };
-      },
-      item1: () => {
-        this.scene.get('InventoryManager').equipItem(this.currentIndex, 'item1');
-      },
-      item2: () => {
-        this.scene.get('InventoryManager').equipItem(this.currentIndex, 'item2');
-      },
-      menu: ()=> {}
-    }
- 
-    // bind keyboard functionality 
-    this.manager.configureKeys(this);
-
-    // Gamepad functionality
-    this.manager.checkForGamepad(this);
-  }
-
-  update(time, delta) {
-    // move the cursor
-    let dir = Utils.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
-
-    if (dir.x !== 0 || dir.y !== 0) {
-      let increment = Utils.convertIndexTo1D(dir.x, dir.y, this.inventoryDimensions.w);
-      this.currentIndex = (this.currentIndex + increment) % this.scene.get('InventoryManager').inventorySize;
-      // wrap around
-      if (this.currentIndex < 0) {
-        this.currentIndex += this.scene.get('InventoryManager').inventorySize;
-      }
-      let cursorPos = this.itemPositionFromIndex(this.currentIndex);
-      this.cursor.x = cursorPos.x;
-      this.cursor.y = cursorPos.y;
-
-      // update the text at the buttom
-      let item = this.scene.get('InventoryManager').inventory[this.currentIndex];
-      this.currentItemText.setText(item ? item.screenName : '');
-    }
-  }
-
-  constructInventory() {
-    let items = this.scene.get('InventoryManager').inventory;
-    items.forEach((item, index) => {
-      if (item) {
-        let itemPos = this.itemPositionFromIndex(index);
-
-        let img = this.add.image(itemPos.x, itemPos.y, item.spritesheet, item.frame).setOrigin(0);
-        this.invElements.push(img);
-        let txt = this.add.text(
-          itemPos.x + 8, itemPos.y + 12, item.quantity, 
-          { 
-            color: '#fff', 
-            fontSize: '10px', 
-            fontFamily: this.registry.values.globalFontFamily 
-          }
-        );
-        this.invElements.push(txt);
-      }
-    });
 
     // make a rectangle that shows what item is selected
     let cursorPos = this.itemPositionFromIndex(this.currentIndex);
     this.cursor = this.add.rectangle(
       cursorPos.x, 
       cursorPos.y, 
-      this.registry.values.tileSize, 
-      this.registry.values.tileSize
+      config.cursor.size, 
+      config.cursor.size
     );
     this.cursor
-      .setStrokeStyle(1, 0xff0000, 1)
+      .setStrokeStyle(
+        config.cursor.strokeSize, 
+        config.cursor.strokeColor,
+        config.cursor.strokeAlpha
+        )
       .setOrigin(0)
       .setDepth(-1);
-    this.invElements.push(this.cursor);
 
-    // label that shows the name of the currently selected item
-
-    // get the name of the currently selected item if there is one
-    let screenName = items[this.currentIndex] ? items[this.currentIndex].screenName : '';
-
+    // Text at the bottom that shows the currently selected item information
     this.currentItemText = this.add.text(
       this.background.x, 
       this.background.getBottomCenter().y - 8, 
-      screenName,
-      { 
-        color: '#fff', 
-        fontSize: '18px',
-        fontFamily: this.registry.values.globalFontFamily 
-      }
+      '',
+      this.textStyles.bottom
     );
     this.currentItemText.setOrigin(0.5, 1);
-    this.invElements.push(this.currentItemText);
 
-    // change the text on the button UI
-    this.manager.events.emit('changeTextInteract', 'info');
-    this.manager.events.emit('changeTextInventory', 'exit');
-  }
-
-  fillSidebar() {
-    this.sidebarSlots = [];
-    for (let i = 0; i < this.numSidebarSlots; i++) {
-      let yMargin = this.sidebarBackground.height / (this.numSidebarSlots + 1)
-
-      this.sidebarSlots[i] = {
-        x: this.sidebarBackground.getCenter().x,
-        y: this.sidebarBackground.y + yMargin + i * yMargin,
-        element: null
-      };
-    }
-  }
-
-  addToSidebar(element, index) {
-    if (index >= 0) {
-      // if index is specified, put this element in that position
-      // change the x and y coordinates to match the sidebar slot
-      element.x = this.sidebarSlots[index].x;
-      element.y = this.sidebarSlots[index].y;
-      this.sidebarSlots[index].element = element;
-      this.invElements.push(element);
-    } else {
-      // get first free index
-      for (let i = 0; i < this.sidebarSlots.length; i++) {
-        if (!this.sidebarSlots[i].element) {
-          this.addToSidebar(element, i);
-          break;
-        }
-      }
-    }
-  }
-
-  constructSidebar() {
-    // reset sidebar
-    this.fillSidebar();
-
-    // money display
-    let moneySprite = this.add.image(-16, 0, 'inventory-items', 5);
-    let moneyText = this.add.text(
-      moneySprite.getRightCenter().x + 2, moneySprite.getRightCenter().y, 
-      this.registry.values.money, 
-      { 
-        color: '#fff', 
-        fontSize: '10px',
-        fontFamily: this.registry.values.globalFontFamily 
-      }
-    ).setOrigin(0, 0.5);
-
-    let moneyInformation = this.add.container(0, 0, [ moneySprite, moneyText ]);
-    this.invElements.push(moneyInformation);
-
-    this.addToSidebar(moneyInformation);
-  }
-
-
-  itemPositionFromIndex(index) {
-    // returns the 2D position on the inventory for a given index
-    let pos = Utils.convertIndexTo2D(index, this.inventoryDimensions.w);
-    let x = this.background.getTopLeft().x + pos.x * this.cellSize.w + this.cellSize.w / 2;
-    let y = this.background.getTopLeft().y + pos.y * this.cellSize.h + this.cellSize.h / 2;
-    return { x: x, y: y };
-  }
-}
-
-
-export class ShopDisplay extends Phaser.Scene {
-  /*
-  TODO docstring
-  scene where you buy stuff
-  */
-  create(data) {
-    this.data = data;
-    this.manager = this.scene.get('GameManager');
-    this.parentScene = data.parentScene;
-
+    // Key and Button bindings
     this.buttonCallbacks = {
-      inventory: ()=> {
-        showMessage(this, 'npc-dialogue.shopping.goodbye', null, ()=> {
-          this.manager.events.emit('changeTextInventory', 'inventory');
-          this.scene.stop(this.scene.key);
-          this.scene.run(this.parentScene);
-        });
+      inventory: this.inventoryButtonCallback.bind(this),
+      interact: () => {
+        let item = this.getItem(this.currentIndex);
+        if (item) { 
+          this.interactWithItem(item); 
+        };
       },
-      interact: this.interactionButtonCallback.bind(this),
-      item1: ()=> {},
-      item2: ()=> {}
-    };
+      item1: this.item1ButtonCallback.bind(this),
+      item2: this.item2ButtonCallback.bind(this),
+      menu: this.menuButtonCallback.bind(this)
+    }
 
+    // bind keyboard functionality 
     this.manager.configureKeys(this);
+
+    // Gamepad functionality
     this.manager.checkForGamepad(this);
 
-    this.type = data.type;  // 'buy' or 'sell'
-
-    let width = 338;
-    let height = 184;
-
-    this.background = this.add.rectangle(
-      this.registry.values.windowWidth - 8, this.registry.values.windowHeight - 8,
-      width, height, 
-      0x000000, 0.75
-    ).setOrigin(1);
-
-    this.sidebarBackground = this.add.rectangle(
-      8, 64,
-      64, 32, 
-      0x000000, 0.75
-    )
-      .setDepth(0)
-      .setOrigin(0);
-
-    this.textStyles = {
-      sidebar: { color: '#fff', fontSize: '10px', fontFamily: this.registry.values.globalFontFamily },
-      items: { color: '#fff', fontSize: '10px', fontFamily: this.registry.values.globalFontFamily },
-      bottomText: { color: '#fff', fontSize: '12px', fontFamily: this.registry.values.globalFontFamily }
-    };
-
-    let moneySprite = this.add.image(-16, 0, 'inventory-items', 5);
-    this.moneyText = this.add.text(
-      moneySprite.getRightCenter().x + 2, moneySprite.getRightCenter().y, 
-      this.registry.values.money, this.textStyles.sidebar
-    ).setOrigin(0, 0.5);
-
-    this.add.container(
-      this.sidebarBackground.getCenter().x, 
-      this.sidebarBackground.getCenter().y, 
-      [ moneySprite, this.moneyText ]
-    );
-
-    // event listener that changes the money text
-    this.registry.events.on('changedata', (parent, key, data)=> {
-      if (key === 'money') {
-        this.moneyText.setText(data);
-      }
+    // update the elements on the first start and on wake
+    this.events.on('create', () => {
+      this.updateInventory();
+      this.updateSidebar();
     });
 
-    //display items in inventory
-    this.invElements = [];
-
-    this.currentIndex = 0;
-
-    // maximum slots
-    this.inventoryDimensions = { w: 8, h: 4 };
-    this.inventorySize = this.inventoryDimensions.w * this.inventoryDimensions.h;
-
-    this.cellSize = {
-      w: this.background.width / (this.inventoryDimensions.w + 1),
-      h: this.background.height / (this.inventoryDimensions.h + 1)
-    };
-
-    this.constructInventory();
-  }
-
-  interactionButtonCallback() {
-    // buy or sell the currently selected item
-    let item = this.items[this.currentIndex];
-    if (item) { 
-      if (this.type === 'buy') {
-        let currentFunds = this.registry.values.money;
-        if (currentFunds >= item.buyPrice) {
-          this.registry.set('money',  currentFunds - item.buyPrice);
-          this.showMoneyChange('-' + item.buyPrice);
-          this.manager.events.emit('item-collected', item);
-
-          // update the text at the buttom
-          this.currentItemText.setText(item ? this.getItemText(item) : '');
-
-        } else {
-          showMessage(this, 'npc-dialogue.shopping.insufficient-funds');
-        }
-      } else if (this.type === 'sell') {
-        let currentFunds = this.registry.values.money;
-
-        // determine the amount that can be sold
-        let soldAmount;
-        if (item.unique) {
-          soldAmount = 1;
-        } else if (item.quantity > item.sellQuantity) {
-          soldAmount = item.sellQuantity;
-        } else {
-          soldAmount = item.quantity;
-        }
-
-        let sellPrice = soldAmount * item.sellPrice;
-
-        this.registry.set('money',  currentFunds + sellPrice);
-        this.showMoneyChange('+' + sellPrice);
-
-        this.manager.events.emit('item-removed', this.currentIndex, item, soldAmount);
-
-        // reconstruct inventory
-        this.constructInventory();
-
-          // update the text at the buttom
-        //  this.currentItemText.setText(item ? this.getItemText(item) : '');
-      }        
-    }
-  }
-
-  constructInventory() {
-    this.invElements.forEach(elem => { 
-      elem.destroy(); 
-    });
-    this.invElements = [];
-
-    this.items = [];
-
-    // add the items
-    // "data.items" is an array of keys that corresponds to objects in items.json
-    if (this.type === 'buy') {
-      let itemData = Utils.deepcopy(this.cache.json.get('itemData'));
-
-      this.data.items.forEach((key, index) => {
-        let item = Utils.getNestedKey(itemData, key);
-        let itemPos = this.itemPositionFromIndex(index);
-  
-        let img = this.add.image(itemPos.x, itemPos.y, item.spritesheet, item.frame)
-          .setOrigin(0)
-          .setDepth(2);
-        this.invElements.push(img);
-        let txt = this.add.text(itemPos.x + 8, itemPos.y + 12, item.quantity, this.textStyles.items)
-          .setDepth(2);
-        this.invElements.push(txt);
-  
-        this.items.push(item);
-      });
-    } else if (this.type === 'sell') {
-      let items = this.scene.get('InventoryManager').inventory;
-      // push all the null values to the back
-      items.sort();  
-      items.forEach((item, index) => {
-        // TODO: too much duplicate code
-        if (item) {
-          let itemPos = this.itemPositionFromIndex(index);
-          let img = this.add.image(itemPos.x, itemPos.y, item.spritesheet, item.frame)
-            .setOrigin(0)
-            .setDepth(2);
-          this.invElements.push(img);
-          let txt = this.add.text(itemPos.x + 8, itemPos.y + 12, item.quantity, this.textStyles.items)
-            .setDepth(2);
-          this.invElements.push(txt);
-    
-          this.items.push(item);
-        }
-      });
-    }
-
-    // text that shows name and price
-    this.currentItemText = this.add.text(
-      this.background.getBottomCenter().x, 
-      this.background.getBottomCenter().y - 8, 
-      '',
-      this.textStyles.bottomText
-    );
-    if (this.items[this.currentIndex]) {
-      this.currentItemText.setText(this.getItemText(this.items[this.currentIndex]));
-    }
-    this.currentItemText.setOrigin(0.5, 1);
-    this.invElements.push(this.currentItemText);
-
-    // movable cursor
-    let cursorPos = this.itemPositionFromIndex(this.currentIndex);
-    this.cursor = this.add.rectangle(
-      cursorPos.x, 
-      cursorPos.y, 
-      this.registry.values.tileSize, 
-      this.registry.values.tileSize
-    );
-    this.cursor
-      .setStrokeStyle(1, 0xff0000, 1)
-      .setOrigin(0)
-      .setDepth(1);
-    this.invElements.push(this.cursor);
-  }
-
-  itemPositionFromIndex(index) {
-    // returns the 2D position on the inventory for a given index
-    let pos = Utils.convertIndexTo2D(index, this.inventoryDimensions.w);
-    let x = this.background.getTopLeft().x + pos.x * this.cellSize.w + this.cellSize.w / 2;
-    let y = this.background.getTopLeft().y + pos.y * this.cellSize.h + this.cellSize.h / 2;
-    return {x: x, y: y};
-  }
-
-  getItemText(item) {
-    let ownedAmount = this.scene.get('InventoryManager').getAmount(item);
-    // TODO: check if the item is unique
-    if (this.type === 'buy') {
-      return `${item.screenName} : \$ ${item.buyPrice}\nIn inventory: ${ownedAmount}`;
-    } else if (this.type === 'sell') {
-    return `${item.screenName} : \$ ${item.sellPrice}\nIn inventory: ${ownedAmount}`;
-    }
-  }
-
-  showMoneyChange(text) {
-    // creates a moving text object that indicates that the money amount has changed
-    // TODO: get screen position of text object
-    let rect = this.moneyText.getBounds();
-    let textobj = this.add.text(rect.x + rect.width, rect.y + rect.height, text, this.textStyles.sidebar)
-      .setOrigin(1, 0.5);
-    this.tweens.add({
-      targets: textobj,
-      y: textobj.y + 16,
-      alpha: 0,
-      duration: 500,
-      onComplete: (tween, targets)=> { targets[0].destroy(); }
+    this.events.on('wake', () => {
+      this.updateInventory();
+      this.updateSidebar();
     });
   }
 
-  update(time, delta) {
+  update(_, delta) {
     // move the cursor
     let dir = Utils.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
 
@@ -1030,9 +649,390 @@ export class ShopDisplay extends Phaser.Scene {
       this.cursor.x = cursorPos.x;
       this.cursor.y = cursorPos.y;
 
+      // update the text at the bottom
+      let item = this.getItem(this.currentIndex);
+      this.updateBottomText(item);
+    }
+  }
+
+  item1ButtonCallback() {
+    return;
+  }
+
+  item2ButtonCallback() {
+    return;
+  }
+
+  inventoryButtonCallback() {
+    // exit the inventory display
+    this.scene.sleep(this.scene.key);
+    this.scene.resume(this.manager.currentGameScene);
+    // change the button text back
+    this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
+
+    this.manager.toggleDaytimePause();
+  }
+
+  menuButtonCallback() {
+    return;
+  }
+
+  interactWithItem(item) {
+    return;
+  }
+
+  getItem(index) {
+    return;
+  }
+
+  updateSidebar() {
+    // defines how the elements in the sidebar are updated
+    return;
+  }
+
+  updateInventory() {
+    // defines how the elements in the main inventory are updated
+    return;
+  }
+
+  updateBottomText(item) {
+    // item: currently selected item
+    // individual behaviour for child scene, to be overwritten if needed
+    this.currentItemText.setText(item ? item.screenName : '');
+  }
+
+  addToSidebar(element, index) {
+    // adds an element (container, image) to the sidebar
+    if (index >= 0) {
+      // if index is specified, put this element in that position
+      // change the x and y coordinates to match the sidebar slot
+      element.x = this.sidebarSlots[index].x;
+      element.y = this.sidebarSlots[index].y;
+      this.sidebarSlots[index].element = element;
+    } else {
+      // get first free index
+      for (let i = 0; i < this.sidebarSlots.length; i++) {
+        if (!this.sidebarSlots[i].element) {
+          this.addToSidebar(element, i);
+          break;
+        }
+      }
+    }
+  }
+
+  itemPositionFromIndex(index) {
+    // returns the 2D position on the inventory for a given index
+    let pos = Utils.convertIndexTo2D(index, this.inventoryDimensions.w);
+    let x = this.background.getTopLeft().x + pos.x * this.cellSize.w + this.cellSize.w / 2;
+    let y = this.background.getTopLeft().y + pos.y * this.cellSize.h + this.cellSize.h / 2;
+    return { x: x, y: y };
+  }
+}
+
+
+export class InventoryDisplay extends GenericInventoryDisplay {
+  create() {
+    super.create({
+      x: 80,
+      y: 48,
+      width: 338,
+      height: 184,
+      sidebar: {
+        x: 8,
+        y: 64,
+        width: 64,
+        height: 160
+      },
+      inventoryWidth: 8,
+      inventoryHeight: 6,
+      cursor: {
+        size: 18,
+        strokeSize: 2,
+        strokeColor: 0xff0066,
+        strokeAlpha: 0.7
+      },
+      textStyles: {
+        sidebar: { color: '#fff', fontSize: '10px', fontFamily: this.registry.values.globalFontFamily },
+        items: { color: '#fff', fontSize: '10px', fontFamily: this.registry.values.globalFontFamily },
+        bottomText: { color: '#fff', fontSize: '12px', fontFamily: this.registry.values.globalFontFamily }
+      }
+    });
+
+    // money display in the sidebar
+    let moneySprite = this.add.image(-16, 0, 'inventory-items', 5);
+    this.moneyText = this.add.text(
+      moneySprite.getRightCenter().x + 2, moneySprite.getRightCenter().y, 
+      this.registry.values.money, this.textStyles.sidebar
+    ).setOrigin(0, 0.5);
+
+    let moneyInformation = this.add.container(0, 0, [ moneySprite, this.moneyText ]);
+
+    this.addToSidebar(moneyInformation);
+
+    // event listener that changes the money text
+    this.registry.events.on('changedata', (_, key, data)=> {
+      if (key === 'money') {
+        this.moneyText.setText(data);
+      }
+    });
+  }
+
+  item1ButtonCallback() {
+    this.scene.get('InventoryManager').equipItem(this.currentIndex, 'item1');
+  }
+
+  item2ButtonCallback() {
+    this.scene.get('InventoryManager').equipItem(this.currentIndex, 'item2');
+  }
+
+  interactWithItem(item) {
+    showMessage(this, 'tooltips.' + item.tooltip, item);
+  }
+
+  getItem(index) {
+    return this.scene.get('InventoryManager').inventory[index];
+  }
+
+  updateInventory() {
+    // delete all old items
+    this.invElements.forEach(elem => { elem.destroy(); });
+
+    // get the item information from the inventory manager
+    let items = this.scene.get('InventoryManager').inventory;
+
+    items.forEach((item, index) => {
+      if (item) {
+        let itemPos = this.itemPositionFromIndex(index);
+
+        // item sprite
+        let img = this.add.image(itemPos.x, itemPos.y, item.spritesheet, item.frame).setOrigin(0);
+        this.invElements.push(img);
+        // item text(amount)
+        let txt = this.add.text(
+          itemPos.x + 8, itemPos.y + 12, item.quantity, 
+          { 
+            color: '#fff', 
+            fontSize: '10px', 
+            fontFamily: this.registry.values.globalFontFamily 
+          }
+        );
+        this.invElements.push(txt);
+      }
+    });
+
+    // get the name of the currently selected item if there is one
+    this.updateBottomText(items[this.currentIndex]);
+
+    // change the text on the button UI
+    this.manager.events.emit('changeButtonText', 'interact', 'info');
+    this.manager.events.emit('changeButtonText', 'inventory', 'exit');
+  }
+}
+
+
+class ShopDisplayTemplate extends GenericInventoryDisplay {
+  // Template for both types of shops (buying and selling)
+  create(items) {
+    // "items" is an array of objects, see items.json for properties
+    this.items = items;
+    super.create({
+      x: 80,
+      y: 48,
+      width: 338,
+      height: 184,
+      sidebar: {
+        x: 8,
+        y: 64,
+        width: 64,
+        height: 160
+      },
+      inventoryWidth: 8,
+      inventoryHeight: 6,
+      cursor: {
+        size: 18,
+        strokeSize: 2,
+        strokeColor: 0xff0066,
+        strokeAlpha: 0.7
+      },
+      textStyles: {
+        sidebar: { color: '#fff', fontSize: '10px', fontFamily: this.registry.values.globalFontFamily },
+        items: { color: '#fff', fontSize: '10px', fontFamily: this.registry.values.globalFontFamily },
+        bottomText: { color: '#fff', fontSize: '12px', fontFamily: this.registry.values.globalFontFamily }
+      }
+    });
+
+    // money display in the sidebar
+    let moneySprite = this.add.image(-16, 0, 'inventory-items', 5);
+    this.moneyText = this.add.text(
+      moneySprite.getRightCenter().x + 2, moneySprite.getRightCenter().y, 
+      this.registry.values.money, this.textStyles.sidebar
+    ).setOrigin(0, 0.5);
+
+    let moneyInformation = this.add.container(0, 0, [ moneySprite, this.moneyText ]);
+
+    this.addToSidebar(moneyInformation);
+  }
+
+  updateInventory() {
+    // delete all old items
+    this.invElements.forEach(elem => { elem.destroy(); });
+
+    this.items.forEach((item, index) => {
+      if (item) {
+        let itemPos = this.itemPositionFromIndex(index);
+
+        let img = this.add.image(itemPos.x, itemPos.y, item.spritesheet, item.frame)
+          .setOrigin(0)
+          .setDepth(2);
+        this.invElements.push(img);
+        let txt = this.add.text(itemPos.x + 8, itemPos.y + 12, item.quantity, this.textStyles.items)
+          .setDepth(2);
+        this.invElements.push(txt);
+      }
+    });
+
+    this.updateBottomText(this.items[this.currentIndex])
+  }
+
+  inventoryButtonCallback() {
+    showMessage(this, 'npc-dialogue.shopping.goodbye', null, ()=> {
+      this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
+      this.scene.stop(this.scene.key);
+      this.scene.run(this.manager.getCurrentGameScene());
+    });
+  }
+
+  getItem(index) {
+    return this.items[index];
+  }
+
+  showMoneyChange(text) {
+    // set the money text in the sidebar
+    this.moneyText.setText(this.registry.values.money);
+
+    // creates a moving text object that indicates that the money amount has changed
+    let rect = this.moneyText.getBounds();
+    let textobj = this.add.text(rect.x + rect.width, rect.y + rect.height, text, this.textStyles.sidebar)
+      .setOrigin(1, 0.5);
+    this.tweens.add({
+      targets: textobj,
+      y: textobj.y + 16,
+      alpha: 0,
+      duration: 500,
+      onComplete: (tween, targets)=> { targets[0].destroy(); }
+    });
+  }
+}
+
+
+export class ShopDisplayBuy extends ShopDisplayTemplate {
+  create(items) {
+    // here, items is an array of keys (like "tools.scytheL1")
+    // this makes different shops easier to create
+
+    // get the corresponding item objects from the json cache
+    let itemObjects = [];
+    let itemData = Utils.deepcopy(this.cache.json.get('itemData'));
+    items.forEach(key => {
+      itemObjects.push(Utils.getNestedKey(itemData, key));
+    });
+
+    super.create(itemObjects);
+  }
+
+  // Scene where you can buy items
+  interactWithItem(item) {
+    let currentFunds = this.registry.values.money;
+    if (currentFunds >= item.buyPrice) {
+      this.registry.set('money',  currentFunds - item.buyPrice);
+      this.showMoneyChange('-' + item.buyPrice);
+      // TODO: make this work for items that don't go into the inventory
+      if (item.inventory) {
+        this.manager.events.emit('item-collected', item);
+      } else {
+        if (item.type === 'livestock') {
+          // TODO check if player has the right barn for this animal
+          if (this.scene.isSleeping('BarnInteriorScene')) {
+            this.scene.get('BarnInteriorScene').addAnimal(item.name);
+          } else {
+            // if this scene has not been initialized yet
+            // TODO: this feels very hacky
+            this.scene.get('BarnInteriorScene').events.once('create', scene => {
+              scene.addAnimal(item.name);
+              this.updateBottomText(item);
+            });
+            this.scene.run('BarnInteriorScene')
+            this.scene.sleep('BarnInteriorScene');
+          }
+        }
+      }
+
       // update the text at the buttom
-      let item = this.items[this.currentIndex];
-      this.currentItemText.setText(item ? this.getItemText(item) : '');
+      this.updateBottomText(item);
+
+    } else {
+      showMessage(this, 'npc-dialogue.shopping.insufficient-funds');
+    }
+  }
+
+  updateBottomText(item) {
+    if (item) {
+      let ownedAmount;
+      if (item.inventory) {
+        // if it is an inventory item
+        ownedAmount = this.scene.get('InventoryManager').getAmount(item);
+        this.currentItemText.setText(`${item.screenName} : \$ ${item.buyPrice}\nIn inventory: ${ownedAmount}`);
+      } else {
+        if (item.type === 'livestock') {
+          ownedAmount = this.manager.livestock[item.name].length;
+          this.currentItemText.setText(`${item.screenName} : \$ ${item.buyPrice}\nOn the farm: ${ownedAmount}`);
+        }
+      }
+      
+    } else {
+      this.currentItemText.setText('');
+    }
+  }
+}
+
+
+export class ShopDisplaySell extends ShopDisplayTemplate {
+  create() {
+    // pass the player's inventory to the parent scene
+    super.create(this.scene.get('InventoryManager').inventory);
+  }
+
+  // this is where you can sell your inventory items
+  interactWithItem(item) {
+    let currentFunds = this.registry.values.money;
+
+    // determine the amount that can be sold
+    let soldAmount;
+    if (item.unique) {
+      soldAmount = 1;
+    } else if (item.quantity > item.sellQuantity) {
+      soldAmount = item.sellQuantity;
+    } else {
+      soldAmount = item.quantity;
+    }
+
+    let sellPrice = soldAmount * item.sellPrice;
+
+    this.registry.set('money',  currentFunds + sellPrice);
+    this.showMoneyChange('+' + sellPrice);
+
+    this.manager.events.emit('item-removed', this.currentIndex, item, soldAmount);
+
+    // reconstruct inventory
+    this.updateInventory();
+  }
+
+  updateBottomText(item) {
+    if (item) {
+      let ownedAmount = this.scene.get('InventoryManager').getAmount(item);
+      this.currentItemText.setText(`${item.screenName} : \$ ${item.sellPrice}\nIn inventory: ${ownedAmount}`);
+    } else {
+      this.currentItemText.setText('');
     }
   }
 }

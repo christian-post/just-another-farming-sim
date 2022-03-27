@@ -1,17 +1,21 @@
 # Just Another Farming Sim
 
-play at https://christian-post.github.io/just-another-farming-sim/
+Play the current version at https://christian-post.github.io/just-another-farming-sim/
 
 
 # Controls 
 
-| function        | keyboard | gamepad  |
-| --------------- | -------- | -------- |
-| move            | cursors  | D-pad    |
-| interact        | W        | X        |
-| open/close menu | E        | Y        |
-| use item 1      | A        | A        |
-| use item 2      | S        | B        |
+Currently supported gamepads: XBOX 
+
+| function             | keyboard | gamepad  |
+| ---------------      | -------- | -------- |
+| move                 | cursors  | D-pad    |
+| interact             | W        | X        |
+| inventory            | E        | Y        |
+| use item 1           | A        | A        |
+| use item 2           | S        | B        |
+| menu                 | ESC      | BACK     |
+
 
 # How to Play
 

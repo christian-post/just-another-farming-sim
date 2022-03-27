@@ -1,6 +1,12 @@
 import { Player, NPC, Vendor } from '../sprites.js';
 import { WeatherDisplayManager } from './scene-weather.js';
-import { DialogueTrigger, TeleportTrigger, SoilPatch, InteractTrigger } from '../game-objects.js';
+import { 
+  DialogueTrigger, 
+  TeleportTrigger, 
+  SoilPatch, 
+  InteractTrigger, 
+  TeleportInteractTrigger 
+} from '../game-objects.js';
 import * as Utils from '../utils.js';
 
 
@@ -157,7 +163,11 @@ export class OverworldScene extends Phaser.Scene {
 
     // draw the layers above the sprites
     layersDrawnAbove.forEach(layer => {
-      this.mapLayers[layer].setDepth(this.depthValues.mapAboveSprites);
+      if (layer in this.mapLayers) {
+        this.mapLayers[layer].setDepth(this.depthValues.mapAboveSprites);
+      } else {
+        console.warn(`${layer} not in map "${mapKey}".`);
+      }
     });
 
     this.physics.world.setBounds(0, 0, this.mapLayers.layer1.width, this.mapLayers.layer1.height);
@@ -218,7 +228,13 @@ export class OverworldScene extends Phaser.Scene {
         break;
 
       case 'teleport':
-        new TeleportTrigger(this, object.x, object.y, object.width, object.height, object.target, object.targetX, object.targetY);
+        if ('interact' in object && object.interact) {
+          // player has to press the interact button
+          new TeleportInteractTrigger(this, object.x, object.y, object.width, object.height, object.target, object.targetX, object.targetY)
+        } else {
+          // player just runs into it
+          new TeleportTrigger(this, object.x, object.y, object.width, object.height, object.target, object.targetX, object.targetY);
+        }
         break;
 
       case 'interact':
@@ -249,9 +265,14 @@ export class OverworldScene extends Phaser.Scene {
     return grid;
   }
 
-  setupCamera() {
+  setupCamera(follow=true) {
     this.cameras.main.setBounds(0, 0, this.mapLayers.layer0.width, this.mapLayers.layer0.height);
     this.cameras.main.startFollow(this.player, true);
+    if (!follow) {
+      this.cameras.main.on('followupdate', ()=> {
+        this.cameras.main.stopFollow();
+      });
+    }
   }
 
   setupDaytimeOverlay() {
@@ -581,22 +602,30 @@ export class BarnInteriorScene extends OverworldScene {
       collectible.collect();
     }); 
 
-    this.makeTilemap('barns', ['layer0', 'layer1', 'layer2'], ['layer3']);
+    this.makeTilemap('barns', ['layer0', 'layer1', 'layer2'], ['layer3', 'layer4']);
     this.setupCamera();
 
+    this.animals = this.add.group();
+  }
 
-    // TODO testing random pigs
-    for (let i = 0; i < 10; i++) {
-      let pig = new NPC(
-        this, 
-        Phaser.Math.Between(32, 239),
-        Phaser.Math.Between(1360, 1536),
-        'pig'
-      );
-      pig.setBehaviour('randomWalk');
-      pig.body.pushable = true;
-      pig.changeHitbox(12, 8, pig.width / 2 - 6, pig.height - 8);
-    }
+  addAnimal(type) {
+    // TODO:
+    // temporary solution
+    // check if there is space left
+    // check for collisions when adding
+    // decouple animal information and sprites
+    let animal = new NPC(
+      this, 
+      Phaser.Math.Between(32, 239),
+      Phaser.Math.Between(1360, 1536),
+      type
+    );
+    animal.setBehaviour('randomWalk');
+    animal.body.pushable = true;
+    animal.changeHitbox(12, 8, animal.width / 2 - 6, animal.height - 8);
+
+    this.animals.add(animal);
+    this.manager.livestock[type].push(animal);
   }
 
   update(time, delta) {
@@ -616,8 +645,8 @@ export class HouseInteriorScene extends OverworldScene {
       collectible.collect();
     }); 
 
-    this.makeTilemap('houses', ['layer0', 'layer1', 'layer2'], ['layer3']);
-    this.setupCamera();
+    this.makeTilemap('houses', ['layer0', 'layer1', 'layer2'], ['layer3', 'layer4']);
+    this.setupCamera(false);
   }
 
   update(time, delta) {

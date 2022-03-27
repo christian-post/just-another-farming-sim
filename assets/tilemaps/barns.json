@@ -56,7 +56,7 @@
          "name":"objects",
          "objects":[
                 {
-                 "height":8,
+                 "height":4,
                  "id":1,
                  "name":"toFarm",
                  "properties":[
@@ -80,7 +80,7 @@
                  "visible":true,
                  "width":24,
                  "x":124,
-                 "y":1560
+                 "y":1564
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -91,6 +91,12 @@
  "nextlayerid":6,
  "nextobjectid":4,
  "orientation":"orthogonal",
+ "properties":[
+        {
+         "name":"targetY",
+         "type":"int",
+         "value":290
+        }],
  "renderorder":"right-down",
  "tiledversion":"1.7.2",
  "tileheight":16,

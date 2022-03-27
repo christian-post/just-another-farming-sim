@@ -91,7 +91,7 @@ export class TitleScene extends Phaser.Scene {
     this.helpTextElements.add(text2);
 
     if (this.pad) {
-
+      // TODO: button images
     } else {
       // no gamepad detected
       let textKey1 = this.add.text(
@@ -126,16 +126,27 @@ export class TitleScene extends Phaser.Scene {
     let callbacks;
 
     if (saveData) {
-      options = ['New Game', 'Load Game', 'Quit'];    // TODO: get from dialogue.json
+      options = [
+        'New Game',
+        'Load Game',
+        'Controls',
+        'Quit'
+      ];
       callbacks = [
         this.newGame.bind(this),
         ()=> { this.manager.loadGameFromSave(saveData); },
+        this.showControls.bind(this),
         ()=> { console.log('TODO: quit the game (back to last page?)'); },
       ];
     } else {
-      options = ['New Game', 'Quit'];    // TODO: get from dialogue.json
+      options = [
+        'New Game',
+        'Controls',
+        'Quit'
+      ];    // TODO: get from dialogue.json?
       callbacks = [
         this.newGame.bind(this),
+        this.showControls.bind(this),
         ()=> { console.log('TODO: quit the game (back to last page?)'); },
       ];
     }
@@ -161,7 +172,6 @@ export class TitleScene extends Phaser.Scene {
   }
 
   newGame() {
-
     // reset some variables in the manager
     this.manager.configureIngameVariables();
 
@@ -189,5 +199,92 @@ export class TitleScene extends Phaser.Scene {
       scene.makeAcre(9, 15, 10, 4);
     });
   }
+
+  showControls() {
+    this.scene.start('ShowControls');
+  }
 }
 
+
+export class ShowControls extends Phaser.Scene {
+  create() {
+    this.manager = this.scene.get('GameManager');
+
+    // "any key" event to go back
+    this.input.gamepad.on('down', ()=> {
+      this.scene.start('Title');
+    });
+
+    this.input.keyboard.on('keydown', ()=> {
+      this.scene.start('Title');
+    });
+    
+    let gamepadX = 200;
+    let gamepadY = 100;
+
+    // relative button positions on the texture
+    let buttonPositions = {
+      ls: { x: 52, y: 44 },
+      rs: { x: 126, y: 72 },
+      a: { x: 148, y: 56 },
+      b: { x: 164, y: 42 },
+      x: { x: 138, y: 43 },
+      y: { x: 154, y: 32 },
+      back: { x: 86, y: 42 },
+      start: { x: 116, y: 42 },
+      lb: { x: 52, y: 10 },
+      rb: { x: 152, y: 10 },
+      digipad: { x: 76, y: 72 }
+    };
+
+    // positions of the text
+    let texts = {
+      a: {
+        text: 'Item 1',
+        pos: { x: 300, y: 20 }
+      },
+      b: {
+        text: 'Item 2',
+        pos: { x: 300, y: 40 }
+      },
+      x: {
+        text: 'Interact',
+        pos: { x: 300, y: 60 }
+      },
+      y: {
+        text: 'Inventory',
+        pos: { x: 300, y: 80 }
+      }
+    };
+
+    this.add.image(gamepadX, gamepadY, 'gamepad')
+      .setOrigin(0);
+
+    let textStyle = { 
+      color: '#fff', 
+      fontSize: '12px', 
+      fontFamily: this.registry.values.globalFontFamily
+    };
+
+    for (const [key, value] of Object.entries(texts)) {
+      this.add.text(value.pos.x, value.pos.y, value.text, textStyle)
+        .setOrigin(1, 0.5);
+
+      let line = this.add.graphics();
+      line.lineStyle(1, 0x000000);
+      line.lineBetween(
+        gamepadX + buttonPositions[key].x, 
+        value.pos.y, 
+        gamepadX + buttonPositions[key].x,
+        gamepadY + buttonPositions[key].y
+      );
+
+      line.lineBetween(
+        gamepadX + buttonPositions[key].x, 
+        value.pos.y, 
+        value.pos.x + 2,
+        value.pos.y
+      );
+    }
+  }
+}

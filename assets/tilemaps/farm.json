@@ -156,48 +156,68 @@
                  "y":272
                 }, 
                 {
-                 "height":48,
+                 "height":32,
                  "id":15,
                  "name":"",
                  "properties":[
                         {
-                         "name":"callbackKey",
-                         "type":"string",
-                         "value":"enterHouse"
+                         "name":"interact",
+                         "type":"bool",
+                         "value":true
                         }, 
                         {
-                         "name":"interactionText",
+                         "name":"target",
                          "type":"string",
-                         "value":"enter"
-                        }],
-                 "rotation":0,
-                 "type":"interact",
-                 "visible":true,
-                 "width":24,
-                 "x":244,
-                 "y":144
-                }, 
-                {
-                 "height":32,
-                 "id":16,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"callbackKey",
-                         "type":"string",
-                         "value":"enterPigshed"
+                         "value":"BarnInteriorScene"
                         }, 
                         {
-                         "name":"interactionText",
-                         "type":"string",
-                         "value":"enter"
+                         "name":"targetX",
+                         "type":"int",
+                         "value":132
+                        }, 
+                        {
+                         "name":"targetY",
+                         "type":"int",
+                         "value":1540
                         }],
                  "rotation":0,
-                 "type":"interact",
+                 "type":"teleport",
                  "visible":true,
                  "width":16,
                  "x":464,
                  "y":512
+                }, 
+                {
+                 "height":48,
+                 "id":17,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"interact",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"target",
+                         "type":"string",
+                         "value":"HouseInteriorScene"
+                        }, 
+                        {
+                         "name":"targetX",
+                         "type":"int",
+                         "value":160
+                        }, 
+                        {
+                         "name":"targetY",
+                         "type":"int",
+                         "value":1570
+                        }],
+                 "rotation":0,
+                 "type":"teleport",
+                 "visible":true,
+                 "width":24,
+                 "x":244,
+                 "y":140
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -206,7 +226,7 @@
          "y":0
         }],
  "nextlayerid":7,
- "nextobjectid":17,
+ "nextobjectid":18,
  "orientation":"orthogonal",
  "properties":[
         {

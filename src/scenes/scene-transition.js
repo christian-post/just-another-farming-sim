@@ -88,7 +88,7 @@ export class TransitionScene extends Phaser.Scene {
     this.scene.get('GameManager').currentGameScene = this.sceneTo.scene.key;
 
     // if scene was paused and is resumed, change the player's position
-    this.scene.get(this.sceneTo).events.on('wake', ()=> {
+    this.scene.get(this.sceneTo).events.once('wake', ()=> {
       let player = this.scene.get(this.sceneTo).player;
       if ('playerPos' in this.createConfig) {
         player.setPosition(this.createConfig.playerPos.x, this.createConfig.playerPos.y);
@@ -96,8 +96,9 @@ export class TransitionScene extends Phaser.Scene {
       if ('lastDir' in this.createConfig) {
         player.lastDir = this.createConfig.lastDir;
       }
-    });
 
+      this.scene.get(this.sceneTo).cameras.main.startFollow(player, true);
+    });
 
     if (this.callback) {
       // execute additional code if given to constructor

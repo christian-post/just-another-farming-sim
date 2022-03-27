@@ -52,7 +52,7 @@ export class DialogueScene extends Phaser.Scene {
       // message contains options
       this.message.on('complete', ()=> {
         // change the action key text
-        this.manager.events.emit('changeTextInteract', 'select');
+        this.manager.events.emit('changeButtonText', 'interact', 'select');
 
         this.options.forEach( (option, index) => {
 
@@ -83,7 +83,7 @@ export class DialogueScene extends Phaser.Scene {
       interact: this.interactButtonCallback.bind(this),
       inventory: ()=> {
         this.message.destroy();
-        this.manager.events.emit('changeTextInventory', 'inventory');
+        this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
         if (this.data.callback) { this.data.callback(); }
       }
     };
@@ -91,7 +91,7 @@ export class DialogueScene extends Phaser.Scene {
     this.keys.interact.on('down', this.buttonCallbacks.interact, this);
     this.keys.inventory.on('down', this.buttonCallbacks.inventory, this);
 
-    this.manager.events.emit('changeTextInventory', 'exit');
+    this.manager.events.emit('changeButtonText', 'inventory', 'exit');
 
   }
   
@@ -105,8 +105,8 @@ export class DialogueScene extends Phaser.Scene {
         this.manager.scene.stop('Dialogue');  // TODO: does this always work?
 
         // change the text back
-        this.manager.events.emit('changeTextInteract', '');
-        this.manager.events.emit('changeTextInventory', 'inventory');
+        this.manager.events.emit('changeButtonText', 'interact', '');
+        this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
 
         // options and stuff
         this.options[this.currentOptionIndex].callback();
@@ -114,7 +114,7 @@ export class DialogueScene extends Phaser.Scene {
         // normal text
         if (this.message.isLastPage) {
           this.message.destroy();
-          this.manager.events.emit('changeTextInventory', 'inventory');
+          this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
           if (this.data.callback) { this.data.callback(); }
         } else {
           this.message.typeNextPage();
@@ -299,7 +299,8 @@ export class GenericMenu extends Phaser.Scene {
     for (let i = 0; i < this.options.length; i++) {
       let y = config.y + margin * i;
       let x = config.x;
-      let text = this.add.text(x, y, this.options[i], fontStyle).setOrigin(0);
+      let text = this.add.text(x, y, this.options[i], fontStyle)
+        .setOrigin(0);
 
       this.optionPositions[i] = { x: text.getLeftCenter().x - 4, y: text.getLeftCenter().y };
     }
@@ -319,8 +320,8 @@ export class GenericMenu extends Phaser.Scene {
           this.scene.stop(this.scene.key);
 
           // change the text back
-          this.manager.events.emit('changeTextInteract', '');
-          this.manager.events.emit('changeTextInventory', 'inventory');
+          this.manager.events.emit('changeButtonText', 'interact', '');
+          this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
 
           // options and stuff
           this.callbacks[this.currentOptionIndex]();
@@ -335,7 +336,7 @@ export class GenericMenu extends Phaser.Scene {
           config.exitCallback();
         } else {
           this.scene.run(this.manager.currentGameScene);
-          this.manager.events.emit('changeTextInventory', 'inventory');
+          this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
         } 
       }
     };
@@ -343,7 +344,7 @@ export class GenericMenu extends Phaser.Scene {
     this.keys.interact.on('down', this.buttonCallbacks.interact, this);
     this.keys.inventory.on('down', this.buttonCallbacks.inventory, this);
 
-    this.manager.events.emit('changeTextInventory', 'exit');
+    this.manager.events.emit('changeButtonText', 'inventory', 'exit');
   }
 
   update(time, delta) {

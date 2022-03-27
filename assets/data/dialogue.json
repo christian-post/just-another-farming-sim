@@ -31,7 +31,7 @@
     "tired-begin": "You have been awake for a very long time. You're starting to feel a little tired.",
     "tired-advanced": "You feel dizzy. You should really go to bed now!",
     "fainting": "You break down tired.",
-    "item-no-action": "Now is not the right time to use this.",
+    "item-no-action": "You can't use this here.",
     "stamina-full": "You already have full stamina.",
     "maxWaterLevelReached": "This patch of soil has enough water!"
   },
@@ -62,7 +62,9 @@
     "seeds": "Plant these seeds in a patch of soil.",
     "harvest": "{screenName} can be sold, processed to feed, or transformed into seeds.",
     "sodaStamina": "Drinking this partially refills your stamina.",
-    "fertilizer": "Use this on a crop to increase its yield."
+    "fertilizer": "Use this on a crop to increase its yield.",
+    "pig": "A pig for fattening. Gets delivered to your pig shed.",
+    "pigFeed": "Feed for your pigs. Put it in a trough in your pig shed."
   },
   "npc-dialogue": {
     "generic": {

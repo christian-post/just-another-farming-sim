@@ -1,10 +1,12 @@
 import { DialogueScene, GenericMenu } from './user-interface.js';
-import { InventoryManager, InventoryDisplay, ShopDisplay } from './scenes/scene-inventory.js';
+import { InventoryManager, InventoryDisplay, ShopDisplayBuy, ShopDisplaySell } from './scenes/scene-inventory.js';
 import * as GameScenes from './scenes/scene-overworld.js';
 import { PreloadingScene } from './scenes/scene-preload.js';
-import { TitleScene } from './scenes/scene-title.js';
+import { TitleScene, ShowControls } from './scenes/scene-title.js';
 import { TransitionScene } from './scenes/scene-transition.js';
 import { GameManager } from './scenes/scene-manager.js';
+
+
 
 const WINDOW_WIDTH = 426;
 const WINDOW_HEIGHT = 240;
@@ -30,7 +32,8 @@ let config = {
       debugShowBody: true
     }
   },
-  antialias: false,
+  // antialias: false,
+  pixelArt: true,
   scale: {
     zoom: 3
   },
@@ -57,6 +60,7 @@ if (SCENEWATCHER) {
   });
 }
 
+
 const game = new Phaser.Game(config);
 
 // additional configuration to be added to the game registry
@@ -70,6 +74,7 @@ game.registry.merge({
   menuScrollDelay: 200,
   globalMusicVolume: 0,
   globalSoundeffectsVolume: 0.5,
+  // globalFontFamily: 'CustomFont',
   globalFontFamily: 'Verdana',
   // in-game settings
   // ingameTimeSpeed: 1000,  // in-game seconds per real-time second
@@ -80,7 +85,7 @@ game.registry.merge({
   },
   playerStaminaRechargeRate: 100,  // how much stamina is refilled
   playerStaminaRechargeDelay: 10,  // ingame minutes until stamina is refilled by the given amount
-  startingMoney: 2000,
+  startingMoney: 10000,
   startingMaxStamina: 200,
   wateringCanAmount: 2,  // how much the watering can raises the soil's water level
   maxWateringLevel: 4
@@ -90,6 +95,7 @@ game.registry.merge({
 game.scene.add('Preload', PreloadingScene, false);   
 game.scene.add('GameManager', GameManager, false);
 game.scene.add('Title', TitleScene, false);
+game.scene.add('ShowControls', ShowControls, false);
 // In Game scenes
 game.scene.add('FarmScene', GameScenes.FarmScene, false);
 game.scene.add('VillageScene', GameScenes.VillageScene, false);
@@ -98,13 +104,14 @@ game.scene.add('HouseInteriorScene', GameScenes.HouseInteriorScene, false);
 
 game.scene.add('InventoryManager', InventoryManager, false); 
 game.scene.add('InventoryDisplay', InventoryDisplay, false);
-game.scene.add('ShopDisplay', ShopDisplay, false);
+game.scene.add('ShopDisplayBuy', ShopDisplayBuy, false);
+game.scene.add('ShopDisplaySell', ShopDisplaySell, false);
 game.scene.add('Dialogue', DialogueScene, false);
 game.scene.add('Transition', TransitionScene, false);
 game.scene.add('Menu', GenericMenu, false);
 
 
-// load the font
+// load a custom font
 new FontFace("CustomFont", "url(assets/fonts/slkscr.ttf)")
   .load()
   .then(function (loaded) {
