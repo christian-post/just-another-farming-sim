@@ -3,7 +3,7 @@ import * as Utils from '../utils.js';
 import { showMessage } from '../user-interface.js';
 
 
-let XBOXMAPPING = {
+export const XBOXMAPPING = {
   0: 'A',
   1: 'B',
   2: 'X',

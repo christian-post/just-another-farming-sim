@@ -13,7 +13,7 @@
   "defaultGamepad": {
     "item1": 0,
     "item2": 1,
-    "interact": 2,
+    "interact": 4,
     "inventory": 3,
     "menu": 8,
     "up": 12,

@@ -1,3 +1,9 @@
+import { DialogueTrigger } from "../game-objects.js";
+import { showMessage } from "../user-interface.js";
+import { XBOXMAPPING } from "./scene-manager.js";
+import * as Utils from "../utils.js";
+
+
 export class TitleScene extends Phaser.Scene {
   preload () {
     this.load.scenePlugin({
@@ -197,7 +203,25 @@ export class TitleScene extends Phaser.Scene {
     this.scene.get('FarmScene').events.once('create', scene => {
       this.manager.timerPaused = false;
       scene.makeAcre(9, 15, 10, 4);
+
+      this.welcomeMessage(scene);
     });
+  }
+
+  welcomeMessage(scene) {
+    // show a tutorial message
+    // TODO: add a "repeat" parameter to the options dialogue
+    showMessage(
+      scene, 'help.intro.text', this.manager, null, 
+      {
+        key: 'help.intro.options', 
+        callbacks: [
+          ()=> { showMessage(scene,'help.controls', null, ()=> { this.welcomeMessage(scene) }) }, 
+          ()=> { showMessage(scene,'help.farming', null, ()=> { this.welcomeMessage(scene) }) }, 
+          ()=> { showMessage(scene,'help.economy', null, ()=> { this.welcomeMessage(scene) }) }, 
+          ()=> { showMessage(scene,'help.other', null, ()=> { this.welcomeMessage(scene) }) }
+        ]
+      });
   }
 
   showControls() {
@@ -210,6 +234,16 @@ export class ShowControls extends Phaser.Scene {
   create() {
     this.manager = this.scene.get('GameManager');
 
+    this.manager.checkForGamepad(this);
+    
+    // get current gamepad mapping, but reversed
+    const gamepadMapping = this.cache.json.get('controls').defaultGamepad;
+    let reversedGamepadMap = {};
+
+    for (const [key, value] of Object.entries(gamepadMapping)) {
+      reversedGamepadMap[value] = key;
+    };
+
     // "any key" event to go back
     this.input.gamepad.on('down', ()=> {
       this.scene.start('Title');
@@ -218,73 +252,148 @@ export class ShowControls extends Phaser.Scene {
     this.input.keyboard.on('keydown', ()=> {
       this.scene.start('Title');
     });
-    
-    let gamepadX = 200;
-    let gamepadY = 100;
 
-    // relative button positions on the texture
-    let buttonPositions = {
-      ls: { x: 52, y: 44 },
-      rs: { x: 126, y: 72 },
-      a: { x: 148, y: 56 },
-      b: { x: 164, y: 42 },
-      x: { x: 138, y: 43 },
-      y: { x: 154, y: 32 },
-      back: { x: 86, y: 42 },
-      start: { x: 116, y: 42 },
-      lb: { x: 52, y: 10 },
-      rb: { x: 152, y: 10 },
-      digipad: { x: 76, y: 72 }
-    };
-
-    // positions of the text
-    let texts = {
-      a: {
-        text: 'Item 1',
-        pos: { x: 300, y: 20 }
-      },
-      b: {
-        text: 'Item 2',
-        pos: { x: 300, y: 40 }
-      },
-      x: {
-        text: 'Interact',
-        pos: { x: 300, y: 60 }
-      },
-      y: {
-        text: 'Inventory',
-        pos: { x: 300, y: 80 }
-      }
-    };
-
-    this.add.image(gamepadX, gamepadY, 'gamepad')
-      .setOrigin(0);
-
-    let textStyle = { 
+    const textStyle = { 
       color: '#fff', 
       fontSize: '12px', 
       fontFamily: this.registry.values.globalFontFamily
     };
 
-    for (const [key, value] of Object.entries(texts)) {
-      this.add.text(value.pos.x, value.pos.y, value.text, textStyle)
+
+    // Header
+    this.add.text(80, 10, 'Keyboard', textStyle)
+      .setOrigin(0.5);
+    this.add.text(280, 10, 'Gamepad', textStyle)
+      .setOrigin(0.5);
+
+
+    // Keyboard bindings
+    const xStart = 10;
+    const yStart = 36;  // start of the first row
+    const hSpace = 120;  // between left and right column
+    const vSpace = 16;  // vertical space between button descriptions
+
+    const keyboardMapping = this.cache.json.get('controls').default;
+
+    Object.keys(keyboardMapping).forEach((key, index) => {
+      this.add.text(
+        xStart,
+        yStart + vSpace * index,
+        `${Utils.capitalize(key)}:`,
+        textStyle
+      )
+        .setOrigin(0, 0.5);
+
+      this.add.text(
+        xStart + hSpace,
+        yStart + vSpace * index,
+        keyboardMapping[key],
+        textStyle
+      )
         .setOrigin(1, 0.5);
+    });
 
-      let line = this.add.graphics();
-      line.lineStyle(1, 0x000000);
-      line.lineBetween(
-        gamepadX + buttonPositions[key].x, 
-        value.pos.y, 
-        gamepadX + buttonPositions[key].x,
-        gamepadY + buttonPositions[key].y
-      );
 
-      line.lineBetween(
-        gamepadX + buttonPositions[key].x, 
-        value.pos.y, 
-        value.pos.x + 2,
-        value.pos.y
-      );
+
+    // this.pad = true;  // testing only
+    // gamepad texture position
+    const gamepadX = 180;
+    const gamepadY = 100;
+
+    if (!this.pad) {
+      this.add.image(gamepadX, gamepadY, 'gamepadMissing')
+        .setOrigin(0)
+        .setTintFill(0x000000);
+  
+      this.add.text(280, 150, 'No Gamepad detected', textStyle)
+        .setOrigin(0.5);
+    } else {
+      // relative button positions on the texture
+      const buttonPositions = {
+        10: { x: 52, y: 44 },       // LS
+        11: { x: 126, y: 72 },      // RS
+        0: { x: 149, y: 56 },       // A
+        1: { x: 164, y: 42 },       // B   
+        2: { x: 138, y: 42 },       // X
+        3: { x: 153, y: 32 },       // Y
+        8: { x: 86, y: 42 },        // BACK
+        9: { x: 116, y: 42 },       // START
+        4: { x: 52, y: 10 },        // LB
+        5: { x: 152, y: 10 },       // RB
+        12: { x: 76, y: 72 }        // DIGIPAD (12 - 15)
+      };
+  
+      // positions of the text
+  
+      const rightColumn = gamepadX + 180;
+      const leftColumn = gamepadX + 40;
+  
+      const texts = {
+        12: {
+          text: 'Move',  // custom button description if not in gamepad mapping
+          pos: { x: leftColumn, y: yStart },
+          align: 1  // 1 = right, 0 = left
+        },
+        8: {
+          pos: { x: leftColumn, y: yStart + vSpace },
+          align: 1 
+        },
+        4: {
+          pos: { x: leftColumn, y: yStart + 2 * vSpace },
+          align: 1
+        },
+        0: {
+          pos: { x: rightColumn, y: yStart },
+          align: 0
+        },
+        1: {
+          pos: { x: rightColumn, y: yStart + vSpace },
+          align: 0
+        },
+        2: {
+          pos: { x: rightColumn, y: yStart + 2 * vSpace },
+          align: 0
+        },
+        3: {
+          pos: { x: rightColumn, y: yStart + 3 * vSpace },
+          align: 0
+        }
+      };
+  
+      this.add.image(gamepadX, gamepadY, 'gamepad')
+        .setOrigin(0);
+  
+      for (const [key, value] of Object.entries(texts)) {
+        
+        // button description
+        let buttonFunc = reversedGamepadMap[key];
+  
+        this.add.text(
+          value.pos.x, 
+          value.pos.y, 
+          value.text || Utils.capitalize(buttonFunc || ''),  // get button descrition either from the texts object, or from mapping
+          textStyle)
+          .setOrigin(value.align, 0.5);
+  
+        if (buttonFunc) {
+          // if there is a function for this button, draw a line from the text to the gamepad image
+          let line = this.add.graphics();
+          line.lineStyle(1, 0x000000);
+          line.lineBetween(
+            gamepadX + buttonPositions[key].x, 
+            value.pos.y, 
+            gamepadX + buttonPositions[key].x,
+            gamepadY + buttonPositions[key].y
+          );
+    
+          line.lineBetween(
+            gamepadX + buttonPositions[key].x, 
+            value.pos.y, 
+            value.pos.x + 2 * (value.align === 1 ? 1 : -1),  // offset depending on the alignment
+            value.pos.y
+          );
+        } 
+      }
     }
   }
 }

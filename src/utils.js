@@ -107,21 +107,13 @@ export const hexColor = function(number) {
 }
 
 
-// // -------------- Monkey patch -------------------------------- //
-
-// String.prototype.format = function() {
-//   // string formatting similar to pythons str.format
-//   // usage: '{0} {1}'.format('hello', 'world')
-//   // CAUTION: much slower than ES6 template strings, use only when absolutely necessary
-//   a = this;
-//   for (k in arguments) {
-//     a = a.replace("{" + k + "}", arguments[k])
-//   }
-//   return a
-// }
-
 export const sumArray = function(array) {
   return array.reduce((a, b) => { return a + b }, 0);
+}
+
+
+export const capitalize = function(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 
