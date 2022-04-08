@@ -1,6 +1,7 @@
 import * as Utils from './utils.js';
 import { showMessage } from './user-interface.js';
 
+
 export class BaseCharacterSprite extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, key) {
     super(scene, x, y, key);
@@ -220,6 +221,7 @@ export class Player extends BaseCharacterSprite {
     let index = Utils.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
 
     // check for arable Land
+    // TODO can this be generalized?
     if (this.scene.hasArableLand) {
       if (this.scene.arableMap[index]) {
         if (!this.interactionRect.visible) { this.interactionRect.setVisible(true) };
@@ -230,6 +232,12 @@ export class Player extends BaseCharacterSprite {
         } else {
           if (this.interactionRect.visible) { this.interactionRect.setVisible(false) };
         }
+      }
+    } else if (this.scene.scene.key === 'BarnInteriorScene') {
+      if (this.inventory.isEquippedType('feed')) {
+        if (!this.interactionRect.visible) { this.interactionRect.setVisible(true) };
+      } else {
+        if (this.interactionRect.visible) { this.interactionRect.setVisible(false) };
       }
     }
 
@@ -336,6 +344,27 @@ export class Player extends BaseCharacterSprite {
               y: interactY
           });
 
+          break;
+
+        case 'feed':
+          collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
+          collisions.forEach(col => {
+            // check if the collision object is a trough
+            if (col instanceof Trough) {
+              // check if it's the right type of feed
+              if (col.data.animal === item.animal) {
+                this.manager.events.emit('itemConsumed', item, button);
+
+                // change the data in the data manager
+                let barn = this.manager.farmData.data.buildings[col.data.barnID];
+                let trough = barn.troughs[col.data.index];
+                trough.currentFill++;
+              } else {
+                // TODO show message
+                console.log('Wrong type of feed.');
+              }
+            } 
+          });
           break;
 
         default:
@@ -996,9 +1025,7 @@ export class Trough extends Phaser.GameObjects.Image {
     this.data = {};
     data.forEach(obj => {
       this.data[obj.name] = obj.value;
-    })
-    console.log(this.data)
-    console.log(this.manager.farmData.data.buildings)
+    });
 
     this.interactionButtonText = 'inspect';
   }

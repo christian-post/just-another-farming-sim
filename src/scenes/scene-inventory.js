@@ -390,6 +390,13 @@ export class InventoryManager extends Phaser.Scene {
     return (item1 && item1.name === name) || (item2 && item2.name === name);
   }
 
+  isEquippedType(type) {
+    // checks if this item is equipped on any button
+    let item1 = this.getSelectedItem('item1');
+    let item2 = this.getSelectedItem('item2');
+    return (item1 && item1.type === type) || (item2 && item2.type === type);
+  }
+
   getAmount(item) {
     // looks for instances of this item and returns the total amount owned
     let total = 0;

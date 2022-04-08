@@ -622,7 +622,7 @@ export class BarnInteriorScene extends OverworldScene {
 
     // add an animal sprite once an animal is added to the data manager
     this.manager.events.on('farmDataAdd', (type, animal) => {
-      console.log('animal added: ', animal)
+      // console.log('animal added: ', animal)
       this.addAnimal(type, animal);
     });
 
