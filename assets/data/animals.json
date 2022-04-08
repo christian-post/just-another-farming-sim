@@ -1,0 +1,8 @@
+{
+  "pig": {
+    "startingWeight": 30,
+    "maxWeight": 140,
+    "averageDailyGain": 6,
+    "feedIntake": 1
+  }
+}

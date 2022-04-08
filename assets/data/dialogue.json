@@ -49,7 +49,10 @@
       "enoughFertilizer": "The soil is fertilized enough for this crop."
     },
     "collectible": "{itemToAdd.screenName} (Quantity: {itemToAdd.quantity}).",
-    "soilPatch": "This is a patch of arable soil."
+    "soilPatch": "This is a patch of arable soil.",
+    "troughFull": "This trough is full already.",
+    "troughEmpty": "This trough is empty.",
+    "troughStatus": "There are currently {feedAmount} kg of feed in this trough."
   },
   "tooltips": {
     "scytheL1": "A tool to cut crops when they are ready for harvest. You can also use this to remove weeds.",
@@ -64,7 +67,7 @@
     "sodaStamina": "Drinking this partially refills your stamina.",
     "fertilizer": "Use this on a crop to increase its yield.",
     "pig": "A pig for fattening. Gets delivered to your pig shed.",
-    "pigFeed": "Feed for your pigs. Put it in a trough in your pig shed."
+    "pigFeedStandard": "The standard feed for your pigs. Put it in a trough in your pig shed."
   },
   "npc-dialogue": {
     "generic": {
@@ -83,6 +86,9 @@
       "insufficient-funds": "You don't have enough money to buy this!",
       "goodbye": "Pleasure doin' business with ya!",
       "leaving": "Alright. See ya!"
+    },
+    "animals": {
+      "age": "The {data.values.name} is {data.values.age} day(s) old. It weighs {data.values.weight} kg."
     }
   }
 }

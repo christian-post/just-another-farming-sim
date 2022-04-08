@@ -220,15 +220,37 @@
                         {
                          "name":"texture",
                          "type":"string",
-                         "value":"npc-man-1"
+                         "value":"npc-man-2"
                         }],
                  "rotation":0,
                  "type":"vendor",
                  "visible":true,
                  "width":16,
-                 "x":1040,
+                 "x":1020,
                  "y":1492
-                }],
+                },
+                {
+                  "height":16,
+                  "id":7,
+                  "name":"Vendor for Animal Feed",
+                  "properties":[
+                         {
+                          "name":"items",
+                          "type":"string",
+                          "value":"[\"feed.pigFeedStandard\"]"
+                         }, 
+                         {
+                          "name":"texture",
+                          "type":"string",
+                          "value":"npc-man-3"
+                         }],
+                  "rotation":0,
+                  "type":"vendor",
+                  "visible":true,
+                  "width":16,
+                  "x":1088,
+                  "y":1492
+                 }],
          "opacity":1,
          "type":"objectgroup",
          "visible":true,

@@ -103,6 +103,7 @@ export class PreloadingScene extends Phaser.Scene {
     this.load.json('itemData', 'assets/data/items.json');
     this.load.json('dialogue', 'assets/data/dialogue.json');
     this.load.json('controls', 'assets/data/controls.json');
+    this.load.json('animalData', 'assets/data/animals.json');
 
     // Sprites
     this.load.image('testSprite', 'assets/images/sprites/test.png');
@@ -112,6 +113,10 @@ export class PreloadingScene extends Phaser.Scene {
     this.load.image('water-droplet', 'assets/images/sprites/water-droplet.png');
     this.load.image('staminaOverlay', 'assets/images/ui/stamina_overlay.png');
     this.load.image('clockOverlay', 'assets/images/ui/clock_overlay.png');
+    this.load.image('buttonOverlayLarge', 'assets/images/ui/button_overlay_large.png');
+    this.load.image('buttonOverlaySmall', 'assets/images/ui/button_overlay_small.png');
+    this.load.image('buttonOverlayLargeShadow', 'assets/images/ui/button_overlay_large_shadow.png');
+    this.load.image('buttonOverlaySmallShadow', 'assets/images/ui/button_overlay_small_shadow.png');
     this.load.image('gamepad', 'assets/images/other/xbox_pad.png');
     this.load.image('gamepadMissing', 'assets/images/other/xbox_pad_missing.png');
 
@@ -120,10 +125,13 @@ export class PreloadingScene extends Phaser.Scene {
     let spritesheetList = [
       { key: 'player', file: 'sprites/farmer_own_24.png', w: 24, h: 32 },
       { key: 'npc-man-1', file: 'sprites/npc_man_1.png', w: 24, h: 32 },
+      { key: 'npc-man-2', file: 'sprites/npc_man_2.png', w: 24, h: 32 },
+      { key: 'npc-man-3', file: 'sprites/npc_man_3.png', w: 24, h: 32 },
       { key: 'npc-woman-1', file: 'sprites/npc_woman_1.png', w: 24, h: 32 },
       { key: 'pig', file: 'sprites/pig.png', w: 24, h: 24 },
       { key: 'crops', file: 'sprites/crops_test.png', w: 16, h: 32 },
       { key: 'seeds', file: 'sprites/seed_packs.png', w: 16, h: 16 },
+      { key: 'troughs', file: 'sprites/troughs.png', w: 32, h: 32 },
       { key: 'leaf-particles', file: 'sprites/leaf_particles.png', w: 16, h: 16 },
       { key: 'tools', file: 'sprites/tools.png', w: 16, h: 16},
       { key: 'particles', file: 'sprites/misc_particles.png', w: 8, h: 8 },

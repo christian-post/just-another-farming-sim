@@ -36,7 +36,6 @@ export class GameManager extends Phaser.Scene {
     this.keyMapping = this.cache.json.get('controls').default;
     this.gamepadMapping = this.cache.json.get('controls').defaultGamepad;
 
-    
     this.hasControl = true;   // flage for whether input is processed
 
     this.events.on('newDay', this.onNewDay, this);
@@ -79,16 +78,8 @@ export class GameManager extends Phaser.Scene {
 
 
     // all the farm stuff that is owned by the player, but not part of the inventory scene
-    // TODO: work in progress
-    // TODO: make data Manager that emits events when data has changed?
-    this.farmObjects = {
-      livestock: {
-        pig: []
-      },
-      crops: {
+    this.farmData = new FarmDataManager(this);
 
-      }
-    };
 
     // define the first scene (title)
     this.currentGameScene = 'Title';
@@ -154,23 +145,7 @@ export class GameManager extends Phaser.Scene {
               showMessage(this.getCurrentGameScene(), 'game-saved');
               this.scene.resume(this.scene.key);
             },
-            ()=> { 
-              // quit game TODO: make seperate function "endGame" 
-
-              this.overworldScenes.forEach(scene => {
-                if (scene !== this.currentGameScene) {
-                  this.scene.stop(scene);
-                }
-              });
-
-              this.switchScenes(this.currentGameScene, 'Title', {}, true, true);
-              this.scene.get(this.currentGameScene).events.on('shutdown', ()=> {
-                this.scene.stop('InventoryManager');
-                this.scene.stop('InventoryDisplay');
-                this.scene.resume(this.scene.key);
-                this.events.removeAllListeners();
-              });
-            }
+            this.quitGame.bind(this)
           ],
           exitCallback: ()=> { 
             this.scene.resume(this.currentGameScene);
@@ -209,12 +184,23 @@ export class GameManager extends Phaser.Scene {
       }
     });
 
+
+    // debugging feature for teleporting to various positions in the overworld scenes
+    const sceneIterator = Utils.makeLoopingIterator([
+      { key: 'VillageScene', pos: { x: 30 * 16, y: 19 * 16 } },
+      { key: 'HouseInteriorScene', pos: { x: 65 * 16, y: 96 * 16 } },
+      { key: 'HouseInteriorScene', pos: { x: 10 * 16, y: 98 * 16 } },
+      { key: 'FarmScene', pos: { x: 256, y: 200 } },
+      { key: 'BarnInteriorScene', pos: { x: 8 * 16, y: 96 * 16 } },
+    ]);
+
     this.input.keyboard.on('keydown-M', ()=> {
       if (this.registry.values.debug) {
+        let nextScene =  sceneIterator.next();
         this.switchScenes(
-          this.currentGameScene, 'VillageScene', 
+          this.currentGameScene, nextScene.key,
           { 
-            playerPos: { x: 33 * 16, y: 18 * 16 }, 
+            playerPos: nextScene.pos, 
             lastDir: this.scene.get(this.currentGameScene).player.lastDir
           },
           true
@@ -222,6 +208,27 @@ export class GameManager extends Phaser.Scene {
       } else {
         console.log('This is a debug function. Enable debug mode first by pressing P.');
       }
+    });
+  }
+
+  quitGame() {
+    // quits the game and returns to the title scene
+    this.overworldScenes.forEach(scene => {
+      if (scene !== this.currentGameScene) {
+        this.scene.stop(scene);
+      }
+    });
+
+    this.switchScenes(this.currentGameScene, 'Title', {}, true, true);
+    this.scene.get(this.currentGameScene).events.once('shutdown', ()=> {
+      this.scene.stop('InventoryManager');
+      this.scene.stop('InventoryDisplay');
+      this.scene.resume(this.scene.key);
+      // remove manager events
+      this.events.removeAllListeners();
+      // remove registry data manager events
+      this.registry.events.removeListener('changedata');
+      this.registry.events.removeListener('changedata-debug');
     });
   }
 
@@ -303,7 +310,6 @@ export class GameManager extends Phaser.Scene {
         this.events.emit('setClock', { hour: displayHour, minutes: displayMinutes });
 
         // refill stamina after some time
-
         this.staminaRefillTimer += 1;
         if (this.staminaRefillTimer > this.registry.values.playerStaminaRechargeDelay) {
           // refill player stamina
@@ -436,7 +442,9 @@ export class GameManager extends Phaser.Scene {
       gameScene: this.currentGameScene,
       arableMapData: {},
       soilData: {},
-      cropData: {}
+      cropData: {},
+      farmData: this.farmData.data,
+      currentFarmDataID: this.farmData.currentID // this needs to be stored so that objects aren't overwritten after loading
     };
 
     // loop through scenes, if they have arable map --> store data
@@ -467,6 +475,8 @@ export class GameManager extends Phaser.Scene {
       }
     });
 
+    console.log('You saved the game. Data:', saveData);
+
     localStorage.setItem(key, JSON.stringify(saveData));
   }
 
@@ -488,11 +498,16 @@ export class GameManager extends Phaser.Scene {
     // overworld scene
     this.scene.get(saveData.gameScene).events.on('create', ()=> {
       this.player.setPosition(saveData.playerPos.x, saveData.playerPos.y);
+      this.timerPaused = false;
       // ingame values
       this.day = saveData.day;
       this.setTime(saveData.daytime);
-      this.registry.values.money = saveData.money;
+      this.registry.set('money', saveData.money);
     });
+
+    // restore farm data
+    this.farmData.data = saveData.farmData;
+    this.farmData.currentID = saveData.currentFarmDataID;
 
     // create the arable maps
     this.overworldScenes.forEach(scene => {
@@ -542,5 +557,115 @@ export class GameManager extends Phaser.Scene {
 
   eraseSave(key) {
     localStorage.removeItem(key);
+  }
+}
+
+
+export class FarmDataManager {
+  // handles persistant data and emits events when data is changed
+  constructor(managerScene) {
+    // reference to the game manager scene instance
+    this.manager = managerScene;
+
+    // objects are stored by ID as key
+
+    this.data = {
+      livestock: {
+        pig: {}
+      },
+      crops: {},
+      buildings: {}  
+    };
+
+    // ID counter, increase after an id is given to an object
+    this.currentID = 0;
+  }
+
+  addBuilding(type, animal) {
+    // TODO get different buildings from JSON data, like the items and animals
+    // Placeholder
+    // type: House, barn, etc
+    let building = {
+      type: type,
+      animal: animal,
+      id: this.currentID++,
+      animals: [],
+      maxAnimals: 20,
+      troughs: [
+        { currentFill: 0, maxFill: 10 },
+        { currentFill: 0, maxFill: 10 },
+        { currentFill: 0, maxFill: 10 },
+        { currentFill: 0, maxFill: 10 }
+      ]
+    }
+
+    this.data.buildings[building.id] = building;
+    this.manager.events.emit('farmDataAdd', (type, building));
+    return building;
+  }
+
+  addAnimal(name, animalData, buildingID, animalID=null) {
+    let animal = Utils.deepcopy(animalData);
+
+    // add additional properties that are not in items.json
+    animal = Object.assign(animal, this.manager.cache.json.get('animalData')[name]);
+    // properties that change every day
+    animal.age = 0;
+    animal.weight = animal.startingWeight;
+
+    // check if building is free
+    let building = this.data.buildings[buildingID];
+    if (building.animals.length < building.maxAnimals) {
+      // give a unique ID number if ID is not given (e.g. from a save file)
+      if (animalID) {
+        animal.id = animalID;
+      } else {
+        animal.id = this.currentID++;
+      }
+      // store a reference to the barn in the animal's data
+      animal.building = buildingID;
+
+      this.data.livestock[name][animal.id] = animal;
+      // store a reference in the building's animal array
+      building.animals.push(animal.id);
+
+      this.manager.events.emit('farmDataAdd', name, animal);
+      return animal;
+    } else {
+      return null;
+    }
+  }
+
+  removeAnimal(name, animalID) {
+    // remove from livestock object
+    let animal = this.data.livestock[name][animalID];
+    delete this.data.livestock[name][animalID];
+
+    // remove from barn
+    let building = this.data.buildings[animal.building];
+    building.animals.splice(building.animals.indexOf(animalID), 1);
+
+    this.manager.events.emit('farmDataRemove', name, animal);
+
+    return animal;
+  }
+
+  updateAnimal(name, animalID, key, value) {
+    let animal = this.data.livestock[name][animalID];
+    animal[key] = value;
+
+    this.manager.events.emit('farmDataChange', name, animal, key, value);
+
+    return animal;
+  }
+
+  updateBuilding(buildingID, key, value) {
+    let building = this.data[buildingID];
+    building[key] = value;
+
+    // TODO: do I need this event?
+    this.manager.events.emit('farmDataChange', _, animal, key, value);
+
+    return building;
   }
 }

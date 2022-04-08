@@ -1,4 +1,4 @@
-import { Player, NPC, Vendor } from '../sprites.js';
+import { Player, NPC, Vendor, Trough } from '../sprites.js';
 import { WeatherDisplayManager } from './scene-weather.js';
 import { 
   DialogueTrigger, 
@@ -116,20 +116,18 @@ export class OverworldScene extends Phaser.Scene {
       // physics hitboxes
       let physicsDebugGfx = null;
 
-      this.registry.events.on('changedata', (_, key, value) => {
+      this.registry.events.on('changedata-debug', (_, value) => {
         // what happens when the debug flag changes
-        if (key === 'debug') {
-          this.debugGfx.forEach(gfx => {
-            gfx.setVisible(value);
-          });
-          grid.setVisible(value);
+        this.debugGfx.forEach(gfx => {
+          gfx.setVisible(value);
+        });
+        grid.setVisible(value);
 
-          this.physics.world.drawDebug = value;
-          if (value) {
-            physicsDebugGfx = this.physics.world.createDebugGraphic();
-          } else {
-            if (physicsDebugGfx) { physicsDebugGfx.destroy(); }
-          }
+        this.physics.world.drawDebug = value;
+        if (value) {
+          physicsDebugGfx = this.physics.world.createDebugGraphic();
+        } else {
+          if (physicsDebugGfx) { physicsDebugGfx.destroy(); }
         }
       });
     });
@@ -229,16 +227,24 @@ export class OverworldScene extends Phaser.Scene {
 
       case 'teleport':
         if ('interact' in object && object.interact) {
-          // player has to press the interact button
+          // player has to press the interact button to teleport
           new TeleportInteractTrigger(this, object.x, object.y, object.width, object.height, object.target, object.targetX, object.targetY)
         } else {
-          // player just runs into it
+          // player just runs into it to teleport
           new TeleportTrigger(this, object.x, object.y, object.width, object.height, object.target, object.targetX, object.targetY);
         }
         break;
 
       case 'interact':
-        new InteractTrigger(this, object.x, object.y, object.width, object.height, object.callbackKey, object.interactionText);
+        let args = null;
+        if ('callbackArgs' in object) {
+          args = JSON.parse(object.callbackArgs)
+        }
+        new InteractTrigger(this, object.x, object.y, object.width, object.height, object.callbackKey, args, object.interactionText);
+        break;
+
+      case 'trough':
+        new Trough(this, object.x, object.y, object.properties);
         break;
 
       default:
@@ -450,7 +456,6 @@ export class FarmScene extends OverworldScene {
 
     // Start the background music
     this.manager.playMusic('overworld');
-    
   }
 
 
@@ -605,27 +610,82 @@ export class BarnInteriorScene extends OverworldScene {
     this.makeTilemap('barns', ['layer0', 'layer1', 'layer2'], ['layer3', 'layer4']);
     this.setupCamera();
 
-    this.animals = this.add.group();
+    this.animals = this.add.group();  // Sprites
+
+    // add animals that are already in the farmData
+    for (const [type, data] of Object.entries(this.manager.farmData.data.livestock)) {
+      // loop over types of livestock (pig, cow, etc)
+      for (const [id, animal] of Object.entries(data)) {
+        this.addAnimal(type, animal);
+      }
+    }
+
+    // add an animal sprite once an animal is added to the data manager
+    this.manager.events.on('farmDataAdd', (type, animal) => {
+      console.log('animal added: ', animal)
+      this.addAnimal(type, animal);
+    });
+
+    // update existing animals when a day has passed
+    this.manager.events.on('newDay', ()=> {
+      this.animals.getChildren().forEach(animal => {
+        let name = animal.data.get('name');
+        let id = animal.data.get('id');
+        // animal ages
+        animal.data.inc('age', 1);
+        this.manager.farmData.updateAnimal(name, id, 'age', animal.data.get('age'));
+
+        // TODO animal eats and drinks
+
+        // check if there is enough feed in the barn
+        let buildingID = animal.data.get('building');
+        let fed = false;
+        this.manager.farmData.data.buildings[buildingID].troughs.forEach(trough => {
+          if (trough.currentFill >= animal.data.get('feedIntake')) {
+            // there is feed here, so animal eats
+            fed = true;
+            trough.currentFill -= animal.data.get('feedIntake');
+          }
+        });
+
+        if (fed) {
+          // animal gets heavier
+          if (animal.data.get('weight') < animal.data.get('maxWeight')) {
+            animal.data.inc('weight', animal.data.get('averageDailyGain'));
+            this.manager.farmData.updateAnimal(name, id, 'weight', animal.data.get('weight'));
+          }
+        } else {
+          // the animal has no food, gets sick and dies :(
+          console.log(`The ${name} has no food!`);
+        }
+      });
+    });
   }
 
-  addAnimal(type) {
+  addAnimal(type, animalData) {
     // TODO:
     // temporary solution
     // check if there is space left
     // check for collisions when adding
-    // decouple animal information and sprites
     let animal = new NPC(
       this, 
       Phaser.Math.Between(32, 239),
       Phaser.Math.Between(1360, 1536),
       type
     );
+    
+    // store data references in the sprite (like id, etc)
+    // TODO might be only a temporary solution, depending on the data
+    for (let [key, value] of Object.entries(animalData)) {
+      animal.setData(key, value);
+    }
+
+    animal.setDialogue('animals.age');  // TODO: for testing 
     animal.setBehaviour('randomWalk');
     animal.body.pushable = true;
     animal.changeHitbox(12, 8, animal.width / 2 - 6, animal.height - 8);
 
     this.animals.add(animal);
-    this.manager.farmObjects.livestock[type].push(animal);
   }
 
   update(time, delta) {

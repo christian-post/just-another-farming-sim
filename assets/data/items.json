@@ -276,15 +276,16 @@
     }
   },
   "feed": {
-    "pigFeed": {
-      "name": "pigFeed",
-      "screenName": "Pig feed",
+    "pigFeedStandard": {
+      "name": "pigFeedStandard",
+      "screenName": "Standard Pig Feed",
       "type": "feed",
+      "animal": "pig",
       "quantity": 1,
       "unique": false,
       "spritesheet": "inventory-items",
       "frame": 12,
-      "tooltip": "pigFeed",
+      "tooltip": "pigFeedStandard",
       "buyPrice": 25,
       "inventory": true
     }

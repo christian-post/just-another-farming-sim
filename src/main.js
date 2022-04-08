@@ -1,5 +1,11 @@
 import { DialogueScene, GenericMenu } from './user-interface.js';
-import { InventoryManager, InventoryDisplay, ShopDisplayBuy, ShopDisplaySell } from './scenes/scene-inventory.js';
+import { 
+  InventoryManager, 
+  InventoryDisplay, 
+  ShopDisplayBuy, 
+  ShopDisplaySell,
+  SpecificItemUseDisplay
+} from './scenes/scene-inventory.js';
 import * as GameScenes from './scenes/scene-overworld.js';
 import { PreloadingScene } from './scenes/scene-preload.js';
 import { TitleScene, ShowControls } from './scenes/scene-title.js';
@@ -17,6 +23,7 @@ const COLOR_BACKGROUND = 0x006022;
 // debug settings
 const DEBUG = false;
 const SCENEWATCHER = false;
+// const SCENEWATCHER = true;
 
 
 let config = {
@@ -72,11 +79,13 @@ game.registry.merge({
   windowHeight: WINDOW_HEIGHT,
   tileSize: 16,
   menuScrollDelay: 200,
+  textSpeed: 50,
   globalMusicVolume: 0,
   globalSoundeffectsVolume: 0.5,
   // globalFontFamily: 'CustomFont',
   globalFontFamily: 'Verdana',
   // in-game settings
+  playerDebugSpeed: 300,  // player running speed when in debug mode (normal = 80)
   // ingameTimeSpeed: 1000,  // in-game seconds per real-time second
   ingameTimeSpeed: 60,  // in-game seconds per real-time second
   startingDaytime: {
@@ -106,6 +115,7 @@ game.scene.add('InventoryManager', InventoryManager, false);
 game.scene.add('InventoryDisplay', InventoryDisplay, false);
 game.scene.add('ShopDisplayBuy', ShopDisplayBuy, false);
 game.scene.add('ShopDisplaySell', ShopDisplaySell, false);
+game.scene.add('SpecificItemUseDisplay', SpecificItemUseDisplay, false);
 game.scene.add('Dialogue', DialogueScene, false);
 game.scene.add('Transition', TransitionScene, false);
 game.scene.add('Menu', GenericMenu, false);

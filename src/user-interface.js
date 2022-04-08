@@ -42,23 +42,23 @@ export class DialogueScene extends Phaser.Scene {
     }
 
     this.message = this.createMessage();
-    this.message.start(formattedText, 50);
+    this.message.start(formattedText, this.registry.get('textSpeed'));
 
     this.cursor = null;
 
     if (this.options.length > 0) {
       this.optionPositions = [];
       this.currentOptionIndex = 0;
-      // message contains options
+      // if message contains options, display them once the message text is completed
       this.message.on('complete', ()=> {
-        // change the action key text
+        // change the action key text to "select"
         this.manager.events.emit('changeButtonText', 'interact', 'select');
 
-        this.options.forEach( (option, index) => {
-
+        this.options.forEach((option, index) => {
+          // display a text object for each option
           let margin = this.message.width / (this.options.length + 1);
           let x = this.message.left + margin * (index + 1);
-          let y = this.message.y + 24
+          let y = this.message.y + 24;
 
           let text = this.add.text(
             x, y, option.text, 
@@ -70,12 +70,21 @@ export class DialogueScene extends Phaser.Scene {
             }
           ).setOrigin(0.5);
 
-          this.optionPositions[index] = { x: text.getLeftCenter().x - 4, y: text.getLeftCenter().y };
+          // store the position of the text for the cursor
+          this.optionPositions[index] = { 
+            x: text.getLeftCenter().x - 4, 
+            y: text.getLeftCenter().y 
+          };
         });
         
+        // add a cursor sprite
         this.cursor = this.add.image(
-          this.optionPositions[this.currentOptionIndex].x, this.optionPositions[this.currentOptionIndex].y, 'ui-images', 0
-        ).setOrigin(1, 0.5);
+          this.optionPositions[this.currentOptionIndex].x, 
+          this.optionPositions[this.currentOptionIndex].y, 
+          'ui-images', 
+          0
+        )
+          .setOrigin(1, 0.5);
       });
     }
 
@@ -92,14 +101,16 @@ export class DialogueScene extends Phaser.Scene {
     this.keys.inventory.on('down', this.buttonCallbacks.inventory, this);
 
     this.manager.events.emit('changeButtonText', 'inventory', 'exit');
-
   }
   
   interactButtonCallback() {
     // when the message is still typing, show all text
     // when the message is complete, start next page or close if last page is reached
     if (this.message.isTyping) {
-      this.message.stop(true);
+      // make sure is has popped up completely
+      if (this.message.scale === 1) {
+        this.message.stop(true);
+      }
     } else {
       if (this.cursor) {
         this.manager.scene.stop('Dialogue');  // TODO: does this always work?
@@ -108,7 +119,7 @@ export class DialogueScene extends Phaser.Scene {
         this.manager.events.emit('changeButtonText', 'interact', '');
         this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
 
-        // options and stuff
+        // execute the callback with the currently selected index
         this.options[this.currentOptionIndex].callback();
       } else {
         // normal text

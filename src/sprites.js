@@ -35,6 +35,31 @@ export class BaseCharacterSprite extends Phaser.Physics.Arcade.Sprite {
     this.scene.events.on('prerender', ()=> {
       this.shadow.setPosition(this.x, this.getBounds().bottom);
     });
+
+    this.debugInfo = this.scene.add.text(
+      this.x, 
+      this.y, 
+      'TEST', 
+      { 
+        color: '#fff', 
+        fontSize: '12px', 
+        fontFamily: this.scene.registry.values.globalFontFamily
+      }
+    )
+      .setDepth(30)
+      .setVisible(false);
+
+    this.scene.registry.events.on('changedata-debug', (_, value) => {
+      // what happens when the debug flag changes
+      this.debugInfo.setVisible(value);
+    });
+  }
+
+  update(time, delta) {
+    if (this.scene.registry.values.debug) {
+      this.debugInfo.setText(this.depth.toFixed(0));
+      this.debugInfo.setPosition(this.x + 8, this.y);
+    }
   }
 
   changeHitbox(width, height, offsetX=null, offsetY=null) {
@@ -130,15 +155,24 @@ export class Player extends BaseCharacterSprite {
     // the tool that is currently being used
     this.tool = null;
 
-    this.scene.registry.events.on('changedata', (_, key, value) => {
+    this.scene.registry.events.on('changedata-debug', (_, value) => {
       // what happens when the debug flag changes
-      if (key === 'debug') {
-        this.body.checkCollision.none = value;
+      this.speed = value ? this.scene.registry.values.playerDebugSpeed : 80;
+    });
+
+    this.manager.input.keyboard.on('keydown-C', ()=> {
+      let debug = this.scene.registry.get('debug');
+      if (debug) {
+        this.body.checkCollision.none = debug;
+        console.log(`Player collision ${debug ? "off" : "on"}`);
+      } else {
+        console.log('This is a debug function. Enable debug mode first by pressing P.');
       }
     });
   }
 
   update(time, delta) {
+    super.update(time, delta);
     // check if a tool is being used
     // if so, the player can't move for that period
     if (this.tool) {
@@ -215,8 +249,8 @@ export class Player extends BaseCharacterSprite {
     let interactY = parseInt(this.interactionRect.y / this.scene.registry.values.tileSize);
 
     if (this.scene.registry.values.debug) {
-      console.log(this.x, this.y)
-      console.log(interactX, interactY);
+      console.log('player pos:', parseInt(this.x), parseInt(this.y));
+      console.log('interact rect:', `${interactX}, ${interactY}, ${interactX * 16}, ${interactY * 16}`);
     }
 
     let collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
@@ -475,6 +509,7 @@ export class NPC extends BaseCharacterSprite {
   }
 
   update(time, delta) {
+    super.update(time, delta);
     if (this.path) {
       this.followPath();
     }
@@ -621,11 +656,11 @@ export class NPC extends BaseCharacterSprite {
       dialogue = this.finalDialogue;
     }
     if (dialogue.type === 'normal') {
-      showMessage(this.scene, 'npc-dialogue.' + dialogue.key);
+      showMessage(this.scene, 'npc-dialogue.' + dialogue.key, this);
     } else if (dialogue.type === 'options') {
       showMessage(
         this.scene, 'npc-dialogue.' + dialogue.key, 
-        null, null, { key: 'npc-dialogue.' + dialogue.optionKey, callbacks: dialogue.callbacks }
+        this, null, { key: 'npc-dialogue.' + dialogue.optionKey, callbacks: dialogue.callbacks }
       );
     }
   }
@@ -689,7 +724,8 @@ export class Vendor extends NPC {
   
   }
 
-  update() {
+  update(time, delta) {
+    super.update(time, delta);
     this.face(this.scene.player);
   }
 
@@ -933,6 +969,50 @@ export class Collectible extends Phaser.GameObjects.Image {
   }
 }
 
+
+export class Trough extends Phaser.GameObjects.Image {
+  /*
+  spritesheet frames:
+    0 = empty
+    1 = pig feed
+    2 = straw
+  */
+  constructor(scene, x, y, data) {
+    super(scene, x, y, 'troughs', 0);
+
+    this.setOrigin(0, 0.5);
+
+    this.scene.add.existing(this);
+    this.scene.allSprites.add(this);
+    this.scene.physics.add.existing(this, true);  // static object
+    this.scene.depthSortedSprites.add(this);
+
+    this.body.setSize(32, 16, false);
+    this.body.setOffset(0, 16);
+
+    this.manager = this.scene.scene.get('GameManager');
+    
+    // this.data = Utils.deepcopy(data);
+    this.data = {};
+    data.forEach(obj => {
+      this.data[obj.name] = obj.value;
+    })
+    console.log(this.data)
+    console.log(this.manager.farmData.data.buildings)
+
+    this.interactionButtonText = 'inspect';
+  }
+
+  interact() {
+    showMessage(this.scene, 'interactibles.troughStatus', this);
+  }
+
+  get feedAmount() {
+    // gets feed amount from data manager
+    let barn = this.manager.farmData.data.buildings[this.data.barnID];
+    return barn.troughs[this.data.index].currentFill;
+  }
+}
 
 class Scythe extends Phaser.GameObjects.Image {
   constructor(scene, x, y, imageIndex=2) {

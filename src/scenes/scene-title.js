@@ -195,6 +195,7 @@ export class TitleScene extends Phaser.Scene {
       inventoryManager.addItem(itemData.seeds.wheat, 20);
       inventoryManager.addItem(itemData.tools.fertilizer, 10);
       inventoryManager.addItem(itemData.tools.hoeL1);
+      inventoryManager.addItem(itemData.feed.pigFeedStandard, 10);
     });
 
     this.manager.switchScenes(this.scene.key, this.nextScene, {playerPos: { x: 256, y: 200 }}, false, true);
@@ -204,7 +205,10 @@ export class TitleScene extends Phaser.Scene {
       this.manager.timerPaused = false;
       scene.makeAcre(9, 15, 10, 4);
 
-      this.welcomeMessage(scene);
+      // this.welcomeMessage(scene);
+
+      // create the pig barn (TODO: for testing)
+      this.manager.farmData.addBuilding('barn');
     });
   }
 

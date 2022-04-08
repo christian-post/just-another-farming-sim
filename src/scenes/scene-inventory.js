@@ -17,8 +17,6 @@ export class InventoryManager extends Phaser.Scene {
 
     this.keys = Utils.addKeysToScene(this, this.manager.keyMapping);
 
-    // TODO: placeholders, change to pixel art
-
     // black transparent background 
     // day
     const dayBG = this.add.rectangle(
@@ -31,48 +29,36 @@ export class InventoryManager extends Phaser.Scene {
     )
       .setOrigin(0);
     
-    // Action button position
-    const pos = {
+    // Action command positions
+    const cmdPos = {
+      inventory: {
+        x: 190, 
+        y: 8
+      },
+      interact: {
+        x: 260, 
+        y: 8
+      },
       item1: {
-          x: this.manager.registry.values.windowWidth - 48, 
+          x: 330, 
           y: 8
         },
       item2: {
-          x: this.manager.registry.values.windowWidth - 8, 
+          x: 375, 
           y: 8
-        },
-      interact: {
-          x: this.manager.registry.values.windowWidth - 88, 
-          y: 8
-        },
-      inventory: {
-          x: this.manager.registry.values.windowWidth - 152, 
-          y: 8
-        },
+        }
     };
 
-    this.actionButtonSpots = {
-      item1: this.add.rectangle(
-          pos.item1.x, pos.item1.y, 32, 32, 0x000000, 0.5
-          ).setOrigin(1, 0),
-      item2: this.add.rectangle(
-          pos.item2.x, pos.item2.y, 32, 32, 0x000000, 0.5
-          ).setOrigin(1, 0),
-      interact: this.add.rectangle(
-        pos.interact.x, pos.interact.y, 56, 32, 0x000000, 0.5
-          ).setOrigin(1, 0),
-      inventory: this.add.rectangle(
-        pos.inventory.x, pos.inventory.y, 56, 32, 0x000000, 0.5
-          ).setOrigin(1, 0),
-    };
+    let itemTextOffsetX = 36;
+    let itemTextOffsetY = 30;
 
     this.selectedItemQuantities = {
       item1: this.add.text(
-        pos.item1.x - 2, pos.item1.y + 30, '', 
+        cmdPos.item1.x + itemTextOffsetX, cmdPos.item1.y + itemTextOffsetY, '', 
         { color: '#fff', fontSize: '10px', fontFamily: this.registry.values.globalFontFamily }
       ).setOrigin(1).setDepth(2),
       item2: this.add.text(
-        pos.item2.x - 2, pos.item2.y + 30, '', 
+        cmdPos.item2.x + itemTextOffsetX, cmdPos.item2.y + itemTextOffsetY, '', 
         { color: '#fff', fontSize: '10px', fontFamily: this.registry.values.globalFontFamily }
       ).setOrigin(1).setDepth(2)
     }
@@ -102,63 +88,112 @@ export class InventoryManager extends Phaser.Scene {
     this.add.image(clockBG.x, clockBG.y, 'clockOverlay')
       .setOrigin(0);
 
+    // visual overlays for the buttons
+    this.add.image(
+      cmdPos.inventory.x, 
+      cmdPos.inventory.y, 
+      'buttonOverlayLarge')
+        .setOrigin(0);
+
+    this.add.image(
+      cmdPos.interact.x, 
+      cmdPos.interact.y, 
+      'buttonOverlayLarge')
+        .setOrigin(0);
+
+    this.add.image(
+      cmdPos.inventory.x, 
+      cmdPos.inventory.y, 
+      'buttonOverlayLargeShadow')
+        .setOrigin(0);
+
+    this.add.image(
+      cmdPos.interact.x, 
+      cmdPos.interact.y, 
+      'buttonOverlayLargeShadow')
+        .setOrigin(0);
+
+    this.add.image(
+      cmdPos.item1.x, 
+      cmdPos.item1.y, 
+      'buttonOverlaySmall')
+        .setOrigin(0);
+
+    this.add.image(
+      cmdPos.item2.x, 
+      cmdPos.item2.y, 
+      'buttonOverlaySmall')
+        .setOrigin(0);
+
+    this.add.image(
+      cmdPos.item1.x, 
+      cmdPos.item1.y, 
+      'buttonOverlaySmallShadow')
+        .setOrigin(0);
+
+    this.add.image(
+      cmdPos.item2.x, 
+      cmdPos.item2.y, 
+      'buttonOverlaySmallShadow')
+        .setOrigin(0);
+
     // action buttons
     if (this.manager.getCurrentGameScene().pad) {
-      const buttonOffsetX = 4;
+      const buttonOffsetX = 8;
       const buttonOffsetY = 28;
 
       this.buttonLabels = {
         item1: this.add.image(
-          pos.item1.x - this.actionButtonSpots.item1.width + buttonOffsetX, 
-          pos.item1.y + buttonOffsetY, 
+          cmdPos.item1.x + buttonOffsetX, 
+          cmdPos.item1.y + buttonOffsetY, 
           'gamepad-buttons',
           0
         ),
         item2: this.add.image(
-          pos.item2.x - this.actionButtonSpots.item2.width + buttonOffsetX, 
-          pos.item2.y + buttonOffsetY, 
+          cmdPos.item2.x + buttonOffsetX, 
+          cmdPos.item2.y + buttonOffsetY, 
           'gamepad-buttons',
           1
         ),
         inventory: this.add.image(
-          pos.inventory.x - this.actionButtonSpots.inventory.width + buttonOffsetX, 
-          pos.inventory.y + buttonOffsetY, 
+          cmdPos.inventory.x + buttonOffsetX, 
+          cmdPos.inventory.y + buttonOffsetY, 
           'gamepad-buttons',
           3
         ),
         interact: this.add.image(
-          pos.interact.x - this.actionButtonSpots.interact.width + buttonOffsetX, 
-          pos.interact.y + buttonOffsetY, 
+          cmdPos.interact.x + buttonOffsetX, 
+          cmdPos.interact.y + buttonOffsetY, 
           'gamepad-buttons',
           2
         )
       }
     } else {
-      const buttonOffsetX = 0;
+      const buttonOffsetX = 4;
       const buttonOffsetY = 19;
 
       this.buttonLabels = {
         item1: this.add.text(
-          pos.item1.x - this.actionButtonSpots.item1.width + buttonOffsetX, 
-          pos.item1.y + buttonOffsetY, 
+          cmdPos.item1.x + buttonOffsetX, 
+          cmdPos.item1.y + buttonOffsetY, 
           this.registry.values.keymap[this.keys.item1.keyCode],
           fontStyle
         ),
         item2: this.add.text(
-          pos.item2.x - this.actionButtonSpots.item2.width + buttonOffsetX, 
-          pos.item2.y + buttonOffsetY, 
+          cmdPos.item2.x + buttonOffsetX, 
+          cmdPos.item2.y + buttonOffsetY, 
           this.registry.values.keymap[this.keys.item2.keyCode], 
           fontStyle
         ),
         interact: this.add.text(
-          pos.interact.x - this.actionButtonSpots.interact.width + buttonOffsetX, 
-          pos.interact.y + buttonOffsetY, 
+          cmdPos.interact.x + buttonOffsetX, 
+          cmdPos.interact.y + buttonOffsetY, 
           this.registry.values.keymap[this.keys.interact.keyCode], 
           fontStyle
         ),
         inventory: this.add.text(
-          pos.inventory.x - this.actionButtonSpots.inventory.width + buttonOffsetX, 
-          pos.inventory.y + buttonOffsetY, 
+          cmdPos.inventory.x + buttonOffsetX, 
+          cmdPos.inventory.y + buttonOffsetY, 
           this.registry.values.keymap[this.keys.inventory.keyCode], 
           fontStyle
         ),
@@ -166,24 +201,28 @@ export class InventoryManager extends Phaser.Scene {
     }
 
     // text that shows what the current interaction is
+
+    let textOffsetX = 34;
+    let textOffsetY = 6;
+
     this.interactionText = this.add.text(
-      this.actionButtonSpots.interact.getCenter().x, 
-      this.actionButtonSpots.interact.getCenter().y,
+      cmdPos.interact.x + textOffsetX, 
+      cmdPos.interact.y + textOffsetY,
       '', fontStyle
-    ).setOrigin(0.5);
+    ).setOrigin(0.5, 0);
 
     this.inventoryText = this.add.text(
-      this.actionButtonSpots.inventory.getCenter().x, 
-      this.actionButtonSpots.inventory.getCenter().y,
+      cmdPos.inventory.x + textOffsetX, 
+      cmdPos.inventory.y + textOffsetY,
       'inventory', fontStyle
-    ).setOrigin(0.5);
+    ).setOrigin(0.5, 0);
 
     // stamina bar
-    this.staminaBar = this.makeBar(15, 45, 0x00dd00);
+    this.staminaBar = this.makeBar(15, 48, 0x00dd00);
     this.setBarValue(100);
 
     // overlay sprite for the stamina bar
-    this.add.image(2, 48, 'staminaOverlay')
+    this.add.image(2, this.staminaBar.background.y + 3, 'staminaOverlay')
       .setOrigin(0, 0.5);
 
 
@@ -213,16 +252,6 @@ export class InventoryManager extends Phaser.Scene {
       this.setBarValue(value);
     }, this);
 
-    // TODO: make one event for all buttons and pass the button name
-
-    // this.manager.events.on('changeTextInteract', string => {
-    //   this.interactionText.setText(string);
-    // });
-
-    // this.manager.events.on('changeTextInventory', string => {
-    //   this.inventoryText.setText(string);
-    // });
-
     // TODO: make one object that holds all text objects
     this.manager.events.on('changeButtonText', (button, string) => {
       switch(button) {
@@ -246,8 +275,8 @@ export class InventoryManager extends Phaser.Scene {
       const index = this.itemSelected[button];
       const item = this.inventory[index];
       if (item) {
-        let x = this.actionButtonSpots[button].getCenter().x;
-        let y = this.actionButtonSpots[button].getCenter().y; 
+        let x = cmdPos[button].x + 22;
+        let y = cmdPos[button].y + 18; 
   
         // check if the same item is equipped on the other button
         let otherButton = button === 'item1' ? 'item2' : 'item1';
@@ -335,10 +364,8 @@ export class InventoryManager extends Phaser.Scene {
       .setVisible(false)
       .setDataEnabled(true);
 
-    this.registry.events.on('changedata', (_, key, value) => {
-      if (key === 'debug') {
-        this.fpsInfo.setVisible(value);
-      }
+    this.registry.events.on('changedata-debug', (_, value) => {
+      this.fpsInfo.setVisible(value);
     });
   }
 
@@ -946,28 +973,17 @@ export class ShopDisplayBuy extends ShopDisplayTemplate {
     if (currentFunds >= item.buyPrice) {
       this.registry.set('money',  currentFunds - item.buyPrice);
       this.showMoneyChange('-' + item.buyPrice);
-      // TODO: make this work for items that don't go into the inventory
+      
+      // check if the item goes in the inventory
       if (item.inventory) {
         this.manager.events.emit('item-collected', item);
       } else {
         if (item.type === 'livestock') {
-          // TODO check if player has the right barn for this animal
-          if (this.scene.isSleeping('BarnInteriorScene')) {
-            this.scene.get('BarnInteriorScene').addAnimal(item.name);
-          } else {
-            // if this scene has not been initialized yet
-            // TODO: this feels very hacky
-            this.scene.get('BarnInteriorScene').events.once('create', scene => {
-              scene.addAnimal(item.name);
-              this.updateBottomText(item);
-            });
-            this.scene.run('BarnInteriorScene')
-            this.scene.sleep('BarnInteriorScene');
-          }
+          this.manager.farmData.addAnimal(item.name, item, 0);
         }
       }
 
-      // update the text at the buttom
+      // update the text at the bottom
       this.updateBottomText(item);
 
     } else {
@@ -984,7 +1000,11 @@ export class ShopDisplayBuy extends ShopDisplayTemplate {
         this.currentItemText.setText(`${item.screenName} : \$ ${item.buyPrice}\nIn inventory: ${ownedAmount}`);
       } else {
         if (item.type === 'livestock') {
-          ownedAmount = this.manager.farmObjects.livestock[item.name].length;
+          // TODO: placeholder
+          // think about how the building is chosen where the animal is placed
+          // this defines the amount shown on screen
+          ownedAmount = this.manager.farmData.data.buildings[0].animals.length;  
+
           this.currentItemText.setText(`${item.screenName} : \$ ${item.buyPrice}\nOn the farm: ${ownedAmount}`);
         }
       }
@@ -1034,5 +1054,69 @@ export class ShopDisplaySell extends ShopDisplayTemplate {
     } else {
       this.currentItemText.setText('');
     }
+  }
+}
+
+
+export class SpecificItemUseDisplay extends ShopDisplayTemplate {
+  /*
+  This scene pops up when you have to use items of a specified quality.
+  E.g. put a kind of feed in a trough.
+  */
+  create(config) {
+    /* config contains
+      requirements: object
+      amount (optional): integer
+      maxAmount (optional): integer
+      maxAmountMessage (optional): string (is shown when max amount is reached)
+      onRemoveCallback (optional): function is called when an item is removed
+    */
+   
+    // pass the player's inventory to the parent scene
+    super.create(this.scene.get('InventoryManager').inventory);
+
+    // store the requirements for the item from the config
+    this.requirements = config.requirements;
+    this.amountToRemove = config.amount || 1;  // if amount is undefined, fall back to 1
+    this.amountRemoved = 0;  // counts how many of the items have been removed
+    // TODO: this might need to be an object in case multiple items can be used
+    this.maxAmount = config.maxAmount || Infinity;
+    this.maxAmountMessage = config.maxAmountMessage || 'general.item-no-action';
+
+    this.onRemoveCallback = config.onRemoveCallback || null;
+  }
+
+  interactWithItem(item) {
+    // check if it meets all the requirements
+    for (const [key, value] of Object.entries(this.requirements)) {
+      if (item[key] !== value) {
+        showMessage(this, 'general.item-no-action');
+        return;
+      }
+    }
+
+    if (this.amountRemoved < this.maxAmount) {
+      // all requirements have been met
+      this.manager.events.emit('item-removed', this.currentIndex, item, this.amountToRemove);
+
+      this.amountRemoved++;
+
+      if (this.onRemoveCallback) {
+        this.onRemoveCallback();
+      }
+
+      // reconstruct inventory
+      this.updateInventory();
+    } else {
+      showMessage(this, this.maxAmountMessage);
+    }
+    
+    // TODO: emit another event specific to this scene?
+  }
+
+  inventoryButtonCallback() {
+    this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
+    this.scene.stop(this.scene.key);
+    this.scene.run(this.manager.getCurrentGameScene());
   }
 }

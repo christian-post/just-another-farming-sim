@@ -17,10 +17,8 @@ export class DialogueTrigger extends Phaser.GameObjects.Rectangle {
 
     this.interactionButtonText = 'read';
 
-    this.scene.registry.events.on('changedata', (_, key, value) => {
-      if (key === 'debug') {
-        this.setFillStyle(0xff0000, 0.3 * + value);
-      }
+    this.scene.registry.events.on('changedata-debug', (_, value) => {
+      this.setFillStyle(0xff0000, 0.3 * + value);
     });
 
     // TODO: more modular! (cutscenes etc)
@@ -61,7 +59,7 @@ export class DialogueTrigger extends Phaser.GameObjects.Rectangle {
 
 
 export class InteractTrigger extends Phaser.GameObjects.Rectangle {
-  constructor(scene, x, y, width, height, callbackKey, interactionText){
+  constructor(scene, x, y, width, height, callbackKey, callbackArgs, interactionText){
     super(scene, x, y, width, height);
     this.scene.add.existing(this);
     this.scene.allSprites.add(this);
@@ -69,19 +67,18 @@ export class InteractTrigger extends Phaser.GameObjects.Rectangle {
     this.setOrigin(0);
 
     this.callback = Utils.getNestedKey(callbacks, callbackKey);
+    this.callbackArgs = callbackArgs;
 
     this.interactionButtonText = interactionText;
 
     // debug overlay
-    this.scene.registry.events.on('changedata', (_, key, value) => {
-      if (key === 'debug') {
-        this.setFillStyle(0xff0000, 0.3 * + value);
-      }
+    this.scene.registry.events.on('changedata-debug', (_, value) => {
+      this.setFillStyle(0xff0000, 0.3 * + value);
     });
   }
 
   interact() {
-    this.callback(this.scene);
+    this.callback(this.scene, this.callbackArgs);
   }
 }
 
@@ -97,10 +94,8 @@ export class TeleportTrigger extends Phaser.GameObjects.Rectangle {
 
     this.interactionButtonText = '';
 
-    this.scene.registry.events.on('changedata', (_, key, value) => {
-      if (key === 'debug') {
-        this.setFillStyle(0xff0000, 0.3 * + value);
-      }
+    this.scene.registry.events.on('changedata-debug', (_, value) => {
+      this.setFillStyle(0xff0000, 0.3 * + value);
     });
 
     // collision results in change of tilemaps
@@ -138,10 +133,8 @@ export class TeleportInteractTrigger extends Phaser.GameObjects.Rectangle {
       y: playerY
     };
 
-    this.scene.registry.events.on('changedata', (_, key, value) => {
-      if (key === 'debug') {
-        this.setFillStyle(0xff0000, 0.3 * + value);
-      }
+    this.scene.registry.events.on('changedata-debug', (_, value) => {
+      this.setFillStyle(0xff0000, 0.3 * + value);
     });
   }
 

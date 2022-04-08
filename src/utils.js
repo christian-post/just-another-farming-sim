@@ -330,3 +330,22 @@ export const getScreenPoint = function(camera, x, y) {
   let screenY = (y - cameraView.y) * camera.zoom;
   return { x: screenX, y: screenY };
 }
+
+
+export const makeLoopingIterator = function(array) {
+  let index = 0;
+
+  const rangeIterator = {
+    next: function() {
+      let result = array[index];
+      if (index < array.length - 1) {
+        index++;
+      } else {
+        index = 0;
+      }
+      return result;
+    }
+  };
+
+  return rangeIterator;
+}
