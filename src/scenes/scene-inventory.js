@@ -17,15 +17,9 @@ export class InventoryManager extends Phaser.Scene {
 
     this.keys = Utils.addKeysToScene(this, this.manager.keyMapping);
 
-    // black transparent background 
-    // day
-    const dayBG = this.add.rectangle(
-      8, 8, 64, 32, 0x000000, 0.5
-    )
-      .setOrigin(0);
-
+    // black transparent background for the clock UI
     const clockBG = this.rexUI.add.roundRectangle(
-      80, 8, 64, 32, 8, 0x000000, 0.5
+      48, 8, 64, 32, 8, 0x000000, 0.5
     )
       .setOrigin(0);
     
@@ -71,10 +65,24 @@ export class InventoryManager extends Phaser.Scene {
       padding: { y: 2 }
     };
 
+    const fontStyleDay = { 
+      color: '#000', 
+      fontSize: '10px', 
+      fontFamily: this.registry.values.globalFontFamily,
+      padding: { y: 2 }
+    };
+
+    const calenderPos = { x: 8, y: 8 };
+
+    // background sprite for the calendar
+    let calendarBG = this.add.image(calenderPos.x, calenderPos.y, 'calendarOverlay')
+      .setOrigin(0);
+
     this.day = this.add.text(
-      dayBG.getCenter().x, dayBG.getCenter().y, 'Day 1', fontStyle
+      calendarBG.getCenter().x, calendarBG.getCenter().y, '1', fontStyleDay
     ).setOrigin(0.5);
 
+    // clock
     const hours = this.registry.values.startingDaytime.hour.toString().padStart(2, '0');
     const minutes = this.registry.values.startingDaytime.minutes.toString().padStart(2, '0');
 
@@ -245,7 +253,7 @@ export class InventoryManager extends Phaser.Scene {
 
     // events that change the UI contents
     this.manager.events.on('newDay', ()=> {
-      this.day.setText(`Day ${this.manager.day}`);
+      this.day.setText(`${this.manager.day}`);
     }, this);
 
     this.manager.events.on('stamina-bar-change', value => {

@@ -113,6 +113,7 @@ export class PreloadingScene extends Phaser.Scene {
     this.load.image('water-droplet', 'assets/images/sprites/water-droplet.png');
     this.load.image('staminaOverlay', 'assets/images/ui/stamina_overlay.png');
     this.load.image('clockOverlay', 'assets/images/ui/clock_overlay.png');
+    this.load.image('calendarOverlay', 'assets/images/ui/calendar_overlay.png');
     this.load.image('buttonOverlayLarge', 'assets/images/ui/button_overlay_large.png');
     this.load.image('buttonOverlaySmall', 'assets/images/ui/button_overlay_small.png');
     this.load.image('buttonOverlayLargeShadow', 'assets/images/ui/button_overlay_large_shadow.png');

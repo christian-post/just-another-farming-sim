@@ -85,6 +85,7 @@ game.registry.merge({
   // globalFontFamily: 'CustomFont',
   globalFontFamily: 'Verdana',
   // in-game settings
+  playerWalkSpeed: 80,
   playerDebugSpeed: 300,  // player running speed when in debug mode (normal = 80)
   // ingameTimeSpeed: 1000,  // in-game seconds per real-time second
   ingameTimeSpeed: 60,  // in-game seconds per real-time second

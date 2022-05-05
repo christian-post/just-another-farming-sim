@@ -161,6 +161,14 @@ export class GameManager extends Phaser.Scene {
     this.input.keyboard.on('keydown-P', ()=> {
       // toggle debug mode
       this.registry.set('debug', !this.registry.values.debug);
+
+      // print the debugging features to the console
+      console.log(`Debugging features:
+      T: change tileset of current map
+      U: tween test
+      M: switch scenes
+      C: toggle player collision
+      L: change player walk speed`);
     });
 
     this.input.keyboard.on('keydown-T', ()=> {

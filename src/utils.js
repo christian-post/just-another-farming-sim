@@ -138,7 +138,13 @@ export const checkCollisionGroup = function(object, groupArray) {
   let collisions = [];
   groupArray.forEach(child => {
     let rect1 = object.getBounds();
-    let rect2 = child.body;
+    let rect2;
+    if (child.hasOwnProperty("interactionRect")) {
+      // custom property of certain sprites
+      rect2 = child.interactionRect.getBounds();
+    } else {
+      rect2 = child.body;
+    }
     if (Phaser.Geom.Rectangle.Overlaps(rect1, rect2)) {
       collisions.push(child);
     }

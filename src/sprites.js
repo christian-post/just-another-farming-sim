@@ -27,7 +27,7 @@ export class BaseCharacterSprite extends Phaser.Physics.Arcade.Sprite {
     this.lastDir = 'down';  // last facing direction
 
     // Physics
-    this.speed = 80;
+    this.speed = this.scene.registry.values.playerWalkSpeed;
 
     // make a shadow
     this.shadow = this.scene.add.image(this.x, this.getBounds().bottom, 'player-shadow')
@@ -156,9 +156,19 @@ export class Player extends BaseCharacterSprite {
     // the tool that is currently being used
     this.tool = null;
 
-    this.scene.registry.events.on('changedata-debug', (_, value) => {
-      // what happens when the debug flag changes
-      this.speed = value ? this.scene.registry.values.playerDebugSpeed : 80;
+
+    // DEBUG features
+    this.manager.input.keyboard.on('keydown-L', ()=> {
+      let debug = this.scene.registry.get('debug');
+      if (debug) {
+        if (this.speed === this.scene.registry.values.playerWalkSpeed) {
+          this.speed = this.scene.registry.values.playerDebugSpeed;
+        } else {
+          this.speed = this.scene.registry.values.playerWalkSpeed;
+        }
+      } else {
+        console.log('This is a debug function. Enable debug mode first by pressing P.');
+      }
     });
 
     this.manager.input.keyboard.on('keydown-C', ()=> {
@@ -191,7 +201,7 @@ export class Player extends BaseCharacterSprite {
     }
 
     // create a ray that is cast in front of the player based on the last direction
-    let ray = new Phaser.Math.Vector2(this.x, this.y + this.width * 0.5);
+    let ray = new Phaser.Math.Vector2(this.x, this.y + this.height * 0.25);
 
     switch (this.lastDir) {
       case 'right': 
@@ -204,24 +214,25 @@ export class Player extends BaseCharacterSprite {
         ray.y += this.height * 0.5;
         break;
       case 'up': 
-        ray.y -= this.height;
+        ray.y -= this.height * 0.5;
         break;
     }
 
-    // snap rectangle to grid
+    // convert the ray's position to a tile position (top left)
     ray.x = parseInt(ray.x / this.scene.registry.values.tileSize) * this.scene.registry.values.tileSize;
     ray.y = parseInt(ray.y / this.scene.registry.values.tileSize) * this.scene.registry.values.tileSize;
 
+    // snap the interaction rectangle to tile grid
     this.interactionRect.x = ray.x + this.scene.registry.values.tileSize * 0.5;
     this.interactionRect.y = ray.y + this.scene.registry.values.tileSize * 0.5;
 
-    // TODO: this is checked twice when a button is pressed
+    // TODO: this is checked twice when a button is pressed, unnecessary
     let interactX = parseInt(this.interactionRect.x / this.scene.registry.values.tileSize);
     let interactY = parseInt(this.interactionRect.y / this.scene.registry.values.tileSize);
     let index = Utils.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
 
     // check for arable Land
-    // TODO can this be generalized?
+    // TODO spaghetti code, can this be generalized?
     if (this.scene.hasArableLand) {
       if (this.scene.arableMap[index]) {
         if (!this.interactionRect.visible) { this.interactionRect.setVisible(true) };
@@ -242,6 +253,7 @@ export class Player extends BaseCharacterSprite {
     }
 
     // check if rectangle is colliding with any interactable sprites
+    // TODO: exclude Player sprite from all sprites
     let collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
     if (collisions.length > 0 && collisions[0] != this) {
       // let string = collisions[0].interactionButtonText || 'error';
@@ -530,6 +542,20 @@ export class NPC extends BaseCharacterSprite {
     // interaction with player
     this.interactionButtonText = 'talk';
 
+    this.interactionRect = scene.add.rectangle(
+      x, 
+      y + this.scene.registry.values.tileSize, 
+      this.scene.registry.values.tileSize * 2, 
+      this.scene.registry.values.tileSize * 2
+    )
+      .setOrigin(0.5)
+      .setFillStyle()
+      .setStrokeStyle(1, 0xDD0000, 0.8)
+      .setVisible(false)   // only visible under certain conditions
+      .setDepth(this.scene.depthValues.daytimeOverlay);
+    
+    this.scene.physics.add.existing(this.interactionRect);
+
     this.dialogue = [];
     this.finalDialogue = {
       type: 'normal',
@@ -539,6 +565,9 @@ export class NPC extends BaseCharacterSprite {
 
   update(time, delta) {
     super.update(time, delta);
+
+    this.interactionRect.setPosition(this.x, this.y + this.scene.registry.values.tileSize);
+
     if (this.path) {
       this.followPath();
     }
@@ -1001,6 +1030,8 @@ export class Collectible extends Phaser.GameObjects.Image {
 
 export class Trough extends Phaser.GameObjects.Image {
   /*
+  An object that accepts feed for your animals
+
   spritesheet frames:
     0 = empty
     1 = pig feed
@@ -1015,6 +1046,8 @@ export class Trough extends Phaser.GameObjects.Image {
     this.scene.allSprites.add(this);
     this.scene.physics.add.existing(this, true);  // static object
     this.scene.depthSortedSprites.add(this);
+
+    this.scene.physics.add.collider(this, this.scene.player);
 
     this.body.setSize(32, 16, false);
     this.body.setOffset(0, 16);
