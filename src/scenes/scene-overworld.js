@@ -1,4 +1,4 @@
-import { Player, NPC, Vendor, Trough } from '../sprites.js';
+import { Player, NPC, Animal, Vendor, Trough } from '../sprites.js';
 import { WeatherDisplayManager } from './scene-weather.js';
 import { 
   DialogueTrigger, 
@@ -222,7 +222,9 @@ export class OverworldScene extends Phaser.Scene {
       
       case 'vendor':
         let items = JSON.parse(object.items);
-        new Vendor(this, object.x, object.y, object.texture, items);
+        let acceptedItemTypes = JSON.parse(object.acceptedItemTypes);
+
+        new Vendor(this, object.x, object.y, object.texture, items, acceptedItemTypes);
         break;
 
       case 'teleport':
@@ -333,11 +335,16 @@ export class OverworldScene extends Phaser.Scene {
 
   drawLightcones() {
     this.textureOverlay.clear();
-    this.textureOverlay.draw(this.playerLightcone, this.player.x, this.player.y);
 
+    this.textureOverlay.beginDraw();
+
+    // batch draw calls to enhance performance
+    this.textureOverlay.batchDraw(this.playerLightcone, this.player.x, this.player.y);
     this.lightcones.getChildren().forEach(child => {
-      this.textureOverlay.draw(child, child.x, child.y);
+      this.textureOverlay.batchDraw(child, child.x, child.y);
     });
+
+    this.textureOverlay.endDraw();
   }
 
   updateLightcones() {
@@ -600,6 +607,8 @@ export class BarnInteriorScene extends OverworldScene {
   create(config) {
     super.create(config);
 
+    this.animals = this.add.group();  // Sprites
+
     this.hasWeather = false;
     
     // physics callback for collectible items
@@ -609,8 +618,6 @@ export class BarnInteriorScene extends OverworldScene {
 
     this.makeTilemap('barns', ['layer0', 'layer1', 'layer2'], ['layer3', 'layer4']);
     this.setupCamera();
-
-    this.animals = this.add.group();  // Sprites
 
     // add animals that are already in the farmData
     for (const [type, data] of Object.entries(this.manager.farmData.data.livestock)) {
@@ -624,6 +631,16 @@ export class BarnInteriorScene extends OverworldScene {
     this.manager.events.on('farmDataAdd', (type, animal) => {
       // console.log('animal added: ', animal)
       this.addAnimal(type, animal);
+    });
+
+    // add an event that removes the animal when the data changes
+    this.manager.events.on('farmDataRemove', (_, data) => {
+      this.animals.getChildren().forEach(animal => {
+        if (animal.getData('id') === data.id) {
+          console.log('animal', animal.getData('id'), 'removed')
+          animal.destroy();
+        }
+      });
     });
 
     // update existing animals when a day has passed
@@ -640,22 +657,35 @@ export class BarnInteriorScene extends OverworldScene {
         // check if there is enough feed in the barn
         let buildingID = animal.data.get('building');
         let fed = false;
-        this.manager.farmData.data.buildings[buildingID].troughs.forEach(trough => {
-          if (trough.currentFill >= animal.data.get('feedIntake')) {
+
+        let troughs = this.manager.farmData.data.buildings[buildingID].troughs;
+
+        for (let i = 0; i < troughs.length; i++) {
+          if (troughs[i].currentFill >= animal.data.get('feedIntake')) {
             // there is feed here, so animal eats
             fed = true;
-            trough.currentFill -= animal.data.get('feedIntake');
+            troughs[i].currentFill -= animal.data.get('feedIntake');
+
+            // tell the Trough sprite that the fill has changed
+            this.manager.events.emit('troughFillChange', troughs[i].currentFill, buildingID, i);
+
+            break;
           }
-        });
+        }
 
         if (fed) {
           // animal gets heavier
           if (animal.data.get('weight') < animal.data.get('maxWeight')) {
-            animal.data.inc('weight', animal.data.get('averageDailyGain'));
+            // add ADG to weight, until it reaches max weight
+            animal.data.set(
+              'weight', 
+              Math.min(animal.data.get('maxWeight'), animal.data.get('weight') + animal.data.get('averageDailyGain'))
+            );
             this.manager.farmData.updateAnimal(name, id, 'weight', animal.data.get('weight'));
           }
         } else {
           // the animal has no food, gets sick and dies :(
+          // TODO
           console.log(`The ${name} has no food!`);
         }
       });
@@ -664,26 +694,34 @@ export class BarnInteriorScene extends OverworldScene {
 
   addAnimal(type, animalData) {
     // TODO:
+    // animal child class from NPC
     // temporary solution
     // check if there is space left
     // check for collisions when adding
-    let animal = new NPC(
+
+    // let animal = new NPC(
+    //   this, 
+    //   Phaser.Math.Between(32, 239),
+    //   Phaser.Math.Between(1360, 1536),
+    //   type
+    // );
+    let animal = new Animal(
       this, 
       Phaser.Math.Between(32, 239),
       Phaser.Math.Between(1360, 1536),
-      type
-    );
+      animalData
+    )
     
-    // store data references in the sprite (like id, etc)
-    // TODO might be only a temporary solution, depending on the data
-    for (let [key, value] of Object.entries(animalData)) {
-      animal.setData(key, value);
-    }
+    // // store data references in the sprite (like id, etc)
+    // // TODO might be only a temporary solution, depending on the data
+    // for (let [key, value] of Object.entries(animalData)) {
+    //   animal.setData(key, value);
+    // }
 
-    animal.setDialogue('animals.age');  // TODO: for testing 
-    animal.setBehaviour('randomWalk');
-    animal.body.pushable = true;
-    animal.changeHitbox(12, 8, animal.width / 2 - 6, animal.height - 8);
+    // animal.setDialogue('animals.age');  // TODO: for testing 
+    // animal.setBehaviour('randomWalk');
+    // animal.body.pushable = true;
+    // animal.changeHitbox(12, 8, animal.width / 2 - 6, animal.height - 8);
 
     this.animals.add(animal);
   }

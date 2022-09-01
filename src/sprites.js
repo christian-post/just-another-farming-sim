@@ -37,6 +37,9 @@ export class BaseCharacterSprite extends Phaser.Physics.Arcade.Sprite {
       this.shadow.setPosition(this.x, this.getBounds().bottom);
     });
 
+    this.on('destroy', ()=> this.shadow.destroy());
+
+    // debug stuff
     this.debugInfo = this.scene.add.text(
       this.x, 
       this.y, 
@@ -153,6 +156,9 @@ export class Player extends BaseCharacterSprite {
       staminaMessageShown: false
     };
 
+    // sweating animation when exhausted
+    this.manager.events.on('staminaLow', this.playSweatAnimation.bind(this));
+
     // the tool that is currently being used
     this.tool = null;
 
@@ -256,8 +262,6 @@ export class Player extends BaseCharacterSprite {
     // TODO: exclude Player sprite from all sprites
     let collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
     if (collisions.length > 0 && collisions[0] != this) {
-      // let string = collisions[0].interactionButtonText || 'error';
-      let string = collisions[0].interactionButtonText;
       this.manager.events.emit('changeButtonText', 'interact', string);
     } else {
       this.manager.events.emit('changeButtonText', 'interact', '');
@@ -300,6 +304,9 @@ export class Player extends BaseCharacterSprite {
 
     if (item) {
       // check the item type
+
+      // TODO: maybe put all this in callbacks?
+
       switch (item.type) {
         case 'seed':
           // exit if scene has no arable land
@@ -355,7 +362,6 @@ export class Player extends BaseCharacterSprite {
               x: interactX,
               y: interactY
           });
-
           break;
 
         case 'feed':
@@ -365,15 +371,18 @@ export class Player extends BaseCharacterSprite {
             if (col instanceof Trough) {
               // check if it's the right type of feed
               if (col.data.animal === item.animal) {
-                this.manager.events.emit('itemConsumed', item, button);
-
-                // change the data in the data manager
-                let barn = this.manager.farmData.data.buildings[col.data.barnID];
-                let trough = barn.troughs[col.data.index];
-                trough.currentFill++;
+                // access data in the farm data manager
+                if (col.fillData.currentFill < col.fillData.maxFill) {
+                  this.manager.events.emit('itemConsumed', item, button);
+                  // change the feed amount in the trough instance and the data
+                  col.setFeedAmmount(col.fillData.currentFill + 1);
+                } else {
+                  // trough is full
+                  showMessage(this.scene, 'interactibles.troughFull');
+                }
               } else {
-                // TODO show message
-                console.log('Wrong type of feed.');
+                // not the right type of feed
+                showMessage(this.scene, 'interactibles.wrongFeed');
               }
             } 
           });
@@ -390,8 +399,12 @@ export class Player extends BaseCharacterSprite {
     // you can only use items if you have stamina left
     if (this.scene.registry.values.stamina < item.stamina) {
       if (!this.flags.staminaMessageShown) {
+        // show a message the first time this happens
         showMessage(this.scene, 'general.stamina-low');
         this.flags.staminaMessageShown = true;
+      } else {
+        // emit an event to the UI
+        this.manager.events.emit('staminaLow');
       }
       return true;
     } else {
@@ -490,6 +503,26 @@ export class Player extends BaseCharacterSprite {
         console.warn('function for tool not implemented: ', item.name);
     }
   }
+
+  playSweatAnimation() {
+    // when the player is exhausted, create a few water particles to make it look like they are sweating
+    let particles = this.scene.add.particles('water-droplet');
+    particles.setDepth(this.scene.depthValues.mapAboveSprites);
+
+    let emitter = particles.createEmitter({
+      x: { min: this.x - 4, max: this.x + 4 },
+      y: { min: this.y - 8, max: this.y - 6 },
+      maxParticles: 5,
+      quantity: 1,
+      active: true,
+      lifespan: 400,
+      frequency: 50,
+      gravityY: 200,
+      alpha: { start: 0.9, end: 0.1 }
+    });
+
+    emitter.start();
+  }
 }
 
 
@@ -578,30 +611,34 @@ export class NPC extends BaseCharacterSprite {
       case 'randomWalk': 
       // walks in a random direction after some time, or stops
       // TODO: check for collisions beforehand!
-        var timer = this.scene.time.addEvent({
-          delay: Phaser.Math.Between(1000, 3000),
-          loop: true,
-          callback: ()=> {
-            timer.delay = Phaser.Math.Between(1000, 3000);
-            // flip a coin
-            if (Math.random() < 0.5) {
-              // choose one of four direction, or stop
-              let choice = Utils.chooseWeighted([
-                { x: 1, y: 0 },
-                { x: 0, y: 1 },
-                { x: -1, y: 0 },
-                { x: 0, y: -1 },
-                { x: 0, y: 0 }
-              ], [1, 1, 1, 1, 5]);
-              this.move(new Phaser.Math.Vector2(choice.x, choice.y));
-            } else {
-              // look in a random direction that the NPC is not already facing
-              this.stop();
-              let dirs = ['up', 'down', 'left', 'right'];
-              this.lastDir = Utils.choose(dirs.filter(value => { return value !== this.lastDir; }));
-            }
+      let timer = this.scene.time.addEvent({
+        delay: Phaser.Math.Between(1000, 3000),
+        loop: true,
+        callback: ()=> {
+          timer.delay = Phaser.Math.Between(1000, 3000);
+          // flip a coin
+          if (Math.random() < 0.5) {
+            // choose one of four direction, or stop
+            let choice = Utils.chooseWeighted([
+              { x: 1, y: 0 },
+              { x: 0, y: 1 },
+              { x: -1, y: 0 },
+              { x: 0, y: -1 },
+              { x: 0, y: 0 }
+            ], [1, 1, 1, 1, 5]);
+            this.move(new Phaser.Math.Vector2(choice.x, choice.y));
+          } else {
+            // look in a random direction that the NPC is not already facing
+            this.stop();
+            let dirs = ['up', 'down', 'left', 'right'];
+            this.lastDir = Utils.choose(dirs.filter(value => { return value !== this.lastDir; }));
           }
-        });
+        }
+      });
+
+      // destroy the timer when sprite is destroyed
+      this.on('destroy', ()=> timer.destroy());
+
       break;
 
       case 'followEvent':
@@ -771,7 +808,7 @@ export class NPC extends BaseCharacterSprite {
 
 
 export class Vendor extends NPC {
-  constructor(scene, x, y, textureKey, items=null) {
+  constructor(scene, x, y, textureKey, items=null, acceptedItemTypes=null) {
     super(scene, x, y, textureKey);
 
     // interaction with player
@@ -779,6 +816,8 @@ export class Vendor extends NPC {
 
     // items that are sold in the shop
     this.items = items || [];
+
+    this.acceptedItemTypes = acceptedItemTypes || [];
   
   }
 
@@ -812,7 +851,7 @@ export class Vendor extends NPC {
     
             // switch scenes
             this.scene.scene.pause();
-            this.scene.scene.run('ShopDisplaySell');
+            this.scene.scene.run('ShopDisplaySell', this.acceptedItemTypes);
           },
           ()=> {
             // leave
@@ -821,6 +860,60 @@ export class Vendor extends NPC {
         ]
       }
     );
+  }
+}
+
+
+export class Animal extends NPC {
+  constructor(scene, x, y, data) {
+    // data = corresponds to data in the FarmData manager
+    super(scene, x, y, data.spriteData[0].key);
+
+    // this value is used to pick the correct spritesheet data
+    // it is incremented based on the "startingWeight" property in "spriteData"
+    this.weightIndex = 0;
+
+    for (let [key, value] of Object.entries(data)) {
+      this.setData(key, value);
+    }
+
+    this.setDialogue('animals.age');  // TODO: for testing 
+    this.setBehaviour('randomWalk');
+    this.body.pushable = true;
+
+    const { width, height, offsetX, offsetY} = data.spriteData[0].hitbox;
+    this.changeHitbox(width, height, offsetX, offsetY);
+
+
+    // change spritesheet when a certain weight is reached
+    this.data.events.on('changedata-weight', (parent, value, previousValue) => {
+      if (value > this.data.get('spriteData')[this.weightIndex].endWeight) {
+        // this animal is heavier, so it should change the sprite
+        this.weightIndex++;
+        this.updateAnimations(this.data.get('spriteData')[this.weightIndex].key);
+
+        // update the hitbox
+        const { width, height, offsetX, offsetY} = this.data.get('spriteData')[this.weightIndex].hitbox;
+        this.changeHitbox(width, height, offsetX, offsetY);
+      }
+    })
+  }
+
+  updateAnimations(key) {
+    // clears all current animations and creates new ones based on the passed key
+    // this.anims.destroy();
+    this.key = key;
+
+    this.createAnimations([
+      { key: 'idle-down', frames: [{key: this.key, frame: 1}] },
+      { key: 'idle-up', frames: [{key: this.key, frame: 10}] },
+      { key: 'idle-right', frames: [{key: this.key, frame: 7}] },
+      { key: 'idle-left', frames: [{key: this.key, frame: 4}] },
+      { key: 'walk-down', frames: this.anims.generateFrameNumbers(this.key, {frames: [0, 1, 2, 1]}), repeat: -1 },
+      { key: 'walk-up', frames: this.anims.generateFrameNumbers(this.key, {frames: [9, 10, 11, 10]}), repeat: -1 },
+      { key: 'walk-right', frames: this.anims.generateFrameNumbers(this.key, {frames: [6, 7, 8, 7]}), repeat: -1 },
+      { key: 'walk-left', frames: this.anims.generateFrameNumbers(this.key, {frames: [3, 4, 5, 4]}), repeat: -1 },
+    ]);
   }
 }
 
@@ -1048,6 +1141,7 @@ export class Trough extends Phaser.GameObjects.Image {
     this.scene.depthSortedSprites.add(this);
 
     this.scene.physics.add.collider(this, this.scene.player);
+    this.scene.physics.add.collider(this, this.scene.animals, (_, animal) => { animal.stop(); });
 
     this.body.setSize(32, 16, false);
     this.body.setOffset(0, 16);
@@ -1061,17 +1155,40 @@ export class Trough extends Phaser.GameObjects.Image {
     });
 
     this.interactionButtonText = 'inspect';
+
+    this.manager.events.on('troughFillChange', (amount, ID, index) => {
+      // data gets changed externally in the data manager
+      if (ID === this.data.barnID && index === this.data.index) {
+        // emtpy or full
+        // TODO: make this more dynamic
+        this.setTexture('troughs', amount > 0 ? 1 : 0);
+      }
+    });
   }
 
   interact() {
-    showMessage(this.scene, 'interactibles.troughStatus', this);
+    if (this.fillData.currentFill > 0) {
+      showMessage(this.scene, 'interactibles.troughStatus', this);
+    } else {
+      showMessage(this.scene, 'interactibles.troughEmpty', this);
+    }
   }
 
-  get feedAmount() {
-    // gets feed amount from data manager
+  get fillData() {
+    // gets access to data from data manager
+    // returns: { currentFill: int, maxFill: int }
     let barn = this.manager.farmData.data.buildings[this.data.barnID];
-    return barn.troughs[this.data.index].currentFill;
+    return barn.troughs[this.data.index];
   }
+
+  setFeedAmmount(amount) {
+    // changes the amount in the data as well as the sprite
+    let barn = this.manager.farmData.data.buildings[this.data.barnID];
+    barn.troughs[this.data.index].currentFill = amount;
+    // change sprite
+    // 0 = empty, 1 = pig Feed
+    this.setTexture('troughs', amount > 0 ? 1 : 0);
+  } 
 }
 
 class Scythe extends Phaser.GameObjects.Image {
@@ -1249,8 +1366,8 @@ class WateringCan extends Phaser.GameObjects.Image {
       lifespan: 500,
       speed: 50,
       gravityY: 100,
-      angle: {min: particleAngle - 20, max: particleAngle + 20 },
-      alpha: {start: 0.5, end: 0.1}
+      angle: { min: particleAngle - 20, max: particleAngle + 20 },
+      alpha: { start: 0.5, end: 0.1 }
     });
 
     emitter.start();

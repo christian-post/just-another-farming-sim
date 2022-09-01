@@ -107,6 +107,18 @@ export const hexColor = function(number) {
 }
 
 
+const componentToHex = function(c) {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+export const rgbToHex = function(r, g, b) {
+  // https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+
+
 export const sumArray = function(array) {
   return array.reduce((a, b) => { return a + b }, 0);
 }

@@ -1,5 +1,6 @@
 import * as Utils from '../utils.js';
 import { showMessage } from '../user-interface.js';
+import { callbacks } from '../callbacks.js';
 
 
 export class InventoryManager extends Phaser.Scene {
@@ -256,9 +257,26 @@ export class InventoryManager extends Phaser.Scene {
       this.day.setText(`${this.manager.day}`);
     }, this);
 
+    // stamina bar changes fill and color
     this.manager.events.on('stamina-bar-change', value => {
       this.setBarValue(value);
     }, this);
+
+    // stamina bar flashes when empty
+    let staminaFlashTween = this.add.tween({
+      targets: this.staminaBar.overlay,
+      duration: 250,
+      repeat: 2,
+      yoyo: true,
+      fillAlpha: 1
+    })
+      .pause();
+
+    this.manager.events.on('staminaLow', ()=> {
+      if (!staminaFlashTween.isPlaying()) {
+        staminaFlashTween.play();
+      }
+    });
 
     // TODO: make one object that holds all text objects
     this.manager.events.on('changeButtonText', (button, string) => {
@@ -503,11 +521,11 @@ export class InventoryManager extends Phaser.Scene {
   makeBar(x, y, color) {
     let w = 64;
     let h = 8;
-    let background = this.add.rectangle(x, y, w, h, 0xaaaaaa, 0.75).setOrigin(0);
-    let bar = this.add.rectangle(x, y, w, h, color, 1).setOrigin(0);
-
-    // return an object
-    return { bar: bar, background: background };
+    return {
+      background: this.add.rectangle(x, y, w, h, 0xaaaaaa, 0.75).setOrigin(0),
+      bar: this.add.rectangle(x, y, w, h, color, 1).setOrigin(0),
+      overlay: this.add.rectangle(x, y, w, h, 0xff0000, 0).setOrigin(0)  // this is only used for effects
+    };
   }
 
   setBarValue(percentage) {
@@ -530,6 +548,18 @@ export class InventoryManager extends Phaser.Scene {
       this.staminaBar.bar.setFillStyle(0xff0000);
     }
   }
+
+  // flashStaminaBar() {
+  //   console.log('tweening');
+  //   this.add.tween({
+  //     targets: this.staminaBar.background,
+  //     duration: 500,
+  //     // repeat: 2,
+  //     yoyo: true,
+  //     fillColor: 0xff0000,
+  //     // fillAlpha: 1
+  //   });
+  // }
 }
 
 
@@ -1032,31 +1062,103 @@ export class ShopDisplayBuy extends ShopDisplayTemplate {
 
 
 export class ShopDisplaySell extends ShopDisplayTemplate {
-  create() {
-    // pass the player's inventory to the parent scene
-    super.create(this.scene.get('InventoryManager').inventory);
+  create(acceptedItemTypes) {
+    //  filter inventory for items that this vendor does not buy (by type)
+    //  allow animals also to be sold
+    // e.g. acceptedItemTypes = ['seed', 'tool']
+    this.acceptedItemTypes = acceptedItemTypes;
+
+    super.create(this.filterItems());
   }
 
-  // this is where you can sell your inventory items
+
+  filterItems() {
+    // returns an inventory that only contains the items with matching types
+    // types are stored as strings in this.acceptedItemTypes
+
+    let inventory = this.scene.get('InventoryManager').inventory;
+
+    // append all objects from farm data manager
+    inventory = inventory.concat(this.scene.get('GameManager').farmData.asInventory());
+
+    // return inventory.map(
+    //   item => {
+    //     if (item && this.acceptedItemTypes.includes(item.type)) {
+    //       return item;
+    //     }
+    //     return null;
+    //   }
+    // );
+    return inventory.filter(
+      item => {
+        return (item && this.acceptedItemTypes.includes(item.type));
+      }
+    )
+  }
+
+
+  updateInventory() {
+    // delete all old item sprites
+    this.invElements.forEach(elem => elem.destroy());
+
+    // filter the inventory again
+    this.items = this.filterItems();
+
+    this.items.forEach((item, index) => {
+      if (item) {
+        let itemPos = this.itemPositionFromIndex(index);
+
+        let img = this.add.image(itemPos.x, itemPos.y, item.spritesheet, item.frame)
+          .setOrigin(0)
+          .setDepth(2);
+        this.invElements.push(img);
+        let txt = this.add.text(itemPos.x + 8, itemPos.y + 12, item.quantity, this.textStyles.items)
+          .setDepth(2);
+        this.invElements.push(txt);
+      }
+    });
+
+    this.updateBottomText(this.items[this.currentIndex])
+  }
+
+
   interactWithItem(item) {
+    // this is where you can sell your inventory items
     let currentFunds = this.registry.values.money;
+    let sellPrice;
 
-    // determine the amount that can be sold
-    let soldAmount;
-    if (item.unique) {
-      soldAmount = 1;
-    } else if (item.quantity > item.sellQuantity) {
-      soldAmount = item.sellQuantity;
+    if (item.inventory) {
+      // determine the amount that can be sold
+      let soldAmount;
+      if (item.unique) {
+        soldAmount = 1;
+      } else if (item.quantity > item.sellQuantity) {
+        soldAmount = item.sellQuantity;
+      } else {
+        soldAmount = item.quantity;
+      }
+
+      sellPrice = soldAmount * item.sellPrice;
+      this.registry.set('money',  currentFunds + sellPrice);
+      this.showMoneyChange('+' + sellPrice);
+
+      this.manager.events.emit('item-removed', this.currentIndex, item, soldAmount);
     } else {
-      soldAmount = item.quantity;
+      // farm data object
+      if (item.type === 'livestock') {
+
+        // check if the animal can be sold
+        sellPrice = callbacks.selling[item.name](this, item);
+        if (sellPrice > 0) {
+          this.registry.set('money',  currentFunds + sellPrice);
+          this.showMoneyChange('+' + sellPrice);
+          this.manager.farmData.removeAnimal(item.name, item.id);
+        } else {
+          // not ready to sell
+          showMessage(this, 'npc-dialogue.shopping.animalNoSell');
+        }
+      }
     }
-
-    let sellPrice = soldAmount * item.sellPrice;
-
-    this.registry.set('money',  currentFunds + sellPrice);
-    this.showMoneyChange('+' + sellPrice);
-
-    this.manager.events.emit('item-removed', this.currentIndex, item, soldAmount);
 
     // reconstruct inventory
     this.updateInventory();
@@ -1077,6 +1179,8 @@ export class SpecificItemUseDisplay extends ShopDisplayTemplate {
   /*
   This scene pops up when you have to use items of a specified quality.
   E.g. put a kind of feed in a trough.
+
+  TODO: This class is unused ATM
   */
   create(config) {
     /* config contains

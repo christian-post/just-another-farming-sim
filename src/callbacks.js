@@ -21,8 +21,20 @@ export const callbacks = {
       scene.scene.resume(scene.scene.key);
     }
   },
+  selling: {
+    // if an item isn't an ordinary inventory item, a callback is needed when selling to a vendor
+    // selling callbacks return the selling price if the item is sold, and false if it can't be sold (criteria is not met)
+    pig: (scene, animalData) => {
+      console.log(animalData)
+      if (animalData.weight >= animalData.slaughterWeight) {
+        return Math.floor(animalData.weight * animalData.sellPrice);
+      } else {
+        return 0;
+      }
+    }
+  },
   interaction: {
-    // TODO: this is obsolete for now
+    // TODO: this whole thing is obsolete for now
     /*
     this is the corresponding object that goes into the tilemap data
     {

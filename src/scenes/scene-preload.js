@@ -129,7 +129,9 @@ export class PreloadingScene extends Phaser.Scene {
       { key: 'npc-man-2', file: 'sprites/npc_man_2.png', w: 24, h: 32 },
       { key: 'npc-man-3', file: 'sprites/npc_man_3.png', w: 24, h: 32 },
       { key: 'npc-woman-1', file: 'sprites/npc_woman_1.png', w: 24, h: 32 },
-      { key: 'pig', file: 'sprites/pig.png', w: 24, h: 24 },
+      // { key: 'pig', file: 'sprites/pig.png', w: 24, h: 24 },
+      { key: 'piglet', file: 'sprites/pig.png', w: 24, h: 24 },
+      { key: 'pigAdult', file: 'sprites/pig_adult.png', w: 32, h: 32 },
       { key: 'crops', file: 'sprites/crops_test.png', w: 16, h: 32 },
       { key: 'seeds', file: 'sprites/seed_packs.png', w: 16, h: 16 },
       { key: 'troughs', file: 'sprites/troughs.png', w: 32, h: 32 },
@@ -138,6 +140,7 @@ export class PreloadingScene extends Phaser.Scene {
       { key: 'particles', file: 'sprites/misc_particles.png', w: 8, h: 8 },
       { key: 'raindrop', file: 'sprites/raindrop.png', w: 8, h: 8 },
       { key: 'inventory-items', file: 'sprites/inventory_items.png', w: 16, h: 16 },
+      // User interface
       { key: 'ui-images', file: 'ui/ui_stuff.png', w: 16, h: 16 },
       { key: 'gamepad-buttons', file: 'ui/gamepad_buttons.png', w: 16, h: 16 },
     ];

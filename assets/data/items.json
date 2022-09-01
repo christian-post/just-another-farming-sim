@@ -272,6 +272,7 @@
       "frame": 11,
       "tooltip": "pig",
       "buyPrice": 500,
+      "sellPrice": 10,
       "inventory": false
     }
   },
@@ -287,6 +288,7 @@
       "frame": 12,
       "tooltip": "pigFeedStandard",
       "buyPrice": 25,
+      "sellPrice": 15,
       "inventory": true
     }
   }

@@ -150,36 +150,62 @@ export class GameManager extends Phaser.Scene {
           exitCallback: ()=> { 
             this.scene.resume(this.currentGameScene);
             this.scene.resume(this.scene.key);
-            this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
+            this.events.emit('changeButtonText', 'inventory', 'inventory');
           }
         });
       });
     });
 
-    // ############ only for debugging #########################################
+    // ############ DEBUGGING FUNCTIONS #########################################
 
     this.input.keyboard.on('keydown-P', ()=> {
       // toggle debug mode
       this.registry.set('debug', !this.registry.values.debug);
 
       // print the debugging features to the console
-      console.log(`Debugging features:
-      T: change tileset of current map
-      U: tween test
-      M: switch scenes
-      C: toggle player collision
-      L: change player walk speed`);
+      if (this.registry.values.debug) {
+        console.log(`Debugging features:
+        T: change tileset of current map
+        U: tween test
+        M: switch scenes
+        C: toggle player collision
+        L: change player walk speed
+        Y: speed up ingame time
+        X: slow down ingame time`);
+      }
     });
 
     this.input.keyboard.on('keydown-T', ()=> {
+      // dynamically change tileset
       if (this.registry.values.debug) {
-        this.getCurrentGameScene().currentTileset.setImage(this.textures.get('villageNight'))
+        this.getCurrentGameScene().currentTileset.setImage(this.textures.get('villageNight'));
+      } else {
+        console.log('This is a debug function. Enable debug mode first by pressing P.');
+      }
+    });
+
+    this.input.keyboard.on('keydown-Y', ()=> {
+      // speeds up ingame time
+      if (this.registry.values.debug) {
+        this.registry.set('ingameTimeSpeed', Math.min(6000, Math.floor(this.registry.get('ingameTimeSpeed') * 10)));
+        console.log('Ingame time speed changed to', this.registry.get('ingameTimeSpeed'));
+      } else {
+        console.log('This is a debug function. Enable debug mode first by pressing P.');
+      }
+    });
+
+    this.input.keyboard.on('keydown-X', ()=> {
+      // slows down ingame time
+      if (this.registry.values.debug) {
+        this.registry.set('ingameTimeSpeed', Math.max(6, Math.floor(this.registry.get('ingameTimeSpeed') * 0.1)));
+        console.log('Ingame time speed changed to', this.registry.get('ingameTimeSpeed'));
       } else {
         console.log('This is a debug function. Enable debug mode first by pressing P.');
       }
     });
 
     this.input.keyboard.on('keydown-U', ()=> {
+      // Tween test
       let scene = this.getCurrentGameScene();
       for (const [_, layer] of Object.entries(scene.mapLayers)) {
         scene.tweens.add({
@@ -293,15 +319,16 @@ export class GameManager extends Phaser.Scene {
   update(time, delta) {
     if (!this.timerPaused) {
       // increment the ingame time
-      this.timer += delta * this.registry.values.ingameTimeSpeed;
+      this.timer += delta * this.registry.get('ingameTimeSpeed');
 
       // check if one minute has passed
-      if (this.timer > 60000) {
+      if (this.timer >= 60000) {
         this.minutes += 1;
 
         // check if midnight
         if (this.minutes >= 1440) {
-          this.minutes = this.minutes - 1440;
+          // this.minutes = this.minutes - 1440;
+          this.minutes = 0;
           this.events.emit('newDay', this.minutes);
         }
 
@@ -326,13 +353,13 @@ export class GameManager extends Phaser.Scene {
           this.staminaRefillTimer = 0;
         }
         // reset the timer
-        this.timer = this.timer - 60000;
+        this.timer = 0;
       }
     }
   }
 
   setTime(minutes) {
-    this.minuts = minutes;
+    this.minutes = minutes;
     this.timer = 60000;
   }
 
@@ -413,7 +440,7 @@ export class GameManager extends Phaser.Scene {
 
   switchScenes(current, next, createConfig, playTransitionAnim=true, stopScene=false) {
 
-    console.log(`Switching from ${current} to ${next}`);
+    // console.log(`Switching from ${current} to ${next}`);
 
     if (playTransitionAnim) {
       // Fade out/fade in effect
@@ -582,11 +609,24 @@ export class FarmDataManager {
         pig: {}
       },
       crops: {},
-      buildings: {}  
+      buildings: {}
     };
 
     // ID counter, increase after an id is given to an object
     this.currentID = 0;
+  }
+
+  asInventory() {
+    // returns an array with all single items in this.data
+    let inventory = [];
+
+    Object.values(this.data.livestock).forEach(animals => {
+      inventory = inventory.concat(Object.values(animals));
+    });
+
+    // TODO: crops and buildings
+
+    return inventory;
   }
 
   addBuilding(type, animal) {

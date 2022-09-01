@@ -195,7 +195,7 @@ export class TitleScene extends Phaser.Scene {
       inventoryManager.addItem(itemData.seeds.wheat, 20);
       inventoryManager.addItem(itemData.tools.fertilizer, 10);
       inventoryManager.addItem(itemData.tools.hoeL1);
-      inventoryManager.addItem(itemData.feed.pigFeedStandard, 10);
+      inventoryManager.addItem(itemData.feed.pigFeedStandard, 99);
     });
 
     this.manager.switchScenes(this.scene.key, this.nextScene, {playerPos: { x: 256, y: 200 }}, false, true);

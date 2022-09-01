@@ -51,8 +51,9 @@
     "collectible": "{itemToAdd.screenName} (Quantity: {itemToAdd.quantity}).",
     "soilPatch": "This is a patch of arable soil.",
     "troughFull": "This trough is full already.",
-    "troughEmpty": "This trough is empty.",
-    "troughStatus": "There are currently {feedAmount} kg of feed in this trough."
+    "troughEmpty": "This trough is empty. Put some {data.animal} feed here.",
+    "troughStatus": "There are currently {fillData.currentFill} kg of {data.animal} feed in this trough.",
+    "wrongFeed": "This is not the right type of feed for this animal."
   },
   "tooltips": {
     "scytheL1": "A tool to cut crops when they are ready for harvest. You can also use this to remove weeds.",
@@ -85,7 +86,8 @@
       },
       "insufficient-funds": "You don't have enough money to buy this!",
       "goodbye": "Pleasure doin' business with ya!",
-      "leaving": "Alright. See ya!"
+      "leaving": "Alright. See ya!",
+      "animalNoSell": "This animal is not ready to be sold."
     },
     "animals": {
       "age": "The {data.values.name} is {data.values.age} day(s) old. It weighs {data.values.weight} kg."
