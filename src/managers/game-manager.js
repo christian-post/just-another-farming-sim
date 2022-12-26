@@ -1,6 +1,6 @@
-import { WeatherManager } from './scene-weather.js';
-import * as Utils from '../utils.js';
+import { WeatherManager } from '../scenes/scene-weather.js';
 import { showMessage } from '../user-interface.js';
+import * as Utils from '../utils.js';
 
 
 export const XBOXMAPPING = {
@@ -132,7 +132,7 @@ export class GameManager extends Phaser.Scene {
             color: 0x000000,
             alpha: 0.75
           },
-          options: Utils.getNestedKey(this.cache.json.get('dialogue'), 'save-menu.options'),
+          options: Utils.Misc.getNestedKey(this.cache.json.get('dialogue'), 'save-menu.options'),
           callbacks: [
             ()=> { 
               // back to game
@@ -220,7 +220,7 @@ export class GameManager extends Phaser.Scene {
 
 
     // debugging feature for teleporting to various positions in the overworld scenes
-    const sceneIterator = Utils.makeLoopingIterator([
+    const sceneIterator = Utils.Debug.makeLoopingIterator([
       { key: 'VillageScene', pos: { x: 30 * 16, y: 19 * 16 } },
       { key: 'HouseInteriorScene', pos: { x: 65 * 16, y: 96 * 16 } },
       { key: 'HouseInteriorScene', pos: { x: 10 * 16, y: 98 * 16 } },
@@ -430,7 +430,7 @@ export class GameManager extends Phaser.Scene {
   }
 
   configureKeys(scene) {
-    scene.keys = Utils.addKeysToScene(scene, this.keyMapping);
+    scene.keys = Utils.Phaser.addKeysToScene(scene, this.keyMapping);
 
     let keys = Object.keys(scene.buttonCallbacks);
     keys.forEach(key => {
@@ -552,7 +552,7 @@ export class GameManager extends Phaser.Scene {
           saveData.arableMapData[scene].forEach((elem, index) => {
             if (elem) {
               // create a SoilPatch object based on the 1D map index
-              let pos = Utils.convertIndexTo2D(index, this.scene.get(scene).currentMap.width);
+              let pos = Utils.Math.convertIndexTo2D(index, this.scene.get(scene).currentMap.width);
               let patch = this.scene.get(scene).createSoilPatch(index, pos.x, pos.y);
 
               // restore SoilPatch object attributes
@@ -653,7 +653,7 @@ export class FarmDataManager {
   }
 
   addAnimal(name, animalData, buildingID, animalID=null) {
-    let animal = Utils.deepcopy(animalData);
+    let animal = Utils.Misc.deepcopy(animalData);
 
     // add additional properties that are not in items.json
     animal = Object.assign(animal, this.manager.cache.json.get('animalData')[name]);

@@ -1,5 +1,6 @@
 import { showMessage } from "./user-interface.js";
 
+
 export const callbacks = {
   dialogues: {
     doorYes: scene => {

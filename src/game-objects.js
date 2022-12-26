@@ -1,7 +1,7 @@
 import { showMessage } from './user-interface.js';
-import * as Utils from './utils.js';
 import { callbacks } from './callbacks.js';
 import { Crop } from './sprites.js';
+import * as Utils from './utils.js';
 
 
 
@@ -34,7 +34,7 @@ export class DialogueTrigger extends Phaser.GameObjects.Rectangle {
       // TODO: grab callbacks from js file
       if (optionsAreCallbacks) {
         options.forEach(option => {
-          let callback = Utils.getNestedKey(callbacks, option);
+          let callback = Utils.Misc.getNestedKey(callbacks, option);
             this.optionsCallbacks.push(
               callback ? ()=> { callback(this.scene) } : ()=>{}
             );
@@ -66,7 +66,7 @@ export class InteractTrigger extends Phaser.GameObjects.Rectangle {
     this.scene.physics.add.existing(this);
     this.setOrigin(0);
 
-    this.callback = Utils.getNestedKey(callbacks, callbackKey);
+    this.callback = Utils.Misc.getNestedKey(callbacks, callbackKey);
     this.callbackArgs = callbackArgs;
 
     this.interactionButtonText = interactionText;

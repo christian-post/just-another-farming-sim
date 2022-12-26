@@ -1,6 +1,6 @@
-import * as Utils from '../utils.js';
 import { showMessage } from '../user-interface.js';
 import { callbacks } from '../callbacks.js';
+import * as Utils from '../utils.js';
 
 
 export class InventoryManager extends Phaser.Scene {
@@ -16,7 +16,7 @@ export class InventoryManager extends Phaser.Scene {
     // add reference to game manager
     this.manager = this.scene.get('GameManager');
 
-    this.keys = Utils.addKeysToScene(this, this.manager.keyMapping);
+    this.keys = Utils.Phaser.addKeysToScene(this, this.manager.keyMapping);
 
     // black transparent background for the clock UI
     const clockBG = this.rexUI.add.roundRectangle(
@@ -454,7 +454,7 @@ export class InventoryManager extends Phaser.Scene {
     // quantity is a modifier for the original item data quantity
     if (typeof itemToAdd === 'undefined') { console.warn('Item is undefined'); }
 
-    itemToAdd = Utils.deepcopy(itemToAdd);
+    itemToAdd = Utils.Misc.deepcopy(itemToAdd);
 
     if (quantity) {
       itemToAdd.quantity = quantity;
@@ -488,7 +488,7 @@ export class InventoryManager extends Phaser.Scene {
           this.inventory[index] = itemToAdd;
         } else {
           // add 255 of the item to this slot
-          let newItem = Utils.deepcopy(itemToAdd);
+          let newItem = Utils.Misc.deepcopy(itemToAdd);
           newItem.quantity = this.itemMaxQuantity;
           this.inventory[index] = newItem;
 
@@ -548,18 +548,6 @@ export class InventoryManager extends Phaser.Scene {
       this.staminaBar.bar.setFillStyle(0xff0000);
     }
   }
-
-  // flashStaminaBar() {
-  //   console.log('tweening');
-  //   this.add.tween({
-  //     targets: this.staminaBar.background,
-  //     duration: 500,
-  //     // repeat: 2,
-  //     yoyo: true,
-  //     fillColor: 0xff0000,
-  //     // fillAlpha: 1
-  //   });
-  // }
 }
 
 
@@ -708,10 +696,10 @@ export class GenericInventoryDisplay extends Phaser.Scene {
 
   update(_, delta) {
     // move the cursor
-    let dir = Utils.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+    let dir = Utils.Phaser.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
 
     if (dir.x !== 0 || dir.y !== 0) {
-      let increment = Utils.convertIndexTo1D(dir.x, dir.y, this.inventoryDimensions.w);
+      let increment = Utils.Math.convertIndexTo1D(dir.x, dir.y, this.inventoryDimensions.w);
       this.currentIndex = (this.currentIndex + increment) % this.inventorySize;
       // wrap around
       if (this.currentIndex < 0) {
@@ -794,7 +782,7 @@ export class GenericInventoryDisplay extends Phaser.Scene {
 
   itemPositionFromIndex(index) {
     // returns the 2D position on the inventory for a given index
-    let pos = Utils.convertIndexTo2D(index, this.inventoryDimensions.w);
+    let pos = Utils.Math.convertIndexTo2D(index, this.inventoryDimensions.w);
     let x = this.background.getTopLeft().x + pos.x * this.cellSize.w + this.cellSize.w / 2;
     let y = this.background.getTopLeft().y + pos.y * this.cellSize.h + this.cellSize.h / 2;
     return { x: x, y: y };
@@ -1004,9 +992,9 @@ export class ShopDisplayBuy extends ShopDisplayTemplate {
 
     // get the corresponding item objects from the json cache
     let itemObjects = [];
-    let itemData = Utils.deepcopy(this.cache.json.get('itemData'));
+    let itemData = Utils.Misc.deepcopy(this.cache.json.get('itemData'));
     items.forEach(key => {
-      itemObjects.push(Utils.getNestedKey(itemData, key));
+      itemObjects.push(Utils.Misc.getNestedKey(itemData, key));
     });
 
     super.create(itemObjects);

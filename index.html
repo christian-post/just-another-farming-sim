@@ -31,6 +31,20 @@
   </head>
   <body>
     <script src="src/main.js" type="module"></script>
-    <div id="test"></div>
+    <div id="canvas-container"></div>
+
+    <button id="download-button">Download Save Data</button>
   </body>
+
+  <script type="module">
+    // Functionality for the save button
+    // let's the user download save data from the local storage
+    import { download } from '/src/utils/misc.js';
+
+    let saveData = localStorage.getItem('save0');
+    
+    document.getElementById('download-button')
+      .onclick = ()=> { download(saveData, 'save0.json', 'text/plain'); };
+
+  </script>
 </html>

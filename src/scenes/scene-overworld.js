@@ -1,5 +1,6 @@
 import { Player, NPC, Animal, Vendor, Trough } from '../sprites.js';
 import { WeatherDisplayManager } from './scene-weather.js';
+
 import { 
   DialogueTrigger, 
   TeleportTrigger, 
@@ -7,6 +8,7 @@ import {
   InteractTrigger, 
   TeleportInteractTrigger 
 } from '../game-objects.js';
+
 import * as Utils from '../utils.js';
 
 
@@ -108,7 +110,7 @@ export class OverworldScene extends Phaser.Scene {
       // tilemap layer collision boundaries
       this.debugGfx = [];
       this.collisionLayers.forEach(layer => {
-        let gfx = Utils.debugDraw(this.mapLayers[layer], this, this.registry.values.debug)
+        let gfx = Utils.Debug.debugDraw(this.mapLayers[layer], this, this.registry.values.debug)
           .setDepth(9);
         this.debugGfx.push(gfx);
       });
@@ -468,7 +470,7 @@ export class FarmScene extends OverworldScene {
 
   isArable(x, y) {
     // helper function, might delete
-    let patch = this.arableMap[Utils.convertIndexTo1D(x, y, this.currentMap.width)];
+    let patch = this.arableMap[Utils.Math.convertIndexTo1D(x, y, this.currentMap.width)];
     return patch !== undefined && patch !== null;
   }
 
@@ -543,7 +545,7 @@ export class FarmScene extends OverworldScene {
         let indexX = acreStartX + x;
         let indexY = acreStartY + y;
 
-        let index = Utils.convertIndexTo1D(indexX, indexY, this.currentMap.width);
+        let index = Utils.Math.convertIndexTo1D(indexX, indexY, this.currentMap.width);
         this.createSoilPatch(index, indexX, indexY);
       }
     }

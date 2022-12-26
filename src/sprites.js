@@ -1,5 +1,6 @@
-import * as Utils from './utils.js';
 import { showMessage } from './user-interface.js';
+import * as Utils from './utils.js';
+
 
 
 export class BaseCharacterSprite extends Phaser.Physics.Arcade.Sprite {
@@ -202,7 +203,7 @@ export class Player extends BaseCharacterSprite {
       // TODO: sowing animation
       this.anims.play('player-idle-' + this.lastDir, true);
     } else {
-      let dir = Utils.getCursorDirections(this.scene, 0, delta);
+      let dir = Utils.Phaser.getCursorDirections(this.scene, 0, delta);
       this.move(dir);
     }
 
@@ -235,7 +236,7 @@ export class Player extends BaseCharacterSprite {
     // TODO: this is checked twice when a button is pressed, unnecessary
     let interactX = parseInt(this.interactionRect.x / this.scene.registry.values.tileSize);
     let interactY = parseInt(this.interactionRect.y / this.scene.registry.values.tileSize);
-    let index = Utils.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
+    let index = Utils.Math.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
 
     // check for arable Land
     // TODO spaghetti code, can this be generalized?
@@ -260,7 +261,7 @@ export class Player extends BaseCharacterSprite {
 
     // check if rectangle is colliding with any interactable sprites
     // TODO: exclude Player sprite from all sprites
-    let collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
+    let collisions = Utils.Phaser.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
     if (collisions.length > 0 && collisions[0] != this) {
       this.manager.events.emit('changeButtonText', 'interact', string);
     } else {
@@ -277,7 +278,7 @@ export class Player extends BaseCharacterSprite {
       console.log('interact rect:', `${interactX}, ${interactY}, ${interactX * 16}, ${interactY * 16}`);
     }
 
-    let collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
+    let collisions = Utils.Phaser.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
 
     // check for interactible if any collisions happen
     if (collisions.length > 0) {
@@ -313,10 +314,10 @@ export class Player extends BaseCharacterSprite {
           // TODO. indicate that you can't use this
           if (!this.scene.hasArableLand) break;
 
-          collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.crops.getChildren());
+          collisions = Utils.Phaser.checkCollisionGroup(this.interactionRect, this.scene.crops.getChildren());
 
           if (collisions.length === 0) {
-            let index = Utils.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
+            let index = Utils.Math.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
             if (this.scene.arableMap[index]) {
               if (this.checkExhausted(item)) { return; }
               // plant something
@@ -348,7 +349,7 @@ export class Player extends BaseCharacterSprite {
           break;
 
         case 'tool':
-          collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
+          collisions = Utils.Phaser.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
           if (collisions.length > 0) {
             // check for stamina only if there would be something to interact with
             if (this.checkExhausted(item)) { return; }
@@ -358,14 +359,14 @@ export class Player extends BaseCharacterSprite {
             item, { 
               collisions: collisions,
               button: button,
-              mapIndex: Utils.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width),
+              mapIndex: Utils.Math.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width),
               x: interactX,
               y: interactY
           });
           break;
 
         case 'feed':
-          collisions = Utils.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
+          collisions = Utils.Phaser.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
           collisions.forEach(col => {
             // check if the collision object is a trough
             if (col instanceof Trough) {
@@ -619,7 +620,7 @@ export class NPC extends BaseCharacterSprite {
           // flip a coin
           if (Math.random() < 0.5) {
             // choose one of four direction, or stop
-            let choice = Utils.chooseWeighted([
+            let choice = Utils.Math.chooseWeighted([
               { x: 1, y: 0 },
               { x: 0, y: 1 },
               { x: -1, y: 0 },
@@ -631,7 +632,7 @@ export class NPC extends BaseCharacterSprite {
             // look in a random direction that the NPC is not already facing
             this.stop();
             let dirs = ['up', 'down', 'left', 'right'];
-            this.lastDir = Utils.choose(dirs.filter(value => { return value !== this.lastDir; }));
+            this.lastDir = Utils.Math.choose(dirs.filter(value => { return value !== this.lastDir; }));
           }
         }
       });
@@ -671,7 +672,7 @@ export class NPC extends BaseCharacterSprite {
         if (path === null) {
           console.warn("Path was not found.");
         } else {
-          // this.path = simplifyPath(path);
+          // this.path = Utils.Math.simplifyPath(path);
           this.path = path;
 
           if (this.scene.registry.values.debug) {
@@ -920,7 +921,7 @@ export class Animal extends NPC {
 
 export class Crop extends Phaser.GameObjects.Image {
   constructor(scene, x, y, name, mapIndex) {
-    let data = Utils.deepcopy(scene.cache.json.get('cropData').croplist[name]);
+    let data = Utils.Misc.deepcopy(scene.cache.json.get('cropData').croplist[name]);
     super(scene, x, y, 'crops', data.frames[0]);
     this.setData(data);
 
@@ -953,7 +954,7 @@ export class Crop extends Phaser.GameObjects.Image {
     this.fertilizedLevel = 0;  // TODO: add soil class that holds the fertilization
 
     // calculate the color of particles that appear when the crop is cut
-    this.avgColor = Utils.getAvgColor(
+    this.avgColor = Utils.Phaser.getAvgColor(
       this.scene, this.texture.key, this.data.values.frames[this.data.values.numPhases - 1]
     );
 
@@ -1012,7 +1013,7 @@ export class Crop extends Phaser.GameObjects.Image {
       // spawn something to collect
       let spawnPos = { x: this.body.center.x, y: this.body.center.y - 8};
       let targetPos = { x: this.body.center.x, y: this.body.center.y};
-      let data = Utils.deepcopy(this.scene.cache.json.get('itemData').harvest[this.data.values.harvest]);
+      let data = Utils.Misc.deepcopy(this.scene.cache.json.get('itemData').harvest[this.data.values.harvest]);
 
       // effect of fertillizer
       // TODO: more sophisticated calculation
@@ -1095,7 +1096,7 @@ export class Collectible extends Phaser.GameObjects.Image {
 
     this.manager = this.scene.scene.get('GameManager');
 
-    this.itemToAdd = Utils.deepcopy(itemToAdd);
+    this.itemToAdd = Utils.Misc.deepcopy(itemToAdd);
 
     // interaction with player
     this.interactionButtonText = 'inspect';
@@ -1148,7 +1149,6 @@ export class Trough extends Phaser.GameObjects.Image {
 
     this.manager = this.scene.scene.get('GameManager');
     
-    // this.data = Utils.deepcopy(data);
     this.data = {};
     data.forEach(obj => {
       this.data[obj.name] = obj.value;

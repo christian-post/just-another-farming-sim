@@ -193,7 +193,7 @@ class RainDroplet extends Phaser.GameObjects.GameObject {
     
     let lowerY = this.scene.cameras.main.worldView.y - this.manager.bounds.top;
     let upperY = this.scene.cameras.main.worldView.y + this.scene.cameras.main.worldView.height + this.manager.bounds.bottom;
-    this.alpha = Utils.map(y, lowerY, upperY, 0.2, 1);
+    this.alpha = Utils.Math.map(y, lowerY, upperY, 0.2, 1);
   }
 
   update(time, delta) {

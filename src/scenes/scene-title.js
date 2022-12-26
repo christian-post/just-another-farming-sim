@@ -1,7 +1,8 @@
 import { DialogueTrigger } from "../game-objects.js";
 import { showMessage } from "../user-interface.js";
-import { XBOXMAPPING } from "./scene-manager.js";
+import { XBOXMAPPING } from "../managers/game-manager.js";
 import * as Utils from "../utils.js";
+
 
 
 export class TitleScene extends Phaser.Scene {
@@ -283,7 +284,7 @@ export class ShowControls extends Phaser.Scene {
       this.add.text(
         xStart,
         yStart + vSpace * index,
-        `${Utils.capitalize(key)}:`,
+        `${Utils.Strings.capitalize(key)}:`,
         textStyle
       )
         .setOrigin(0, 0.5);
@@ -375,7 +376,7 @@ export class ShowControls extends Phaser.Scene {
         this.add.text(
           value.pos.x, 
           value.pos.y, 
-          value.text || Utils.capitalize(buttonFunc || ''),  // get button descrition either from the texts object, or from mapping
+          value.text || Utils.Strings.capitalize(buttonFunc || ''),  // get button descrition either from the texts object, or from mapping
           textStyle)
           .setOrigin(value.align, 0.5);
   

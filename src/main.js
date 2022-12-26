@@ -5,28 +5,27 @@ import {
   ShopDisplayBuy, 
   ShopDisplaySell,
   SpecificItemUseDisplay
-} from './scenes/scene-inventory.js';
+} from './managers/inventory-manager.js';
 import * as GameScenes from './scenes/scene-overworld.js';
 import { PreloadingScene } from './scenes/scene-preload.js';
 import { TitleScene, ShowControls } from './scenes/scene-title.js';
 import { TransitionScene } from './scenes/scene-transition.js';
-import { GameManager } from './scenes/scene-manager.js';
+import { GameManager } from './managers/game-manager.js';
 
 
 
 const WINDOW_WIDTH = 426;
 const WINDOW_HEIGHT = 240;
 
-// const COLOR_BACKGROUND = 0x000000;
 const COLOR_BACKGROUND = 0x006022;
 
 // debug settings
 const DEBUG = false;
 const SCENEWATCHER = false;
-// const SCENEWATCHER = true;
 
 
 let config = {
+  parent: "canvas-container",
   type: Phaser.AUTO,
   width: WINDOW_WIDTH,
   height: WINDOW_HEIGHT,
@@ -48,7 +47,7 @@ let config = {
     target: 60
   },
   audio: {
-    noAudio: false  // set to "off" during testing
+    noAudio: true  // set to "off" during testing
   },
   input: {
     gamepad: true
@@ -87,8 +86,7 @@ game.registry.merge({
   // in-game settings
   playerWalkSpeed: 80,
   playerDebugSpeed: 300,  // player running speed when in debug mode (normal = 80)
-  // ingameTimeSpeed: 1000,  // in-game seconds per real-time second
-  ingameTimeSpeed: 60,  // in-game seconds per real-time second
+  ingameTimeSpeed: 60,  // in-game seconds per real-time second (normal = 60)
   startingDaytime: {
     hour: 12,
     minutes: 0
