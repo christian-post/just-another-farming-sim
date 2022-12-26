@@ -3,25 +3,6 @@ import { showMessage } from '../user-interface.js';
 import * as Utils from '../utils.js';
 
 
-export const XBOXMAPPING = {
-  0: 'A',
-  1: 'B',
-  2: 'X',
-  3: 'Y',
-  4: 'LB',
-  5: 'RB',
-  6: 'LT',
-  7: 'RT',
-  8: 'BACK',
-  9: 'START',
-  10: 'LS',
-  11: 'RS',
-  12: 'UP',
-  13: 'DOWN',
-  14: 'LEFT',
-  15: 'RIGHT'
-};
-
 
 export class GameManager extends Phaser.Scene {
   /* 
@@ -33,12 +14,11 @@ export class GameManager extends Phaser.Scene {
 
   create() {
     // load the key mapping from the cache
-    this.keyMapping = this.cache.json.get('controls').default;
-    this.gamepadMapping = this.cache.json.get('controls').defaultGamepad;
+    // this.keyMapping = this.cache.json.get('controls').default;
+    // this.gamepadMapping = this.cache.json.get('controls').defaultGamepad;
 
-    this.hasControl = true;   // flage for whether input is processed
-
-    this.events.on('newDay', this.onNewDay, this);
+    this.inputHandler = this.scene.get('InputManager');
+    this.scene.run('InputManager');
 
     this.configureIngameVariables();
 
@@ -95,17 +75,24 @@ export class GameManager extends Phaser.Scene {
     // stuff that happens when the first overworld scene is created
     this.scene.get(this.overworldScenes[0]).events.on('create', ()=> {
       // configure player controls and events
-      this.events.on('player-interacts', ()=> {
-        this.player.interactButton()
-      });
-      this.events.on('itemUsed', button => {
-        this.player.itemUseButton(button);
-      });
+      // this.events.on('player-interacts', ()=> {
+      //   this.player.interactButton()
+      // });
+      // this.events.on('itemUsed', button => {
+      //   this.player.itemUseButton(button);
+      // });
+
+      this.events.emit('overworld-start');
+
+      // configure overworld player events
+      this.events.on('newDay', this.onNewDay, this);
 
       this.events.on('staminaChange', amount => {
+        // handle what happens when a scene wants to change the stamina
         let stamina = this.registry.values.stamina;
         let maxStamina = this.registry.values.maxStamina;
 
+        // save the new stamina value in the registry
         this.registry.values.stamina = Math.min(maxStamina, Math.max(stamina + amount, 0));
         let percentage = (this.registry.values.stamina / maxStamina) * 100;
         // send data to the UI
@@ -218,7 +205,6 @@ export class GameManager extends Phaser.Scene {
       }
     });
 
-
     // debugging feature for teleporting to various positions in the overworld scenes
     const sceneIterator = Utils.Debug.makeLoopingIterator([
       { key: 'VillageScene', pos: { x: 30 * 16, y: 19 * 16 } },
@@ -282,7 +268,7 @@ export class GameManager extends Phaser.Scene {
 
     this.staminaRefillTimer = 0;  // measured in ingame minutes
 
-    // ressource data
+    // ressource data in game registry
     this.registry.merge({
       money: this.registry.values.startingMoney,
       maxStamina: this.registry.values.startingMaxStamina,
@@ -290,19 +276,19 @@ export class GameManager extends Phaser.Scene {
     });
   }
 
-  checkForGamepad(scene) {
-    if (scene.input.gamepad.total === 0) {
-      scene.input.gamepad.once('connected', pad => {
-        scene.pad = pad;
-        console.log(`pad connected: ${pad}`);
-        this.configurePad(scene);
-      });
-    }
-    else {
-      scene.pad = scene.input.gamepad.pad1;
-      this.configurePad(scene);
-    }
-  }
+  // checkForGamepad(scene) {
+  //   if (scene.input.gamepad.total === 0) {
+  //     scene.input.gamepad.once('connected', pad => {
+  //       scene.pad = pad;
+  //       console.log(`pad connected: ${pad}`);
+  //       this.configurePad(scene);
+  //     });
+  //   }
+  //   else {
+  //     scene.pad = scene.input.gamepad.pad1;
+  //     this.configurePad(scene);
+  //   }
+  // }
 
   playMusic(key) {
     if (this.registry.values.globalMusicVolume > 0) {
@@ -371,18 +357,19 @@ export class GameManager extends Phaser.Scene {
     return this.scene.get(this.currentGameScene);
   }
 
-  get currentInputMapping() {
-    // don't use this every frame
-    if (this.scene.get(this.currentGameScene).pad) {
-      let mapping = {};
-      for (const button in this.gamepadMapping) {
-        mapping[button] = XBOXMAPPING[this.gamepadMapping[button]];
-      }
-      return mapping;
-    } else {
-      return this.keyMapping;
-    }
-  }
+  // get currentInputMapping() {
+  //   // primarily for use with string replacement from dialogue.json
+  //   // don't use this every frame!
+  //   if (this.scene.get(this.currentGameScene).pad) {
+  //     let mapping = {};
+  //     for (const button in this.gamepadMapping) {
+  //       mapping[button] = XBOXMAPPING[this.gamepadMapping[button]];
+  //     }
+  //     return mapping;
+  //   } else {
+  //     return this.keyMapping;
+  //   }
+  // }
 
   get player() {
     // reference to the player sprite of the current game scene
@@ -396,47 +383,47 @@ export class GameManager extends Phaser.Scene {
     this.minutes = minutes;
   }
 
-  configurePad(scene) {
-    // binds scene-specific functions to gamepad buttons 
-    scene.pad.on('down', (index, value, button) => {
-      let func;  // TODO I hate this code
-      switch(index) {
-        case this.gamepadMapping.item1:
-          func = scene.buttonCallbacks.item1;
-          if (func !== undefined) func();
-          break;
+  // configurePad(scene) {
+  //   // binds scene-specific functions to gamepad buttons 
+  //   scene.pad.on('down', (index, value, button) => {
+  //     let func;  // TODO I hate this code
+  //     switch(index) {
+  //       case this.gamepadMapping.item1:
+  //         func = scene.buttonCallbacks.item1;
+  //         if (func !== undefined) func();
+  //         break;
 
-        case this.gamepadMapping.item2:
-          func = scene.buttonCallbacks.item2;
-          if (func !== undefined) func();
-          break;
+  //       case this.gamepadMapping.item2:
+  //         func = scene.buttonCallbacks.item2;
+  //         if (func !== undefined) func();
+  //         break;
 
-        case this.gamepadMapping.interact:
-          func = scene.buttonCallbacks.interact;
-          if (func !== undefined) func();
-          break;
+  //       case this.gamepadMapping.interact:
+  //         func = scene.buttonCallbacks.interact;
+  //         if (func !== undefined) func();
+  //         break;
 
-        case this.gamepadMapping.inventory:
-          func = scene.buttonCallbacks.inventory;
-          if (func !== undefined) func();
-          break;
+  //       case this.gamepadMapping.inventory:
+  //         func = scene.buttonCallbacks.inventory;
+  //         if (func !== undefined) func();
+  //         break;
 
-        case this.gamepadMapping.menu:
-          func = scene.buttonCallbacks.menu;
-          if (func !== undefined) func();
-          break;
-      }
-    });
-  }
+  //       case this.gamepadMapping.menu:
+  //         func = scene.buttonCallbacks.menu;
+  //         if (func !== undefined) func();
+  //         break;
+  //     }
+  //   });
+  // }
 
-  configureKeys(scene) {
-    scene.keys = Utils.Phaser.addKeysToScene(scene, this.keyMapping);
+  // configureKeys(scene) {
+  //   scene.keys = Utils.Phaser.addKeysToScene(scene, this.keyMapping);
 
-    let keys = Object.keys(scene.buttonCallbacks);
-    keys.forEach(key => {
-      scene.keys[key].on('down', scene.buttonCallbacks[key], scene);
-    });
-  }
+  //   let keys = Object.keys(scene.buttonCallbacks);
+  //   keys.forEach(key => {
+  //     scene.keys[key].on('down', scene.buttonCallbacks[key], scene);
+  //   });
+  // }
 
   switchScenes(current, next, createConfig, playTransitionAnim=true, stopScene=false) {
 

@@ -16,7 +16,9 @@ export class InventoryManager extends Phaser.Scene {
     // add reference to game manager
     this.manager = this.scene.get('GameManager');
 
-    this.keys = Utils.Phaser.addKeysToScene(this, this.manager.keyMapping);
+    // get the key mapping for displaying the correct buttons
+    // TODO: can this be solved differently?
+    this.keys = this.manager.inputHandler.addKeysToScene(this, this.manager.inputHandler.keyMapping);
 
     // black transparent background for the clock UI
     const clockBG = this.rexUI.add.roundRectangle(
@@ -146,7 +148,7 @@ export class InventoryManager extends Phaser.Scene {
       'buttonOverlaySmallShadow')
         .setOrigin(0);
 
-    // action buttons
+    // action button images
     if (this.manager.getCurrentGameScene().pad) {
       const buttonOffsetX = 8;
       const buttonOffsetY = 28;
@@ -677,10 +679,10 @@ export class GenericInventoryDisplay extends Phaser.Scene {
     }
 
     // bind keyboard functionality 
-    this.manager.configureKeys(this);
+    this.manager.inputHandler.configureKeys(this);
 
     // Gamepad functionality
-    this.manager.checkForGamepad(this);
+    this.manager.inputHandler.checkForGamepad(this);
 
     // update the elements on the first start and on wake
     this.events.on('create', () => {
@@ -696,7 +698,8 @@ export class GenericInventoryDisplay extends Phaser.Scene {
 
   update(_, delta) {
     // move the cursor
-    let dir = Utils.Phaser.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+    let dir = this.manager.inputHandler.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+    // let dir = Utils.Phaser.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
 
     if (dir.x !== 0 || dir.y !== 0) {
       let increment = Utils.Math.convertIndexTo1D(dir.x, dir.y, this.inventoryDimensions.w);
@@ -994,7 +997,7 @@ export class ShopDisplayBuy extends ShopDisplayTemplate {
     let itemObjects = [];
     let itemData = Utils.Misc.deepcopy(this.cache.json.get('itemData'));
     items.forEach(key => {
-      itemObjects.push(Utils.Phaser.getNestedKey(itemData, key));
+      itemObjects.push(Utils.Misc.getNestedKey(itemData, key));
     });
 
     super.create(itemObjects);

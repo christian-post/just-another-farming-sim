@@ -11,6 +11,7 @@ import { PreloadingScene } from './scenes/scene-preload.js';
 import { TitleScene, ShowControls } from './scenes/scene-title.js';
 import { TransitionScene } from './scenes/scene-transition.js';
 import { GameManager } from './managers/game-manager.js';
+import { InputManager } from './managers/input-manager.js';
 
 
 
@@ -102,6 +103,7 @@ game.registry.merge({
 // define the scenes
 game.scene.add('Preload', PreloadingScene, false);   
 game.scene.add('GameManager', GameManager, false);
+game.scene.add('InputManager', InputManager, false);
 game.scene.add('Title', TitleScene, false);
 game.scene.add('ShowControls', ShowControls, false);
 // In Game scenes

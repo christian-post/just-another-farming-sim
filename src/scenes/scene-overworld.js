@@ -85,10 +85,8 @@ export class OverworldScene extends Phaser.Scene {
       }
     }
 
-    this.manager.configureKeys(this);
-
-    // Gamepad functionality
-    this.manager.checkForGamepad(this);
+    this.manager.inputHandler.configureKeys(this);
+    this.manager.inputHandler.checkForGamepad(this);
 
     // weather manager object
     this.WeatherDisplayManager = new WeatherDisplayManager(this);

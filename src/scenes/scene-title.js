@@ -1,6 +1,4 @@
-import { DialogueTrigger } from "../game-objects.js";
 import { showMessage } from "../user-interface.js";
-import { XBOXMAPPING } from "../managers/game-manager.js";
 import * as Utils from "../utils.js";
 
 
@@ -21,7 +19,7 @@ export class TitleScene extends Phaser.Scene {
     this.buttonCallbacks = {};
 
     this.pad = null;
-    this.manager.checkForGamepad(this);
+    this.manager.inputHandler.checkForGamepad(this);
 
     // "any key" event to advance
     this.input.gamepad.on('down', ()=> {
@@ -239,7 +237,7 @@ export class ShowControls extends Phaser.Scene {
   create() {
     this.manager = this.scene.get('GameManager');
 
-    this.manager.checkForGamepad(this);
+    this.manager.inputHandler.checkForGamepad(this);
     
     // get current gamepad mapping, but reversed
     const gamepadMapping = this.cache.json.get('controls').defaultGamepad;

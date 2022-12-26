@@ -1,5 +1,7 @@
 import * as Utils from './utils.js';
 
+
+
 export class DialogueScene extends Phaser.Scene {
   preload() {
     // Rex UI
@@ -14,16 +16,16 @@ export class DialogueScene extends Phaser.Scene {
     this.manager = this.scene.get('GameManager');
     this.data = data;
 
-    this.keys = Utils.Phaser.addKeysToScene(this, this.manager.keyMapping);
-
-    this.manager.checkForGamepad(this);  
+    // this.keys = Utils.Phaser.addKeysToScene(this, this.manager.inputHandler.keyMapping);
+    // this.manager.inputHandler.configureKeys(this);
+    // this.manager.inputHandler.checkForGamepad(this);  
 
     let json = this.cache.json.get('dialogue');
-    let messageText = Utils.Phaser.getNestedKey(json, data.key);
+    let messageText = Utils.Misc.getNestedKey(json, data.key);
   
     if (!messageText) {
       console.log(`No matching text for "${data.key}"`);
-      messageText = Utils.Phaser.getNestedKey(json, 'error');
+      messageText = Utils.Misc.getNestedKey(json, 'error');
     }
 
     // format message text
@@ -32,7 +34,7 @@ export class DialogueScene extends Phaser.Scene {
     this.options = [];
     // if data has options, format and store that
     if (data.options.callbacks.length > 0) {
-      let optionTexts = Utils.Phaser.getNestedKey(json, data.options.key);
+      let optionTexts = Utils.Misc.getNestedKey(json, data.options.key);
       optionTexts.forEach((text, index) => {
         this.options[index] = {
           text: formatProperties(data.object, text),
@@ -97,6 +99,9 @@ export class DialogueScene extends Phaser.Scene {
       }
     };
 
+    this.manager.inputHandler.configureKeys(this);
+    this.manager.inputHandler.checkForGamepad(this);  
+
     this.keys.interact.on('down', this.buttonCallbacks.interact, this);
     this.keys.inventory.on('down', this.buttonCallbacks.inventory, this);
 
@@ -137,7 +142,8 @@ export class DialogueScene extends Phaser.Scene {
   update(time, delta) {
     if (this.cursor) {
       // move the cursor if the dialogue has options
-      let dir = Utils.Phaser.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+      let dir = this.manager.inputHandler.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+      // let dir = Utils.Phaser.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
       if (dir.x !== 0) {
         if (dir.x > 0) {
           this.currentOptionIndex = (this.currentOptionIndex + 1) % this.options.length;
@@ -321,8 +327,9 @@ export class GenericMenu extends Phaser.Scene {
     ).setOrigin(1, 0.5);
 
     // Button configuration
-    this.keys = Utils.Phaser.addKeysToScene(this, this.manager.keyMapping);
-    this.manager.checkForGamepad(this);
+    // this.keys = Utils.Phaser.addKeysToScene(this, this.manager.inputHandler.keyMapping);
+    // this.manager.inputHandler.configureKeys(this);
+    // this.manager.inputHandler.checkForGamepad(this);
 
     this.buttonCallbacks = {
       interact: ()=> {
@@ -352,6 +359,9 @@ export class GenericMenu extends Phaser.Scene {
       }
     };
 
+    this.manager.inputHandler.configureKeys(this);
+    this.manager.inputHandler.checkForGamepad(this);  
+
     this.keys.interact.on('down', this.buttonCallbacks.interact, this);
     this.keys.inventory.on('down', this.buttonCallbacks.inventory, this);
 
@@ -361,7 +371,8 @@ export class GenericMenu extends Phaser.Scene {
   update(time, delta) {
     if (this.cursor) {
       // move the cursor
-      let dir = Utils.Phaser.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+      let dir = this.manager.inputHandler.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+      // let dir = Utils.Phaser.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
       if (dir.y !== 0) {
         if (dir.y > 0) {
           this.currentOptionIndex = (this.currentOptionIndex + 1) % this.options.length;

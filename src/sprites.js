@@ -203,7 +203,8 @@ export class Player extends BaseCharacterSprite {
       // TODO: sowing animation
       this.anims.play('player-idle-' + this.lastDir, true);
     } else {
-      let dir = Utils.Phaser.getCursorDirections(this.scene, 0, delta);
+      let dir = this.manager.inputHandler.getCursorDirections(this.scene, 0, delta);
+      // let dir = Utils.Phaser.getCursorDirections(this.scene, 0, delta);
       this.move(dir);
     }
 
