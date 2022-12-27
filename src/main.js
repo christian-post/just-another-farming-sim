@@ -21,8 +21,8 @@ const WINDOW_HEIGHT = 240;
 const COLOR_BACKGROUND = 0x006022;
 
 // debug settings
-const DEBUG = false;
-const SCENEWATCHER = false;
+const DEBUG = true;
+const SCENEWATCHER = true;
 
 
 let config = {

@@ -51,7 +51,7 @@ export class InputManager extends Phaser.Scene {
     if (scene.input.gamepad.total === 0) {
       scene.input.gamepad.once('connected', pad => {
         scene.pad = pad;
-        console.log(`pad connected: ${pad}`);
+        console.log(`pad connected: ${pad.id}`);
         this.configurePad(scene);
       });
     }
@@ -81,6 +81,11 @@ export class InputManager extends Phaser.Scene {
     // binds scene-specific functions to gamepad buttons 
     scene.pad.on('down', (index, value, button) => {
       let func;  // TODO I hate this code
+
+      // if (this.registry.values.debug) {
+      //   console.log(`Gamepad button ${index} pressed`);
+      // }
+
       switch(index) {
         case this.gamepadMapping.item1:
           func = scene.buttonCallbacks.item1;

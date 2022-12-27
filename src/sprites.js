@@ -261,10 +261,17 @@ export class Player extends BaseCharacterSprite {
     }
 
     // check if rectangle is colliding with any interactable sprites
-    // TODO: exclude Player sprite from all sprites
     let collisions = Utils.Phaser.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
-    if (collisions.length > 0 && collisions[0] != this) {
-      this.manager.events.emit('changeButtonText', 'interact', string);
+
+    // exclude Player sprite from all sprites
+    let playerIndex = collisions.indexOf(this);
+    if (playerIndex > -1) {
+      collisions.splice(playerIndex, 1);
+    }
+
+    if (collisions.length > 0) {
+      let text = collisions[0].interactionButtonText || 'check';
+      this.manager.events.emit('changeButtonText', 'interact', text);
     } else {
       this.manager.events.emit('changeButtonText', 'interact', '');
     }

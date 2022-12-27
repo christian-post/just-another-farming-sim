@@ -4,6 +4,7 @@ import * as Utils from '../utils.js';
 
 
 export class InventoryManager extends Phaser.Scene {
+  // TODO: separate Inventory and UI?
   preload() {
     this.load.scenePlugin({
       key: 'rexuiplugin',
@@ -37,13 +38,13 @@ export class InventoryManager extends Phaser.Scene {
         y: 8
       },
       item1: {
-          x: 330, 
-          y: 8
-        },
+        x: 330, 
+        y: 8
+      },
       item2: {
-          x: 375, 
-          y: 8
-        }
+        x: 375, 
+        y: 8
+      }
     };
 
     let itemTextOffsetX = 36;
@@ -150,7 +151,7 @@ export class InventoryManager extends Phaser.Scene {
 
     // action button images
     if (this.manager.getCurrentGameScene().pad) {
-      const buttonOffsetX = 8;
+      const buttonOffsetX = 9;
       const buttonOffsetY = 28;
 
       this.buttonLabels = {
@@ -290,7 +291,6 @@ export class InventoryManager extends Phaser.Scene {
           this.interactionText.setText(string);
           break;
       }
-      
     });
 
     this.manager.events.on('itemEquipped', button => {
@@ -385,6 +385,7 @@ export class InventoryManager extends Phaser.Scene {
     });
 
     // debugging
+
     this.fpsInfo = this.add.text(
       2, 2, '', 
     { fontSize: '18px', fill: '#f00', stroke: '#f00', strokeThickness: 1 }
@@ -820,6 +821,7 @@ export class InventoryDisplay extends GenericInventoryDisplay {
         bottomText: { color: '#fff', fontSize: '12px', fontFamily: this.registry.values.globalFontFamily }
       }
     });
+
 
     // money display in the sidebar
     let moneySprite = this.add.image(-16, 0, 'inventory-items', 5);

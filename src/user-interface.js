@@ -49,8 +49,10 @@ export class DialogueScene extends Phaser.Scene {
     this.cursor = null;
 
     if (this.options.length > 0) {
-      this.optionPositions = [];
+      // When the dialog box has options
+      this.optionPositions = [];  // position of the cursor for each option
       this.currentOptionIndex = 0;
+
       // if message contains options, display them once the message text is completed
       this.message.on('complete', ()=> {
         // change the action key text to "select"
@@ -102,13 +104,11 @@ export class DialogueScene extends Phaser.Scene {
     this.manager.inputHandler.configureKeys(this);
     this.manager.inputHandler.checkForGamepad(this);  
 
-    this.keys.interact.on('down', this.buttonCallbacks.interact, this);
-    this.keys.inventory.on('down', this.buttonCallbacks.inventory, this);
-
     this.manager.events.emit('changeButtonText', 'inventory', 'exit');
   }
   
   interactButtonCallback() {
+    console.log(this.message.isTyping)
     // when the message is still typing, show all text
     // when the message is complete, start next page or close if last page is reached
     if (this.message.isTyping) {
@@ -326,11 +326,8 @@ export class GenericMenu extends Phaser.Scene {
       this.optionPositions[this.currentOptionIndex].x, this.optionPositions[this.currentOptionIndex].y, 'ui-images', 0
     ).setOrigin(1, 0.5);
 
-    // Button configuration
-    // this.keys = Utils.Phaser.addKeysToScene(this, this.manager.inputHandler.keyMapping);
-    // this.manager.inputHandler.configureKeys(this);
-    // this.manager.inputHandler.checkForGamepad(this);
 
+    // Button configuration
     this.buttonCallbacks = {
       interact: ()=> {
         // select the current option
@@ -360,10 +357,7 @@ export class GenericMenu extends Phaser.Scene {
     };
 
     this.manager.inputHandler.configureKeys(this);
-    this.manager.inputHandler.checkForGamepad(this);  
-
-    this.keys.interact.on('down', this.buttonCallbacks.interact, this);
-    this.keys.inventory.on('down', this.buttonCallbacks.inventory, this);
+    this.manager.inputHandler.checkForGamepad(this); 
 
     this.manager.events.emit('changeButtonText', 'inventory', 'exit');
   }

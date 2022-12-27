@@ -97,6 +97,7 @@ export class TitleScene extends Phaser.Scene {
 
     if (this.pad) {
       // TODO: button images
+
     } else {
       // no gamepad detected
       let textKey1 = this.add.text(
@@ -122,7 +123,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   startGame() {
-    // starts the ingame scene
+    // starts the first ingame scene
 
     // check if there is a saved game
     let saveData = this.manager.loadSaveFile('save0');
@@ -148,7 +149,7 @@ export class TitleScene extends Phaser.Scene {
         'New Game',
         'Controls',
         'Quit'
-      ];    // TODO: get from dialogue.json?
+      ];    // TODO: get option text from dialogue.json?
       callbacks = [
         this.newGame.bind(this),
         this.showControls.bind(this),
@@ -181,6 +182,7 @@ export class TitleScene extends Phaser.Scene {
     this.manager.configureIngameVariables();
 
     // start the Inventory Scene and User Interface
+    console.log('starting a new game')
     this.scene.run('InventoryManager');
 
     // execute when there is no save game
@@ -197,7 +199,10 @@ export class TitleScene extends Phaser.Scene {
       inventoryManager.addItem(itemData.feed.pigFeedStandard, 99);
     });
 
-    this.manager.switchScenes(this.scene.key, this.nextScene, {playerPos: { x: 256, y: 200 }}, false, true);
+    this.manager.switchScenes(
+      this.scene.key, this.nextScene, { playerPos: { x: 256, y: 200 } },
+      false, true
+    );
 
     // create a small acre for start
     this.scene.get('FarmScene').events.once('create', scene => {
