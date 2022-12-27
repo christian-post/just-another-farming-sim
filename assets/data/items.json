@@ -13,7 +13,8 @@
       "tooltip": "seeds",
       "buyPrice": 100,
       "sellPrice": 50,
-      "sellQuantity": 10
+      "sellQuantity": 10,
+      "inventory": true
     },
     "potato": {
       "name": "potato",
@@ -28,7 +29,8 @@
       "tooltip": "seeds",
       "buyPrice": 200,
       "sellPrice": 100,
-      "sellQuantity": 10
+      "sellQuantity": 10,
+      "inventory": true
     },
     "maize": {
       "name": "maize",
@@ -43,7 +45,24 @@
       "tooltip": "seeds",
       "buyPrice": 150,
       "sellPrice": 75,
-      "sellQuantity": 10
+      "sellQuantity": 10,
+      "inventory": true
+    },
+    "sugarbeet": {
+      "name": "sugarbeet",
+      "screenName": "Seeds (Sugar beet)",
+      "type": "seed",
+      "quantity": 10,
+      "unique": false,
+      "usageCallback": null,
+      "spritesheet": "seeds",
+      "frame": 6,
+      "stamina": 5,
+      "tooltip": "seeds",
+      "buyPrice": 150,
+      "sellPrice": 75,
+      "sellQuantity": 10,
+      "inventory": true
     }
   },
   "harvest": {
@@ -57,8 +76,9 @@
       "frame": 3,
       "tooltip": "harvest",
       "quantity": 1,
-      "sellQuantity": 1,
-      "sellPrice": 20
+      "sellQuantity": 5,
+      "sellPrice": 40,
+      "inventory": true
     },
     "potato": {
       "name": "potato",
@@ -71,7 +91,8 @@
       "tooltip": "harvest",
       "quantity": 5,
       "sellQuantity": 5,
-      "sellPrice": 30
+      "sellPrice": 60,
+      "inventory": true
     },
     "wheat": {
       "name": "wheat",
@@ -82,14 +103,29 @@
       "spritesheet": "inventory-items",
       "frame": 1,
       "tooltip": "harvest",
-      "quantity": 10,
+      "quantity": 2,
       "sellQuantity": 10,
-      "sellPrice": 10
+      "sellPrice": 25,
+      "inventory": true
+    },
+    "sugarbeet": {
+      "name": "sugarbeet",
+      "type": "harvest",
+      "screenName": "Sugar beet",
+      "unique": false,
+      "usageCallback": null,
+      "spritesheet": "inventory-items",
+      "frame": 8,
+      "tooltip": "harvest",
+      "quantity": 1,
+      "sellQuantity": 5,
+      "sellPrice": 80,
+      "inventory": true
     }
   },
   "tools": {
     "scytheL1": {
-      "name": "scytheL1",
+      "name": "scythe",
       "screenName": "Scythe [L1]",
       "type": "tool",
       "quantity": null,
@@ -100,10 +136,11 @@
       "stamina": 10,
       "tooltip": "scytheL1",
       "buyPrice": 200,
-      "sellPrice": 75
+      "sellPrice": 75,
+      "inventory": true
     },
     "scytheL2": {
-      "name": "scytheL2",
+      "name": "scythe",
       "screenName": "Scythe [L2]",
       "type": "tool",
       "quantity": null,
@@ -111,10 +148,148 @@
       "usageCallback": "scythe",
       "spritesheet": "inventory-items",
       "frame": 6,
-      "stamina": 7,
+      "stamina": 5,
       "tooltip": "scytheL2",
       "buyPrice": 3000,
-      "sellPrice": 1000
+      "sellPrice": 1500,
+      "inventory": true
+    },
+    "scytheL3": {
+      "name": "scythe",
+      "screenName": "Scythe [L3]",
+      "type": "tool",
+      "quantity": null,
+      "unique": true,
+      "usageCallback": "scythe",
+      "spritesheet": "tools",
+      "frame": 11,
+      "stamina": 2,
+      "tooltip": "scytheL3",
+      "buyPrice": 8000,
+      "sellPrice": 4000,
+      "inventory": true
+    },
+    "hoeL1": {
+      "name": "hoe",
+      "screenName": "Hoe [L1]",
+      "type": "tool",
+      "quantity": null,
+      "unique": true,
+      "usageCallback": "hoe",
+      "spritesheet": "tools",
+      "frame": 0,
+      "stamina": 15,
+      "tooltip": "hoeL1",
+      "buyPrice": 2000,
+      "sellPrice": 1000,
+      "inventory": true
+    },
+    "hoeL2": {
+      "name": "hoe",
+      "screenName": "Hoe [L2]",
+      "type": "tool",
+      "quantity": null,
+      "unique": true,
+      "usageCallback": "hoe",
+      "spritesheet": "tools",
+      "frame": 1,
+      "stamina": 10,
+      "tooltip": "hoeL2",
+      "buyPrice": 5000,
+      "sellPrice": 2500,
+      "inventory": true
+    },
+    "hoeL3": {
+      "name": "hoe",
+      "screenName": "Hoe [L3]",
+      "type": "tool",
+      "quantity": null,
+      "unique": true,
+      "usageCallback": "hoe",
+      "spritesheet": "tools",
+      "frame": 2,
+      "stamina": 5,
+      "tooltip": "hoeL3",
+      "buyPrice": 10000,
+      "sellPrice": 5000,
+      "inventory": true
+    },
+    "wateringCan": {
+      "name": "wateringCan",
+      "screenName": "Watering Can",
+      "type": "tool",
+      "quantity": null,
+      "unique": true,
+      "usageCallback": "wateringCan",
+      "spritesheet": "inventory-items",
+      "frame": 7,
+      "stamina": 3,
+      "tooltip": "wateringCan",
+      "buyPrice": 1000,
+      "sellPrice": 400,
+      "inventory": true
+    },
+    "sodaStamina": {
+      "name": "sodaStamina",
+      "screenName": "Energy Drink",
+      "type": "tool",
+      "quantity": 1,
+      "unique": false,
+      "usageCallback": "sodaStamina",
+      "spritesheet": "inventory-items",
+      "frame": 9,
+      "stamina": 0,
+      "refillStamina": 1,
+      "tooltip": "sodaStamina",
+      "buyPrice": 350,
+      "sellPrice": 100,
+      "inventory": true
+    },
+    "fertilizer": {
+      "name": "fertilizer",
+      "screenName": "Fertilizer",
+      "type": "tool",
+      "quantity": 10,
+      "unique": false,
+      "usageCallback": "fertilizer",
+      "spritesheet": "inventory-items",
+      "frame": 10,
+      "stamina": 5,
+      "tooltip": "fertilizer",
+      "buyPrice": 100,
+      "sellPrice": 25,
+      "inventory": true
+    }
+  },
+  "animals": {
+    "pig": {
+      "name": "pig",
+      "screenName": "Pig",
+      "type": "livestock",
+      "quantity": 1,
+      "unique": false,
+      "spritesheet": "inventory-items",
+      "frame": 11,
+      "tooltip": "pig",
+      "buyPrice": 500,
+      "sellPrice": 10,
+      "inventory": false
+    }
+  },
+  "feed": {
+    "pigFeedStandard": {
+      "name": "pigFeedStandard",
+      "screenName": "Standard Pig Feed",
+      "type": "feed",
+      "animal": "pig",
+      "quantity": 1,
+      "unique": false,
+      "spritesheet": "inventory-items",
+      "frame": 12,
+      "tooltip": "pigFeedStandard",
+      "buyPrice": 25,
+      "sellPrice": 15,
+      "inventory": true
     }
   }
 }

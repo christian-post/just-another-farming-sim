@@ -6,8 +6,10 @@
       "numPhases": 4,
       "phaseHarvest": 3,
       "phaseDurations": [3, 3, 2, 4],
+      "wateringPhases": 2,
       "harvest": "wheat",
-      "residue": "straw"
+      "residue": "straw",
+      "maxFertilizer": 3
     },
     "potato": {
       "name": "potato",
@@ -15,17 +17,32 @@
       "numPhases": 4,
       "phaseHarvest": 3,
       "phaseDurations": [3, 3, 2, 5],
+      "wateringPhases": 2,
       "harvest": "potato",
-      "residue": "nothing"
+      "residue": "nothing",
+      "maxFertilizer": 4
     },
     "maize": {
       "name": "maize",
       "frames": [11, 12, 13, 14, 15],
+      "numPhases": 5,
+      "phaseHarvest": 4,
+      "phaseDurations": [4, 4, 3, 4, 6],
+      "wateringPhases": 3,
+      "harvest": "maize",
+      "residue": "nothing",
+      "maxFertilizer": 5
+    },
+    "sugarbeet": {
+      "name": "sugarbeet",
+      "frames": [18, 19, 20, 21],
       "numPhases": 4,
       "phaseHarvest": 3,
-      "phaseDurations": [4, 4, 3, 4],
-      "harvest": "maize",
-      "residue": "nothing"
+      "phaseDurations": [3, 3, 2, 6],
+      "wateringPhases": 2,
+      "harvest": "sugarbeet",
+      "residue": "nothing",
+      "maxFertilizer": 5
     }
   }
 }

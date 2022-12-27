@@ -4,9 +4,21 @@
     "item2": "S",
     "interact": "W",
     "inventory": "E",
+    "menu": "ESC",
     "up": "UP",
     "down": "DOWN",
     "left": "LEFT",
     "right": "RIGHT"
+  },
+  "defaultGamepad": {
+    "item1": 0,
+    "item2": 1,
+    "interact": 2,
+    "inventory": 3,
+    "menu": 8,
+    "up": 12,
+    "down": 13,
+    "left": 14,
+    "right": 15
   }
 }

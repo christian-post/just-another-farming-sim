@@ -1,30 +1,74 @@
 {
-  "test": {
-    "welcome": "Welcome to your new farm! I have put a couple of seeds into your Inventory, so you can start to grow some crops right away. You can access the inventory by pressing [{keyMapping.inventory}].\f\nOh, you may want to know how the other controls work first... Press [{keyMapping.up}], [{keyMapping.down}], [{keyMapping.left}] or [{keyMapping.right}] to walk around. [{keyMapping.item1}], [{keyMapping.item2}] and [{keyMapping.interact}] are the three action buttons.\f\nYou can see what they are currently doing at the top right corner of the sceen. [{keyMapping.interact}] is used to interact with your environment. The buttons [{keyMapping.item1}] and [{keyMapping.item2}] are where you can use your equipped items. While in the inventory, press one of those buttons to equip the currently selected item.\f\nA few meters in front of you there are patches of fertile soil. As a first task, you should equip one of your seed bags and start planting your crops!"
+  "help": {
+    "intro": {
+      "text": "It seems this is your first time playing. What you you want to know more about?",
+      "options": [
+        "Controls",
+        "Farming",
+        "Economy",
+        "Other"
+      ]
+    },
+    "controls": "Movement:\nPress [{inputHandler.currentInputMapping.up}], [{inputHandler.currentInputMapping.down}], [{inputHandler.currentInputMapping.left}] or [{inputHandler.currentInputMapping.right}] to walk around.\f\nActions:\nPress [{inputHandler.currentInputMapping.interact}] to interact with your environment (Talking to other people, inspecting objects, and reading signs). Your current actions are displayed at the top of the screen. Pay close attention to them.\n[{inputHandler.currentInputMapping.inventory}] opens and closes your inventory. There you can inspect the items you are currently holding, as well as some other useful information. While in the inventory, press either [{inputHandler.currentInputMapping.item1}] or [{inputHandler.currentInputMapping.item2}] to equip the currently selected item to the respective button. This lets you use it in the game.\nPress [{inputHandler.currentInputMapping.menu}] to access the menu, where you can save or quit the game.",
+    "farming": "Right in front of your house there is an area of fertile soil. When you are facing this area, a red rectangle indicates which patch of soil you are currently able to interact with. The first thing you have to do is to plant a crop. You have to have a seed bag equipped to [{inputHandler.currentInputMapping.item1}] or [{inputHandler.currentInputMapping.item2}]. Once you have planted something, it takes a couple of days to grow. You can inspect the plant to see its current status. Plants also need water to grow at a reasonable speed. When it hasn't been raining for a couple of days, you need to use a watering can or irrigation system, or the plant will grow slower.\f\nOnce a plant is ready, you can use a scythe to harvest it. This leaves the patch of soil empty for the next crop. Attention: If you wait too long, crops will eventually start to wilt and you won't get any harvest from them. Pro tip: Use Fertilizer to raise the yield. How much fertilizer you can use depends on the type of crop.\f\nWhen your acre isn't big enough, you can use the hoe to create new patches of fertile soil.\f\nIf you want to keep animals, you have to build a barn first. There are specific barn types for each kind of animal. Once you have a barn, go to the animal market in the village and buy as many animals as you want, as long as you have the space for them. Animals need to be fed every day. The animal market also sells feed bags. You have to place them in a trough in the barn, and also pay attention to the amount your animals are eating. You may also invest in an automated feeding system, but that is not available for all types of barns.",
+    "economy": "You start your business with ${registry.values.startingMoney} in your pocket.\nGo to the village to the east to buy items and sell your harvest at the market.",
+    "other": "Working is hard. On the top left corner of the screen, below the current day, is a green bar. It indicates your stamina. Every action depletes a part of it. Once it is completely drained, you can not work more and have to rest. The bar will refill again over time. Over the course of the day, you will also get tired. This means that your stamina won't refill completely. This means you will have to sleep eventually, or you will pass out at some point."
   },
+  "save-menu": {
+    "text": "what do you want to do?",
+    "options": [
+      "back to game",
+      "save",
+      "quit"
+    ]
+  },
+  "game-saved": "Game saved successfully.",
   "error": "I AM ERROR",
   "not-implemented": "Whoops, seems like I haven't implemented this yet :(",
   "general": {
-    "stamina-low": "You have worked enough for today. Go to bed to get some rest!",
+    "stamina-low": "You are exausted. Get some rest!",
     "newDay": "Good Morning! It's now day {day}. You feel well rested.",
     "tired-begin": "You have been awake for a very long time. You're starting to feel a little tired.",
     "tired-advanced": "You feel dizzy. You should really go to bed now!",
     "fainting": "You break down tired.",
-    "item-no-action": "Now is not the right time to use this."
+    "item-no-action": "You can't use this here.",
+    "stamina-full": "You already have full stamina.",
+    "maxWaterLevelReached": "This patch of soil has enough water!"
   },
   "interactibles": {
-    "test-door": "I know you want to go to the bedroom, but unfortunately I did not implement that yet. If you want to sleep until the next day, just press [T].",
-    "crops": {
-      "growing": "The {data.values.name} is growing (It is {age} day(s) old).",
-      "ready": "The {data.values.name} is ready for harvest."
+    "test-door": {
+      "text": "Do you want to sleep until the next morning?",
+      "options": [
+        "Yes",
+        "No"
+      ]
     },
-    "collectible": "{itemToAdd.screenName} (Quantity: {itemToAdd.quantity})."
+    "crops": {
+      "growing": "The {data.values.name} is growing.\nFertilization level: {fertilizedLevel}\nWatering level: {wateringLevel}",
+      "ready": "The {data.values.name} is ready for harvest.",
+      "enoughFertilizer": "The soil is fertilized enough for this crop."
+    },
+    "collectible": "{itemToAdd.screenName} (Quantity: {itemToAdd.quantity}).",
+    "soilPatch": "This is a patch of arable soil.",
+    "troughFull": "This trough is full already.",
+    "troughEmpty": "This trough is empty. Put some {data.animal} feed here.",
+    "troughStatus": "There are currently {fillData.currentFill} kg of {data.animal} feed in this trough.",
+    "wrongFeed": "This is not the right type of feed for this animal."
   },
   "tooltips": {
     "scytheL1": "A tool to cut crops when they are ready for harvest. You can also use this to remove weeds.",
     "scytheL2": "A tool to cut crops when they are ready for harvest. You can also use this to remove weeds. Lighter than the normal scythe.",
+    "scytheL3": "A tool to cut crops when they are ready for harvest. You can also use this to remove weeds. The lightest scythe.",
+    "hoeL1": "A tool that lets you dig up the ground to create new arable land.",
+    "hoeL2": "A tool that lets you dig up the ground to create new arable land. Lighter than the normal hoe.",
+    "hoeL3": "A tool that lets you dig up the ground to create new arable land. The lightest hoe.",
+    "wateringCan": "Use the Watering Can to water your crops regularly. Otherwise, they won't grow.",
     "seeds": "Plant these seeds in a patch of soil.",
-    "harvest": "{screenName} can be sold, processed to feed, or transformed into seeds."
+    "harvest": "{screenName} can be sold, processed to feed, or transformed into seeds.",
+    "sodaStamina": "Drinking this partially refills your stamina.",
+    "fertilizer": "Use this on a crop to increase its yield.",
+    "pig": "A pig for fattening. Gets delivered to your pig shed.",
+    "pigFeedStandard": "The standard feed for your pigs. Put it in a trough in your pig shed."
   },
   "npc-dialogue": {
     "generic": {
@@ -38,19 +82,15 @@
       "greeting": "Buy somethin' will ya!",
       "greeting-options": {
         "text": "Greetings! What do you want to do?",
-        "options": [ "Buy", "Sell" ]
+        "options": [ "Buy", "Sell", "Leave" ]
       },
       "insufficient-funds": "You don't have enough money to buy this!",
-      "goodbye": "Pleasure doin' business with ya!"
+      "goodbye": "Pleasure doin' business with ya!",
+      "leaving": "Alright. See ya!",
+      "animalNoSell": "This animal is not ready to be sold."
     },
-    "test": {
-      "test-1": {
-        "text": "Pick an option:", 
-        "options": [ "One", "Two", "Three" ]
-      },
-      "test-one": "You chose option number one.",
-      "test-two": "Option two it is.",
-      "test-three": "This is option three."
+    "animals": {
+      "age": "The {data.values.name} is {data.values.age} day(s) old. It weighs {data.values.weight} kg."
     }
   }
 }

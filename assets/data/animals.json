@@ -1,0 +1,31 @@
+{
+  "pig": {
+    "startingWeight": 30,
+    "maxWeight": 140,
+    "slaughterWeight": 100,
+    "averageDailyGain": 20,
+    "feedIntake": 1,
+    "spriteData": [
+      {
+        "key": "piglet",
+        "endWeight": 75,
+        "hitbox": {
+          "offsetX": 6,
+          "offsetY": 16,
+          "width": 12,
+          "height": 8
+        }
+      },
+      {
+        "key": "pigAdult",
+        "endWeight": 140,
+        "hitbox": {
+          "offsetX": 6,
+          "offsetY": 16,
+          "width": 20,
+          "height": 16
+        }
+      }
+    ]
+  }
+}

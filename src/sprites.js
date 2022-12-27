@@ -1,153 +1,215 @@
-class Player extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y) {
-    super(scene, x, y, 'player');
+import { showMessage } from './user-interface.js';
+import * as Utils from './utils.js';
+
+
+
+export class BaseCharacterSprite extends Phaser.Physics.Arcade.Sprite {
+  constructor(scene, x, y, key) {
+    super(scene, x, y, key);
     this.scene.physics.add.existing(this);
     this.scene.add.existing(this);
     this.scene.allSprites.add(this);
 
-    // reference to the game manager scene
+    this.key = key;
+
+    // reference persistent scenes
     this.manager = this.scene.scene.get('GameManager');
 
+    // hitbox
+    // TODO: more modular?
     this.setBodySize(16, 12, false);
     this.body.setOffset(5, this.height - this.body.height);
+
     this.debugShowBody = true;
 
     // Animations
-    let animsFrateRate = 8;
-    let animsDuration = 300;  // frame duration in milliseconds
-    
-    // IDLE
+    this.animsFrateRate = 8;
+    this.animsDuration = 300;  // frame duration in milliseconds
+    this.lastDir = 'down';  // last facing direction
 
-    this.anims.create({
-      key: 'player-idle-down',
-      frames: [{key: 'player', frame: 1}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    this.anims.create({
-      key: 'player-idle-up',
-      frames: [{key: 'player', frame: 10}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    this.anims.create({
-      key: 'player-idle-right',
-      frames: [{key: 'player', frame: 7}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    this.anims.create({
-      key: 'player-idle-left',
-      frames: [{key: 'player', frame: 4}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    // WALKING
-
-    this.anims.create({
-      key: 'player-walk-down',
-      frames: this.anims.generateFrameNumbers('player', {frames: [0, 1, 2, 1]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    this.anims.create({
-      key: 'player-walk-right',
-      frames: this.anims.generateFrameNumbers('player', {frames: [6, 7, 8, 7]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    this.anims.create({
-      key: 'player-walk-up',
-      frames: this.anims.generateFrameNumbers('player', {frames: [9, 10, 11, 10]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    this.anims.create({
-      key: 'player-walk-left',
-      frames: this.anims.generateFrameNumbers('player', {frames: [3, 4, 5, 4]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    // starting animation (idle)
-    this.anims.play('player-idle-down');
-    this.lastDir = 'down';
+    // Physics
+    this.speed = this.scene.registry.values.playerWalkSpeed;
 
     // make a shadow
-    this.shadow = this.scene.add.image(this.x, this.getBounds().bottom, 'player-shadow');
-    this.shadow.setAlpha(0.3);
+    this.shadow = this.scene.add.image(this.x, this.getBounds().bottom, 'player-shadow')
+      .setAlpha(0.3)
+      .setDepth(this.scene.depthValues.sprites - 1);
     this.scene.events.on('prerender', ()=> {
       this.shadow.setPosition(this.x, this.getBounds().bottom);
     });
 
-    // Physics
-    this.speed = 80;
+    this.on('destroy', ()=> this.shadow.destroy());
 
+    // debug stuff
+    this.debugInfo = this.scene.add.text(
+      this.x, 
+      this.y, 
+      'TEST', 
+      { 
+        color: '#fff', 
+        fontSize: '12px', 
+        fontFamily: this.scene.registry.values.globalFontFamily
+      }
+    )
+      .setDepth(30)
+      .setVisible(false);
+
+    this.scene.registry.events.on('changedata-debug', (_, value) => {
+      // what happens when the debug flag changes
+      this.debugInfo.setVisible(value);
+    });
+  }
+
+  update(time, delta) {
+    if (this.scene.registry.values.debug) {
+      this.debugInfo.setText(this.depth.toFixed(0));
+      this.debugInfo.setPosition(this.x + 8, this.y);
+    }
+  }
+
+  changeHitbox(width, height, offsetX=null, offsetY=null) {
+    // change the hitbox after this sprite has been created
+    this.setBodySize(width, height);
+    if (offsetX || offsetY) {
+      this.body.setOffset(offsetX, offsetY);
+    }
+  }
+
+  createAnimations(animations) {
+    animations.forEach(data => {
+      this.anims.create({
+        key: `${this.key}-${data.key}`,
+        frames: data.frames,
+        frameRate: this.animsFrateRate,
+        duration: this.animsDuration,
+        repeat: data.repeat || 0
+      });
+    });
+
+    // play the first animation as default
+    this.anims.play(`${this.key}-${animations[0].key}`);
+  }
+
+  move(direction) {
+    direction.setLength(this.speed);
+    this.setVelocity(direction.x, direction.y);
+
+    // adjust the player's animation based on the velocity vector
+    if (direction.lengthSq() === 0) {
+      this.anims.play(`${this.key}-idle-${this.lastDir}`, true);
+    } else {
+      if (Math.abs(direction.x) > Math.abs(direction.y)) {
+        // horizontal component of the velocity vector is bigger
+        if (direction.x > 0) {
+          this.lastDir = 'right';
+        } else if (direction.x < 0) {
+          this.lastDir = 'left';
+        }
+      } else {
+        // vertical component is bigger
+        if (direction.y > 0) {
+          this.lastDir = 'down';
+        } else if (direction.y < 0) {
+          this.lastDir = 'up';
+        }
+      }
+      this.anims.play(`${this.key}-walk-${this.lastDir}`, true);
+    }
+  }
+}
+
+
+
+export class Player extends BaseCharacterSprite {
+  constructor(scene, x, y) {
+    super(scene, x, y, 'player');
+
+    this.inventory = this.scene.scene.get('InventoryManager');  // scene reference
+
+    this.createAnimations([
+      { key: 'idle-down', frames: [{key: this.key, frame: 1}] },
+      { key: 'idle-up', frames: [{key: this.key, frame: 10}] },
+      { key: 'idle-right', frames: [{key: this.key, frame: 7}] },
+      { key: 'idle-left', frames: [{key: this.key, frame: 4}] },
+      { key: 'walk-down', frames: this.anims.generateFrameNumbers(this.key, {frames: [0, 1, 2, 1]}) },
+      { key: 'walk-up', frames: this.anims.generateFrameNumbers(this.key, {frames: [9, 10, 11, 10]}) },
+      { key: 'walk-right', frames: this.anims.generateFrameNumbers(this.key, {frames: [6, 7, 8, 7]}) },
+      { key: 'walk-left', frames: this.anims.generateFrameNumbers(this.key, {frames: [3, 4, 5, 4]}) },
+    ]);
+
+    // create an object that lets the player interact with other objects
     this.interactionRect = scene.add.rectangle(
-      x, y + this.scene.registry.values.tileSize, 
-      this.scene.registry.values.tileSize, this.scene.registry.values.tileSize
+      x, 
+      y + this.scene.registry.values.tileSize, 
+      this.scene.registry.values.tileSize, 
+      this.scene.registry.values.tileSize
     )
       .setOrigin(0.5)
       .setFillStyle()
       .setStrokeStyle(2, 0xDD0000, 0.3)
-      .setVisible(false);
+      .setVisible(false)   // only visible under certain conditions
+      .setDepth(this.scene.depthValues.sprites);
 
     this.scene.physics.add.existing(this.interactionRect);
 
-    // Controls
+    this.flags = {
+      isSowing: false,  // cooldown flag for seed usage
+      staminaMessageShown: false
+    };
 
-    // interaction button
-    this.scene.events.on('player-interacts', ()=> {
-      this.interactButton();
-    });
-
-    // Item usage
-    this.scene.events.on('itemUsed', button => {
-      this.itemUseButton(button);
-    }, this);
-
-    // cooldown for seed usage
-    this.isSowing = false;
-
-    // resources
-    this.maxStamina = 200;
-    this.stamina = this.maxStamina;
+    // sweating animation when exhausted
+    this.manager.events.on('staminaLow', this.playSweatAnimation.bind(this));
 
     // the tool that is currently being used
-    this.tool = null; 
+    this.tool = null;
+
+
+    // DEBUG features
+    this.manager.input.keyboard.on('keydown-L', ()=> {
+      let debug = this.scene.registry.get('debug');
+      if (debug) {
+        if (this.speed === this.scene.registry.values.playerWalkSpeed) {
+          this.speed = this.scene.registry.values.playerDebugSpeed;
+        } else {
+          this.speed = this.scene.registry.values.playerWalkSpeed;
+        }
+      } else {
+        console.log('This is a debug function. Enable debug mode first by pressing P.');
+      }
+    });
+
+    this.manager.input.keyboard.on('keydown-C', ()=> {
+      let debug = this.scene.registry.get('debug');
+      if (debug) {
+        this.body.checkCollision.none = debug;
+        console.log(`Player collision ${debug ? "off" : "on"}`);
+      } else {
+        console.log('This is a debug function. Enable debug mode first by pressing P.');
+      }
+    });
   }
 
-  update(delta) {
+  update(time, delta) {
+    super.update(time, delta);
     // check if a tool is being used
     // if so, the player can't move for that period
     if (this.tool) {
-      this.tool.update(delta);
+      this.tool.update(time, delta);
       this.setVelocity(0);
+      // TODO: tool usage animation
       this.anims.play('player-idle-' + this.lastDir, true);
-    } else if (this.isSowing) {
+    } else if (this.flags.isSowing) {
       this.setVelocity(0);
+      // TODO: sowing animation
       this.anims.play('player-idle-' + this.lastDir, true);
     } else {
-      this.move(delta);
+      let dir = this.manager.inputHandler.getCursorDirections(this.scene, 0, delta);
+      // let dir = Utils.Phaser.getCursorDirections(this.scene, 0, delta);
+      this.move(dir);
     }
 
     // create a ray that is cast in front of the player based on the last direction
-    let ray = new Phaser.Math.Vector2(this.x, this.y + this.width * 0.5);
+    let ray = new Phaser.Math.Vector2(this.x, this.y + this.height * 0.25);
 
     switch (this.lastDir) {
       case 'right': 
@@ -160,61 +222,58 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         ray.y += this.height * 0.5;
         break;
       case 'up': 
-        ray.y -= this.height;
+        ray.y -= this.height * 0.5;
         break;
     }
 
-    // snap rectangle to grid
+    // convert the ray's position to a tile position (top left)
     ray.x = parseInt(ray.x / this.scene.registry.values.tileSize) * this.scene.registry.values.tileSize;
     ray.y = parseInt(ray.y / this.scene.registry.values.tileSize) * this.scene.registry.values.tileSize;
 
+    // snap the interaction rectangle to tile grid
     this.interactionRect.x = ray.x + this.scene.registry.values.tileSize * 0.5;
     this.interactionRect.y = ray.y + this.scene.registry.values.tileSize * 0.5;
 
-    // TODO: this is checked twice when a button is pressed
+    // TODO: this is checked twice when a button is pressed, unnecessary
     let interactX = parseInt(this.interactionRect.x / this.scene.registry.values.tileSize);
     let interactY = parseInt(this.interactionRect.y / this.scene.registry.values.tileSize);
-    let index = convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
+    let index = Utils.Math.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
 
-    if (this.scene.arableMap[index] === 1) {
-      if (!this.interactionRect.visible) { this.interactionRect.setVisible(true) };
-    } else {
-      if (this.interactionRect.visible) { this.interactionRect.setVisible(false) };
+    // check for arable Land
+    // TODO spaghetti code, can this be generalized?
+    if (this.scene.hasArableLand) {
+      if (this.scene.arableMap[index]) {
+        if (!this.interactionRect.visible) { this.interactionRect.setVisible(true) };
+      } else {
+        if (this.inventory.isEquipped('hoe')) {
+          // if hoe is equipped, rect is visible outside of arable land
+          if (!this.interactionRect.visible) { this.interactionRect.setVisible(true) };
+        } else {
+          if (this.interactionRect.visible) { this.interactionRect.setVisible(false) };
+        }
+      }
+    } else if (this.scene.scene.key === 'BarnInteriorScene') {
+      if (this.inventory.isEquippedType('feed')) {
+        if (!this.interactionRect.visible) { this.interactionRect.setVisible(true) };
+      } else {
+        if (this.interactionRect.visible) { this.interactionRect.setVisible(false) };
+      }
     }
 
-    // check if rectangle is colliding with any interactables
-    let collisions = checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
-    if (collisions.length > 0 && collisions[0] != this) {
-      let string = collisions[0].interactionButtonText || 'error';
-      this.manager.events.emit('show-interaction', string);
-    } else {
-      this.manager.events.emit('show-interaction', '');
+    // check if rectangle is colliding with any interactable sprites
+    let collisions = Utils.Phaser.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
+
+    // exclude Player sprite from all sprites
+    let playerIndex = collisions.indexOf(this);
+    if (playerIndex > -1) {
+      collisions.splice(playerIndex, 1);
     }
-  }
 
-  move(delta) {
-    // get the movement vector from the inputs
-    let dir = getCursorDirections(this.scene, 0);
-    
-    let move = new Phaser.Math.Vector2(dir.x, dir.y);
-    move.setLength(this.speed);
-    this.setVelocity(move.x, move.y);
-
-    // adjust the player's animation
-    if (move.lengthSq() === 0) {
-      this.anims.play('player-idle-' + this.lastDir, true);
+    if (collisions.length > 0) {
+      let text = collisions[0].interactionButtonText || 'check';
+      this.manager.events.emit('changeButtonText', 'interact', text);
     } else {
-      if (dir.x > 0) {
-        this.lastDir = 'right';
-      } else if (dir.x < 0) {
-        this.lastDir = 'left';
-      }
-      if (dir.y > 0) {
-        this.lastDir = 'down';
-      } else if (dir.y < 0) {
-        this.lastDir = 'up';
-      }
-      this.anims.play('player-walk-' + this.lastDir, true);
+      this.manager.events.emit('changeButtonText', 'interact', '');
     }
   }
 
@@ -222,12 +281,12 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     let interactX = parseInt(this.interactionRect.x / this.scene.registry.values.tileSize);
     let interactY = parseInt(this.interactionRect.y / this.scene.registry.values.tileSize);
 
-    if (DEBUG) {
-      console.log(interactX, interactY);
+    if (this.scene.registry.values.debug) {
+      console.log('player pos:', parseInt(this.x), parseInt(this.y));
+      console.log('interact rect:', `${interactX}, ${interactY}, ${interactX * 16}, ${interactY * 16}`);
     }
 
-    let collisions = checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
-    // let collisions = checkCollisionGroup(this.interactionRect, this.scene.interactables.getChildren());
+    let collisions = Utils.Phaser.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
 
     // check for interactible if any collisions happen
     if (collisions.length > 0) {
@@ -245,7 +304,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     let interactX = parseInt(this.interactionRect.x / this.scene.registry.values.tileSize);
     let interactY = parseInt(this.interactionRect.y / this.scene.registry.values.tileSize);
 
-    if (DEBUG) {
+    if (this.scene.registry.values.debug) {
       console.log(interactX, interactY);
     }
 
@@ -254,14 +313,21 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (item) {
       // check the item type
+
+      // TODO: maybe put all this in callbacks?
+
       switch (item.type) {
         case 'seed':
-          collisions = checkCollisionGroup(this.interactionRect, this.scene.crops.getChildren());
+          // exit if scene has no arable land
+          // TODO. indicate that you can't use this
+          if (!this.scene.hasArableLand) break;
+
+          collisions = Utils.Phaser.checkCollisionGroup(this.interactionRect, this.scene.crops.getChildren());
 
           if (collisions.length === 0) {
-            let index = convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
-            if (this.scene.arableMap[index] === 1) {
-              if (this.checkExhausted()) { return; }
+            let index = Utils.Math.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width);
+            if (this.scene.arableMap[index]) {
+              if (this.checkExhausted(item)) { return; }
               // plant something
               // get crop type from inventory
       
@@ -269,63 +335,92 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 // TODO: check if it is actually a crop, maybe use the callback of the item
                 let cropX = this.scene.registry.values.tileSize * interactX;
                 let cropY = this.scene.registry.values.tileSize * interactY;
-                new Crop(this.scene, this.scene.crops, cropX, cropY, item.name);
-      
-                item.quantity -= 1;
-                // TODO: replace this code with event for the inventory scene
-                if (item.quantity > 0) {
-                  this.scene.scene.get('InventoryManager').selectedItemQuantities[button].setText(item.quantity);
-                } else {
-                  // TODO: remove sprite from inventory that the button points to
-                  this.scene.scene.get('InventoryManager').removeItem(button);
 
-                  // remove the sprite from the action button
-                  this.scene.scene.get('InventoryManager').equipItem(null, button);
-                  this.scene.scene.get('InventoryManager').selectedItemQuantities[button].setText('');
-                }
-                
+                this.scene.arableMap[index].plantCrop(this.scene, cropX, cropY, item.name, index);
+      
+                this.manager.events.emit('itemConsumed', item, button);              
 
                 // reduce the player's stamina by a bit
-                this.changeStamina(-item.stamina);
+                this.manager.events.emit('staminaChange', -item.stamina);
 
                 // set a timer as a cooldown
                 // TODO: placeholder for sowing animation
-                this.isSowing = true;
+                this.flags.isSowing = true;
                 this.scene.time.addEvent({
                     delay: 500, callback: ()=> {
-                      this.isSowing = false;
+                      this.flags.isSowing = false;
                     }
                   });
-              } else {
-                console.log('nothing equipped');
               }
             }
           } 
           break;
 
         case 'tool':
-          collisions = checkCollisionGroup(this.interactionRect, this.scene.crops.getChildren());
+          collisions = Utils.Phaser.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
           if (collisions.length > 0) {
             // check for stamina only if there would be something to interact with
-            if (this.checkExhausted()) { return; }
-            this.changeStamina(-item.stamina);
+            if (this.checkExhausted(item)) { return; }
           }
           // use the tool
-          this.createTool(item, { collisions: collisions });
+          this.createTool(
+            item, { 
+              collisions: collisions,
+              button: button,
+              mapIndex: Utils.Math.convertIndexTo1D(interactX, interactY, this.scene.currentMap.width),
+              x: interactX,
+              y: interactY
+          });
+          break;
+
+        case 'feed':
+          collisions = Utils.Phaser.checkCollisionGroup(this.interactionRect, this.scene.allSprites.getChildren());
+          collisions.forEach(col => {
+            // check if the collision object is a trough
+            if (col instanceof Trough) {
+              // check if it's the right type of feed
+              if (col.data.animal === item.animal) {
+                // access data in the farm data manager
+                if (col.fillData.currentFill < col.fillData.maxFill) {
+                  this.manager.events.emit('itemConsumed', item, button);
+                  // change the feed amount in the trough instance and the data
+                  col.setFeedAmmount(col.fillData.currentFill + 1);
+                } else {
+                  // trough is full
+                  showMessage(this.scene, 'interactibles.troughFull');
+                }
+              } else {
+                // not the right type of feed
+                showMessage(this.scene, 'interactibles.wrongFeed');
+              }
+            } 
+          });
           break;
 
         default:
-          console.log(`behavior for item "${item.type}" not implemented`);
+          console.warn(`behavior for item "${item.type}" not implemented`);
           showMessage(this.scene, 'general.item-no-action');
       }
     }
   }
 
-  changeStamina(value) {
-    this.stamina = Math.min(this.maxStamina, Math.max(this.stamina + value, 0));
-    let percentage = (this.stamina / this.maxStamina) * 100;
-    this.manager.events.emit('stamina-change', percentage);
+  checkExhausted(item) {
+    // you can only use items if you have stamina left
+    if (this.scene.registry.values.stamina < item.stamina) {
+      if (!this.flags.staminaMessageShown) {
+        // show a message the first time this happens
+        showMessage(this.scene, 'general.stamina-low');
+        this.flags.staminaMessageShown = true;
+      } else {
+        // emit an event to the UI
+        this.manager.events.emit('staminaLow');
+      }
+      return true;
+    } else {
+      return false;
+    }
   }
+
 
   createTool(item, config) {
     if (this.tool) {
@@ -334,159 +429,134 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     switch(item.usageCallback) {
+      // TODO: put in own js file?
       case 'scythe':
         this.tool = new Scythe(this.scene, this.x, this.y, item.frame);
         // check if collision object has a "harvest" method
         if (config.collisions.length > 0) {
           for (let col of config.collisions) {
             if (col['harvest']) {
+              this.manager.events.emit('staminaChange', -item.stamina);
               col.harvest();
               break;
             }
           }
         }
         break;
+      case 'hoe':
+        if (this.checkExhausted(item)) { return; }
+        // TODO: make a property in Tiled where land can be dug over
+
+        // check if there is arable land
+        if (this.scene.hasArableLand) {
+          this.tool = new Hoe(this.scene, this.x, this.y, item.frame);
+          if (!this.scene.arableMap[config.mapIndex]) {
+            // if this has not made arable yet
+            this.scene.makeAcre(config.x, config.y, 1, 1);
+            this.manager.events.emit('staminaChange', -item.stamina);
+          }
+        } else {
+          showMessage(this.scene, 'general.item-no-action');
+        }
+        break;
+
+      case 'wateringCan':
+        this.tool = new WateringCan(this.scene, this.x, this.y, item.frame);
+        // check if there is a collision and can be watered
+        if (config.collisions.length > 0) {
+          for (let col of config.collisions) {
+            if (col['water']) {
+              if (col.waterLevel == this.scene.registry.values.maxWateringLevel) {
+                showMessage(this.scene, 'general.maxWaterLevelReached')
+              } else {
+                this.manager.events.emit('staminaChange', -item.stamina);
+                col.water(this.scene.registry.values.wateringCanAmount);
+              }
+              break;
+            }
+          }
+        }
+        break;
+      case 'sodaStamina': 
+        if (item.quantity > 0) {
+          // check if stamina is full
+          if (this.stamina >= this.maxStamina) {
+            showMessage(this.scene, 'general.stamina-full');
+          } else {
+            this.manager.events.emit('staminaChange', this.scene.registry.values.maxStamina * item.refillStamina);
+            this.inventory.events.emit('itemConsumed', item, config.button);
+          }
+        }
+        
+        break;
+      case 'fertilizer':
+        if (item.quantity > 0) {
+          // look for collision with crop and raise its fertilization level
+          if (config.collisions.length > 0) {
+            for (let col of config.collisions) {
+              if (col instanceof Crop) {
+                if (col.fertilizedLevel < col.data.values.maxFertilizer) {
+                  col.fertilizedLevel++;
+                  this.manager.events.emit('itemConsumed', item, config.button);
+                  this.scene.arableMap[config.mapIndex].fertilize(1);
+                } else {
+                  showMessage(this.scene, 'interactibles.crops.enoughFertilizer');
+                }
+                break;
+              }
+            }
+          }
+        }
+        break;
       default:
-        console.warn('tool not implemented: ', type);
+        console.warn('function for tool not implemented: ', item.name);
     }
   }
 
-  checkExhausted() {
-    // you can only use items if you have stamina left
-    if (this.stamina === 0) {
-      showMessage(this.scene, 'general.stamina-low');
-      return true;
-    } else {
-      return false;
-    }
+  playSweatAnimation() {
+    // when the player is exhausted, create a few water particles to make it look like they are sweating
+    let particles = this.scene.add.particles('water-droplet');
+    particles.setDepth(this.scene.depthValues.mapAboveSprites);
+
+    let emitter = particles.createEmitter({
+      x: { min: this.x - 4, max: this.x + 4 },
+      y: { min: this.y - 8, max: this.y - 6 },
+      maxParticles: 5,
+      quantity: 1,
+      active: true,
+      lifespan: 400,
+      frequency: 50,
+      gravityY: 200,
+      alpha: { start: 0.9, end: 0.1 }
+    });
+
+    emitter.start();
   }
 }
 
 
-class NPC extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y, textureKey) {
-    super(scene, x, y, textureKey);
-    this.scene.physics.add.existing(this);
-    this.scene.add.existing(this);
+export class NPC extends BaseCharacterSprite {
+  constructor(scene, x, y, key) {
+    super(scene, x, y, key);
 
-    this.scene.allSprites.add(this);
     this.scene.npcs.add(this);
     this.scene.depthSortedSprites.add(this);
 
-    this.key = textureKey;
+    this.key = key;
 
-    // reference to the game manager scene
-    this.manager = this.scene.scene.get('GameManager');
+    this.createAnimations([
+      { key: 'idle-down', frames: [{key: this.key, frame: 1}] },
+      { key: 'idle-up', frames: [{key: this.key, frame: 10}] },
+      { key: 'idle-right', frames: [{key: this.key, frame: 7}] },
+      { key: 'idle-left', frames: [{key: this.key, frame: 4}] },
+      { key: 'walk-down', frames: this.anims.generateFrameNumbers(this.key, {frames: [0, 1, 2, 1]}), repeat: -1 },
+      { key: 'walk-up', frames: this.anims.generateFrameNumbers(this.key, {frames: [9, 10, 11, 10]}), repeat: -1 },
+      { key: 'walk-right', frames: this.anims.generateFrameNumbers(this.key, {frames: [6, 7, 8, 7]}), repeat: -1 },
+      { key: 'walk-left', frames: this.anims.generateFrameNumbers(this.key, {frames: [3, 4, 5, 4]}), repeat: -1 },
+    ]);
 
-    this.setBodySize(16, 16, false);
-    this.body.setOffset(this.width * 0.25, this.height * 0.5);
-    this.debugShowBody = true;
-
-    // Animations
-    // this.setDepth(2);
-    let animsFrateRate = 8;
-    let animsDuration = 300;  // frame duration in milliseconds
-    
-    // IDLE
-    this.anims.create({
-      key: this.key + '-idle-down',
-      frames: [{key: this.key, frame: 1}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    this.anims.create({
-      key: this.key + '-idle-up',
-      frames: [{key: this.key, frame: 10}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    this.anims.create({
-      key: this.key + '-idle-right',
-      frames: [{key: this.key, frame: 7}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    this.anims.create({
-      key: this.key + '-idle-left',
-      frames: [{key: this.key, frame: 4}],
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: 0
-    });
-
-    // WALKING
-
-    this.anims.create({
-      key: this.key + '-walk-down',
-      frames: this.anims.generateFrameNumbers(this.key, {frames: [0, 1, 2, 1]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    this.anims.create({
-      key: this.key + '-walk-right',
-      frames: this.anims.generateFrameNumbers(this.key, {frames: [6, 7, 8, 7]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    this.anims.create({
-      key: this.key + '-walk-up',
-      frames: this.anims.generateFrameNumbers(this.key, {frames: [9, 10, 11, 10]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    this.anims.create({
-      key: this.key + '-walk-left',
-      frames: this.anims.generateFrameNumbers(this.key, {frames: [3, 4, 5, 4]}),
-      frameRate: animsFrateRate,
-      duration: animsDuration,
-      repeat: -1
-    });
-
-    // starting animation (idle)
-    this.anims.play(this.key + '-idle-down');
-    this.lastDir = 'down';
-
-    // make a shadow
-    this.shadow = this.scene.add.image(this.x, this.getBounds().bottom, 'player-shadow');
-    this.shadow.setAlpha(0.3);
-    this.scene.events.on('prerender', ()=> {
-      this.shadow.setPosition(this.x, this.getBounds().bottom);
-    });
-
-    // Physics settings
-    this.speed = 50;
     this.body.pushable = false;
-    this.setCollideWorldBounds(true);
-
-    // TODO: replace with random walking or maybe state machine
-    // var timer = this.scene.time.addEvent({
-    //   delay: Phaser.Math.Between(1000, 3000),
-    //   loop: true,
-    //   callback: ()=> {
-    //     timer.delay = Phaser.Math.Between(1000, 3000);
-    //     // choose one of four direction, or stop
-    //     let choice = chooseWeighted([
-    //       { x: 1, y: 0 },
-    //       { x: 0, y: 1 },
-    //       { x: -1, y: 0 },
-    //       { x: 0, y: -1 },
-    //       { x: 0, y: 0 }
-    //     ], [1, 1, 1, 1, 5]);
-    //     this.move(choice.x, choice.y);
-    //   }
-    // });
+    this.speed = 40;
 
     this.scene.physics.add.collider(this, this.scene.player, (npc, player) => { 
       npc.stop(); 
@@ -501,10 +571,32 @@ class NPC extends Phaser.Physics.Arcade.Sprite {
     });
 
     // collision with walls etc
-    this.scene.physics.add.collider(this, this.scene.mapLayers.layer1, (npc, wall) => { npc.stop(); });
+    this.scene.collisionLayers.forEach(layer => {
+      this.scene.physics.add.collider(this, this.scene.mapLayers[layer], (npc, wall) => { 
+        // collision response, stops the walking animation
+        npc.stop(); 
+      });
+    });
+
+    // pathfinding
+    this.path = null;
 
     // interaction with player
     this.interactionButtonText = 'talk';
+
+    this.interactionRect = scene.add.rectangle(
+      x, 
+      y + this.scene.registry.values.tileSize, 
+      this.scene.registry.values.tileSize * 2, 
+      this.scene.registry.values.tileSize * 2
+    )
+      .setOrigin(0.5)
+      .setFillStyle()
+      .setStrokeStyle(1, 0xDD0000, 0.8)
+      .setVisible(false)   // only visible under certain conditions
+      .setDepth(this.scene.depthValues.daytimeOverlay);
+    
+    this.scene.physics.add.existing(this.interactionRect);
 
     this.dialogue = [];
     this.finalDialogue = {
@@ -513,33 +605,128 @@ class NPC extends Phaser.Physics.Arcade.Sprite {
     };
   }
 
-  move(dirX, dirY) {
-    let move = new Phaser.Math.Vector2(dirX, dirY);
-    move.setLength(this.speed);
-    this.setVelocity(move.x, move.y);
+  update(time, delta) {
+    super.update(time, delta);
 
-    // adjust the NPC's animation
-    if (move.lengthSq() === 0) {
-      this.anims.play(`${this.key}-idle-${this.lastDir}`, true);
-    } else {
-      if (dirX > 0) {
-        this.lastDir = 'right';
-      } else if (dirX < 0) {
-        this.lastDir = 'left';
-      }
-      if (dirY > 0) {
-        this.lastDir = 'down';
-      } else if (dirY < 0) {
-        this.lastDir = 'up';
-      }
-      this.anims.play(`${this.key}-walk-${this.lastDir}`, true);
+    this.interactionRect.setPosition(this.x, this.y + this.scene.registry.values.tileSize);
+
+    if (this.path) {
+      this.followPath();
     }
   }
+
+  setBehaviour(type) {
+    switch(type) {
+      case 'randomWalk': 
+      // walks in a random direction after some time, or stops
+      // TODO: check for collisions beforehand!
+      let timer = this.scene.time.addEvent({
+        delay: Phaser.Math.Between(1000, 3000),
+        loop: true,
+        callback: ()=> {
+          timer.delay = Phaser.Math.Between(1000, 3000);
+          // flip a coin
+          if (Math.random() < 0.5) {
+            // choose one of four direction, or stop
+            let choice = Utils.Math.chooseWeighted([
+              { x: 1, y: 0 },
+              { x: 0, y: 1 },
+              { x: -1, y: 0 },
+              { x: 0, y: -1 },
+              { x: 0, y: 0 }
+            ], [1, 1, 1, 1, 5]);
+            this.move(new Phaser.Math.Vector2(choice.x, choice.y));
+          } else {
+            // look in a random direction that the NPC is not already facing
+            this.stop();
+            let dirs = ['up', 'down', 'left', 'right'];
+            this.lastDir = Utils.Math.choose(dirs.filter(value => { return value !== this.lastDir; }));
+          }
+        }
+      });
+
+      // destroy the timer when sprite is destroyed
+      this.on('destroy', ()=> timer.destroy());
+
+      break;
+
+      case 'followEvent':
+        // TODO: testing
+        this.manager.events.on('path-test', ()=> {
+          this.findPath(this.body, this.scene.player.body);
+        });
+
+        break;
+    
+      default:
+        console.warn(`no behaviour defined for ${type}`);
+    }
+  }
+
+  findPath(from, to) {
+    if (!this.scene.pathfinder) {
+      console.warn('Pathfinding plugin not initialised');
+      return; 
+    } else {
+
+      // translate world coordinates to tile coordinates
+      let tile = this.scene.registry.values.tileSize;
+      let startTileX = Math.floor(from.x / tile);
+      let startTileY = Math.floor(from.y / tile);
+      let endTileX = Math.floor(to.x / tile);
+      let endTileY = Math.floor(to.y / tile);
+
+      this.scene.pathfinder.findPath(startTileX, startTileY, endTileX, endTileY, path => {
+        if (path === null) {
+          console.warn("Path was not found.");
+        } else {
+          // this.path = Utils.Math.simplifyPath(path);
+          this.path = path;
+
+          if (this.scene.registry.values.debug) {
+            if (this.scene.hasOwnProperty('debugPath')) {
+              this.scene.debugPath.destroy();
+            }
+            this.scene.debugPath = drawDebugPath(this.scene, path);
+          }
+        }
+      });
+
+      this.scene.pathfinder.calculate();
+    }
+  }
+
+  followPath() {
+    if (this.path.length === 0) {
+      this.stop();
+      return;
+    }
+    
+    let target = this.path[0];
+
+    let tile = this.scene.registry.values.tileSize;
+    let targetX = target.x * tile;
+    let targetY = target.y * tile;
+
+    let dist = Phaser.Math.Distance.Between(this.x, this.y, targetX, targetY);
+
+    if (dist > 1) {
+      // seek the target
+      let vecToTarget = new Phaser.Math.Vector2(targetX, targetY).subtract(new Phaser.Math.Vector2(this.x, this.y));
+      vecToTarget.normalize();
+
+      this.move(vecToTarget);
+    } else {
+      this.path.shift();
+    }
+  }
+
 
   stop() {
     this.setVelocity(0);
     this.anims.play(`${this.key}-idle-${this.lastDir}`, true);
   }
+
 
   face(object) {
     let direction = '';
@@ -564,43 +751,50 @@ class NPC extends Phaser.Physics.Arcade.Sprite {
 
   interact(sprite) {
     this.face(sprite);
-    if (this.dialogue.length > 0) {
-      let dialogue = this.dialogue.shift();
 
-      if (dialogue.type === 'normal') {
-        showMessage(this.scene, 'npc-dialogue.' + dialogue.key);
-      } else if (dialogue.type === 'options') {
-        showMessage(
-          this.scene, 'npc-dialogue.' + dialogue.key, 
-          null, null, { key: 'npc-dialogue.' + dialogue.optionKey, callbacks: dialogue.callbacks }
-        );
-      }
+    let dialogue;
+    if (this.dialogue.length > 0) {
+      dialogue = this.dialogue.shift();
     } else {
       // fallback if nothing left
+      dialogue = this.finalDialogue;
+    }
+    if (dialogue.type === 'normal') {
+      showMessage(this.scene, 'npc-dialogue.' + dialogue.key, this);
+    } else if (dialogue.type === 'options') {
       showMessage(
-        this.scene, 'npc-dialogue.' + this.finalDialogue.key, 
-        null, null, { key: 'npc-dialogue.' + this.finalDialogue.optionKey, callbacks: this.finalDialogue.callbacks });
+        this.scene, 'npc-dialogue.' + dialogue.key, 
+        this, null, { key: 'npc-dialogue.' + dialogue.optionKey, callbacks: dialogue.callbacks }
+      );
     }
   }
 
-  setDialogue(array) {
-    if (array.length === 1) {
+  setDialogue(stringOrArray) {
+    if (typeof stringOrArray === 'string') {
       this.finalDialogue = {
-        key: [...array][0],
+        key: stringOrArray,
         type: 'normal'
       };
     } else {
-      this.finalDialogue = {
-        key: array.unshift(),
-        type: 'normal'
-      };
+      if (stringOrArray.length === 1) {
+        this.finalDialogue = {
+          key: [...stringOrArray][0],
+          type: 'normal'
+        };
+      } else {
+        this.finalDialogue = {
+          key: stringOrArray.pop(),
+          type: 'normal'
+        };
+      }
+
+      stringOrArray.forEach(key => {
+        this.dialogue.push({
+          key: key,
+          type: 'normal'
+        });
+      });
     }
-    array.forEach(key => {
-      this.dialogue.push({
-        key: key,
-        type: 'normal'
-      })
-    });
   }
 
   addDialogueWithOptions(key, optionCallbacks, final=true) {
@@ -622,8 +816,8 @@ class NPC extends Phaser.Physics.Arcade.Sprite {
 }
 
 
-class Vendor extends NPC {
-  constructor(scene, x, y, textureKey, items=null) {
+export class Vendor extends NPC {
+  constructor(scene, x, y, textureKey, items=null, acceptedItemTypes=null) {
     super(scene, x, y, textureKey);
 
     // interaction with player
@@ -631,14 +825,18 @@ class Vendor extends NPC {
 
     // items that are sold in the shop
     this.items = items || [];
+
+    this.acceptedItemTypes = acceptedItemTypes || [];
   
   }
 
-  update() {
+  update(time, delta) {
+    super.update(time, delta);
     this.face(this.scene.player);
   }
 
   interact() {
+    // TODO: make this different for every vendor
     showMessage(
       this.scene, 
       'npc-dialogue.shopping.greeting-options.text', 
@@ -647,27 +845,26 @@ class Vendor extends NPC {
         key: 'npc-dialogue.shopping.greeting-options.options', 
         callbacks: [
           ()=> {
-            // tell the inventory manager that the interaction button shows "info"
-            this.manager.events.emit('show-interaction', 'buy');
-    
+            // change the button texts
+            this.manager.events.emit('changeButtonText', 'interact', 'buy');
+            this.manager.events.emit('changeButtonText', 'inventory', 'exit');
+            
             // switch scenes
             this.scene.scene.pause();
-            this.scene.scene.run('ShopDisplay', {
-              parentScene: this.scene.scene.key,
-              items: this.items,
-              type: 'buy'
-            });
+            this.scene.scene.run('ShopDisplayBuy', this.items);
           },
           ()=> { 
-            // tell the inventory manager that the interaction button shows "info"
-            this.manager.events.emit('show-interaction', 'sell');
+            // change the button texts
+            this.manager.events.emit('changeButtonText', 'interact', 'sell');
+            this.manager.events.emit('changeButtonText', 'inventory', 'exit');
     
             // switch scenes
             this.scene.scene.pause();
-            this.scene.scene.run('ShopDisplay', {
-              parentScene: this.scene.scene.key,
-              type: 'sell'
-            });
+            this.scene.scene.run('ShopDisplaySell', this.acceptedItemTypes);
+          },
+          ()=> {
+            // leave
+            showMessage(this.scene, 'npc-dialogue.shopping.leaving');
           }
         ]
       }
@@ -676,22 +873,79 @@ class Vendor extends NPC {
 }
 
 
-class Crop extends Phaser.GameObjects.Image {
-  constructor(scene, group, x, y, name) {
-    let data = deepcopy(scene.cache.json.get('cropData').croplist[name]);
+export class Animal extends NPC {
+  constructor(scene, x, y, data) {
+    // data = corresponds to data in the FarmData manager
+    super(scene, x, y, data.spriteData[0].key);
+
+    // this value is used to pick the correct spritesheet data
+    // it is incremented based on the "startingWeight" property in "spriteData"
+    this.weightIndex = 0;
+
+    for (let [key, value] of Object.entries(data)) {
+      this.setData(key, value);
+    }
+
+    this.setDialogue('animals.age');  // TODO: for testing 
+    this.setBehaviour('randomWalk');
+    this.body.pushable = true;
+
+    const { width, height, offsetX, offsetY} = data.spriteData[0].hitbox;
+    this.changeHitbox(width, height, offsetX, offsetY);
+
+
+    // change spritesheet when a certain weight is reached
+    this.data.events.on('changedata-weight', (parent, value, previousValue) => {
+      if (value > this.data.get('spriteData')[this.weightIndex].endWeight) {
+        // this animal is heavier, so it should change the sprite
+        this.weightIndex++;
+        this.updateAnimations(this.data.get('spriteData')[this.weightIndex].key);
+
+        // update the hitbox
+        const { width, height, offsetX, offsetY} = this.data.get('spriteData')[this.weightIndex].hitbox;
+        this.changeHitbox(width, height, offsetX, offsetY);
+      }
+    })
+  }
+
+  updateAnimations(key) {
+    // clears all current animations and creates new ones based on the passed key
+    // this.anims.destroy();
+    this.key = key;
+
+    this.createAnimations([
+      { key: 'idle-down', frames: [{key: this.key, frame: 1}] },
+      { key: 'idle-up', frames: [{key: this.key, frame: 10}] },
+      { key: 'idle-right', frames: [{key: this.key, frame: 7}] },
+      { key: 'idle-left', frames: [{key: this.key, frame: 4}] },
+      { key: 'walk-down', frames: this.anims.generateFrameNumbers(this.key, {frames: [0, 1, 2, 1]}), repeat: -1 },
+      { key: 'walk-up', frames: this.anims.generateFrameNumbers(this.key, {frames: [9, 10, 11, 10]}), repeat: -1 },
+      { key: 'walk-right', frames: this.anims.generateFrameNumbers(this.key, {frames: [6, 7, 8, 7]}), repeat: -1 },
+      { key: 'walk-left', frames: this.anims.generateFrameNumbers(this.key, {frames: [3, 4, 5, 4]}), repeat: -1 },
+    ]);
+  }
+}
+
+
+export class Crop extends Phaser.GameObjects.Image {
+  constructor(scene, x, y, name, mapIndex) {
+    let data = Utils.Misc.deepcopy(scene.cache.json.get('cropData').croplist[name]);
     super(scene, x, y, 'crops', data.frames[0]);
     this.setData(data);
+
+    this.name = name; // key for json data
+    this.mapIndex = mapIndex;  // reference to the arable Map of the gameplay scene
 
     // reference to game manager
     this.manager = this.scene.scene.get('GameManager');
     
     // add to GameObjects group and scene
     // TODO: this is getting messy....
-    group.add(this);
     this.scene.add.existing(this);
     this.scene.allSprites.add(this);
     this.scene.physics.add.existing(this);
     this.scene.interactables.add(this);
+    this.scene.crops.add(this);
     
     this.depthSortY = this.getBounds().top + 8;
     this.scene.depthSortedSprites.add(this);
@@ -703,12 +957,12 @@ class Crop extends Phaser.GameObjects.Image {
 
     // variables for growth and harvesting
     this.growthPhase = 0;
-    this.age = 0;
-    this.currentPhaseDay = 0;
+    this.growth = 0;
     this.harvestReady = false;
+    this.fertilizedLevel = 0;  // TODO: add soil class that holds the fertilization
 
     // calculate the color of particles that appear when the crop is cut
-    this.avgColor = getAvgColorButFaster(
+    this.avgColor = Utils.Phaser.getAvgColor(
       this.scene, this.texture.key, this.data.values.frames[this.data.values.numPhases - 1]
     );
 
@@ -719,14 +973,30 @@ class Crop extends Phaser.GameObjects.Image {
     this.manager.events.on('newDay', this.onNewDay, this);
   }
 
-  update() {
-    // pass
+  get wateringLevel() {
+    return this.scene.arableMap[this.mapIndex].waterLevel;
+  }
+
+  get saveData () {
+    return {
+      constructor: {
+        x: this.x,
+        y: this.y,
+        name: this.name,
+        mapIndex: this.mapIndex
+      },
+      attributes: {
+        growthPhase: this.growthPhase,
+        growth: this.growth,
+        harvestReady: this.harvestReady,
+        fertilizedLevel: this.fertilizedLevel
+      }
+    };
   }
 
   harvest() {
     if (this.harvestReady) {
-      // create a particle effect
-      // let particles = this.scene.add.particles(this.data.values.particles, 0);
+      // create a particle effect when the plant gets harvested
       let particles = this.scene.add.particles('leaf-particles', 0);
       particles.setDepth(3);
 
@@ -751,13 +1021,19 @@ class Crop extends Phaser.GameObjects.Image {
       // spawn something to collect
       let spawnPos = { x: this.body.center.x, y: this.body.center.y - 8};
       let targetPos = { x: this.body.center.x, y: this.body.center.y};
-      let data = this.scene.cache.json.get('itemData').harvest[this.data.values.harvest];
+      let data = Utils.Misc.deepcopy(this.scene.cache.json.get('itemData').harvest[this.data.values.harvest]);
+
+      // effect of fertillizer
+      // TODO: more sophisticated calculation
+      data.quantity *= this.fertilizedLevel + 1;
 
       let cb = new Collectible(
         this.scene, this.scene.collectibles, spawnPos.x, spawnPos.y, data
       );
 
-      // cb.setDepth(2);
+      // remove the fertilization level 
+      // TODO: calculate how much fertilizer the crop used
+      this.scene.arableMap[this.mapIndex].reset();
 
       // let this collectible bounce a bit
       this.scene.tweens.add({
@@ -781,11 +1057,19 @@ class Crop extends Phaser.GameObjects.Image {
   }
 
   onNewDay() {
-    this.age += 1;
-    this.currentPhaseDay += 1;
-    if (this.currentPhaseDay > this.data.values.phaseDurations[this.growthPhase]) {
+    // plant grows faster when it's properly watered
+    if (
+      this.scene.arableMap[this.mapIndex].waterLevel > 0 
+      || this.growthPhase > this.data.values.wateringPhases - 1
+    ) {
+      this.growth += 1;
+    } else {
+      this.growth += 0.5;
+    }
+
+    if (this.growth > this.data.values.phaseDurations[this.growthPhase]) {
       this.growthPhase += 1;
-      this.currentPhaseDay = 0;
+      this.growth = 0;
 
       // change to next texture
       this.setTexture('crops', this.data.values.frames[this.growthPhase]);
@@ -809,7 +1093,7 @@ class Crop extends Phaser.GameObjects.Image {
 }
 
 
-class Collectible extends Phaser.GameObjects.Image {
+export class Collectible extends Phaser.GameObjects.Image {
   constructor(scene, group, x, y, itemToAdd) {
     super(scene, x, y, itemToAdd.spritesheet, itemToAdd.frame);
     group.add(this);
@@ -820,7 +1104,7 @@ class Collectible extends Phaser.GameObjects.Image {
 
     this.manager = this.scene.scene.get('GameManager');
 
-    this.itemToAdd = deepcopy(itemToAdd);
+    this.itemToAdd = Utils.Misc.deepcopy(itemToAdd);
 
     // interaction with player
     this.interactionButtonText = 'inspect';
@@ -835,6 +1119,7 @@ class Collectible extends Phaser.GameObjects.Image {
   collect() {
     if (this.canCollide) {
       this.manager.events.emit('item-collected', this.itemToAdd);
+      this.manager.playSound('item-collect')
       this.destroy();
     }
   }
@@ -844,6 +1129,75 @@ class Collectible extends Phaser.GameObjects.Image {
   }
 }
 
+
+export class Trough extends Phaser.GameObjects.Image {
+  /*
+  An object that accepts feed for your animals
+
+  spritesheet frames:
+    0 = empty
+    1 = pig feed
+    2 = straw
+  */
+  constructor(scene, x, y, data) {
+    super(scene, x, y, 'troughs', 0);
+
+    this.setOrigin(0, 0.5);
+
+    this.scene.add.existing(this);
+    this.scene.allSprites.add(this);
+    this.scene.physics.add.existing(this, true);  // static object
+    this.scene.depthSortedSprites.add(this);
+
+    this.scene.physics.add.collider(this, this.scene.player);
+    this.scene.physics.add.collider(this, this.scene.animals, (_, animal) => { animal.stop(); });
+
+    this.body.setSize(32, 16, false);
+    this.body.setOffset(0, 16);
+
+    this.manager = this.scene.scene.get('GameManager');
+    
+    this.data = {};
+    data.forEach(obj => {
+      this.data[obj.name] = obj.value;
+    });
+
+    this.interactionButtonText = 'inspect';
+
+    this.manager.events.on('troughFillChange', (amount, ID, index) => {
+      // data gets changed externally in the data manager
+      if (ID === this.data.barnID && index === this.data.index) {
+        // emtpy or full
+        // TODO: make this more dynamic
+        this.setTexture('troughs', amount > 0 ? 1 : 0);
+      }
+    });
+  }
+
+  interact() {
+    if (this.fillData.currentFill > 0) {
+      showMessage(this.scene, 'interactibles.troughStatus', this);
+    } else {
+      showMessage(this.scene, 'interactibles.troughEmpty', this);
+    }
+  }
+
+  get fillData() {
+    // gets access to data from data manager
+    // returns: { currentFill: int, maxFill: int }
+    let barn = this.manager.farmData.data.buildings[this.data.barnID];
+    return barn.troughs[this.data.index];
+  }
+
+  setFeedAmmount(amount) {
+    // changes the amount in the data as well as the sprite
+    let barn = this.manager.farmData.data.buildings[this.data.barnID];
+    barn.troughs[this.data.index].currentFill = amount;
+    // change sprite
+    // 0 = empty, 1 = pig Feed
+    this.setTexture('troughs', amount > 0 ? 1 : 0);
+  } 
+}
 
 class Scythe extends Phaser.GameObjects.Image {
   constructor(scene, x, y, imageIndex=2) {
@@ -872,8 +1226,8 @@ class Scythe extends Phaser.GameObjects.Image {
     }
   }
 
-  update() {
-    this.angle += 10 * this.rotationDir;
+  update(time, delta) {
+    this.angle += 0.5 * this.rotationDir * delta;
 
     // set position relative to the player
     this.x = this.player.x;
@@ -882,27 +1236,148 @@ class Scythe extends Phaser.GameObjects.Image {
 }
 
 
-class DialogueTrigger extends Phaser.GameObjects.Rectangle {
-  constructor(scene, x, y, width, height, dialogueKey){
-    // TODO: color and alpha only for testing
-    super(scene, x, y, width, height);
-    this.scene.add.existing(this);
-    this.scene.allSprites.add(this);
-    this.scene.physics.add.existing(this);
-    this.scene.interactables.add(this);   // TODO instead check for inteact() method
-    this.setOrigin(0);
+class Hoe extends Phaser.GameObjects.Image {
+  constructor(scene, x, y, imageIndex=0) {
+    super(scene, x, y, 'tools', imageIndex);
 
-    this.interactionButtonText = 'read';
+    scene.add.existing(this);
+    scene.depthSortedSprites.add(this);
 
-    if (DEBUG) {
-      this.setFillStyle(0xff0000, 0.3);
+    scene.time.addEvent({
+        delay: 500, 
+        callback: () => {
+          this.destroy();
+          scene.player.tool = null;
+        }
+    });
+
+    scene.time.addEvent({
+      delay: 250, 
+      callback: () => {
+        // reverse direction (bouncing effect)
+        this.rotationDir *= -1;
+
+        // particle effect
+        let particleStartPos = this.player.interactionRect.getCenter();
+
+        let particles = this.scene.add.particles('particles', 2);
+        particles.setDepth(3);
+
+        let emitter = particles.createEmitter({
+          x: particleStartPos.x,
+          y: particleStartPos.y,
+          quantity: { min: 3, max: 8 },
+          radial: true,
+          active: true,
+          lifespan: 200,
+          speed: 50,
+          gravityY: 100,
+          alpha: 1,
+          tint: 0x3d300b
+        });
+
+        emitter.explode();
+      }
+  });
+
+    this.player = scene.player;
+
+    if (this.player.lastDir === 'left') {
+      this.setFlipX(true);
+      this.rotationDir = -1;
+      this.setOrigin(0, 1);
+    } else {
+      this.rotationDir = 1;
+      this.setOrigin(1);
     }
-
-    // TODO: more modular! (cutscenes etc)
-    this.dialogueKey = dialogueKey;
   }
 
-  interact() {
-    showMessage(this.scene, this.dialogueKey);
+  update(time, delta) {
+    this.angle += 0.5 * this.rotationDir * delta;
+
+    // set position relative to the player
+    this.x = this.player.x;
+    this.y = this.player.y + ((this.player.lastDir === 'up') ? -4 : 8);
+  }
+}
+
+
+class WateringCan extends Phaser.GameObjects.Image {
+  constructor(scene, x, y, imageIndex=7) {
+    super(scene, x, y, 'inventory-items', imageIndex);
+    scene.add.existing(this);
+    
+    this.player = scene.player;
+
+    scene.time.addEvent({
+        delay: 1500, 
+        callback: () => {
+          this.destroy();
+          scene.player.tool = null;
+        }
+    });
+
+    let particleAngle;
+    let particleStartPos = { x: 0, x: 0 };
+
+    switch(this.player.lastDir) {
+      // TODO clean this up a bit...
+      case 'left': 
+        this.x = this.player.x - 16;
+        this.y = this.player.y + 12;
+        particleStartPos.x = this.x;
+        particleStartPos.y = this.y - 12;
+        particleAngle = 180;
+        this.setFlipX(true);
+        this.setOrigin(0, 1);
+        this.setDepth(this.scene.depthSortedSprites.depth - 1);
+        break;
+      case 'right': 
+        this.x = this.player.x + 16;
+        this.y = this.player.y + 14;
+        particleStartPos.x = this.x;
+        particleStartPos.y = this.y - 12;
+        particleAngle = 0;
+        this.setOrigin(1);
+        this.setDepth(this.scene.depthSortedSprites.depth + 1);
+        break;
+      case 'up': 
+        this.x = this.player.x - 12;
+        this.y = this.player.y + 8;
+        particleStartPos.x = this.x;
+        particleStartPos.y = this.y - 12;
+        particleAngle = 270;
+        this.setFlipX(true);
+        this.setOrigin(0, 1);
+        this.setDepth(this.scene.depthSortedSprites.depth - 1);
+        break;
+      case 'down': 
+        this.x = this.player.x + 8;
+        this.y = this.player.y + 14;
+        particleStartPos.x = this.x;
+        particleStartPos.y = this.y - 12;
+        particleAngle = 90;
+        this.setOrigin(1);
+        this.setDepth(this.scene.depthSortedSprites.depth + 1);
+        break;
+    }
+
+    // add particles for water effect
+    let particles = this.scene.add.particles('water-droplet');
+    particles.setDepth(3);
+
+    let emitter = particles.createEmitter({
+      x: particleStartPos.x,
+      y: particleStartPos.y,
+      maxParticles: 30,
+      active: true,
+      lifespan: 500,
+      speed: 50,
+      gravityY: 100,
+      angle: { min: particleAngle - 20, max: particleAngle + 20 },
+      alpha: { start: 0.5, end: 0.1 }
+    });
+
+    emitter.start();
   }
 }

@@ -1,24 +1,31 @@
-class DialogueScene extends Phaser.Scene {
+import * as Utils from './utils.js';
+
+
+
+export class DialogueScene extends Phaser.Scene {
   preload() {
     // Rex UI
     this.load.scenePlugin({
       key: 'rexuiplugin',
-      url: URL_REXUI,
+      url: this.registry.values.rexui_url,
       sceneKey: 'rexUI'
     });
   }
 
   create(data) {
     this.manager = this.scene.get('GameManager');
+    this.data = data;
 
-    this.keys = addKeysToScene(this, this.manager.keyMapping);
+    // this.keys = Utils.Phaser.addKeysToScene(this, this.manager.inputHandler.keyMapping);
+    // this.manager.inputHandler.configureKeys(this);
+    // this.manager.inputHandler.checkForGamepad(this);  
 
     let json = this.cache.json.get('dialogue');
-    let messageText = getNestedKey(json, data.key);
+    let messageText = Utils.Misc.getNestedKey(json, data.key);
   
     if (!messageText) {
       console.log(`No matching text for "${data.key}"`);
-      messageText = getNestedKey(json, 'error');
+      messageText = Utils.Misc.getNestedKey(json, 'error');
     }
 
     // format message text
@@ -27,7 +34,7 @@ class DialogueScene extends Phaser.Scene {
     this.options = [];
     // if data has options, format and store that
     if (data.options.callbacks.length > 0) {
-      let optionTexts = getNestedKey(json, data.options.key);
+      let optionTexts = Utils.Misc.getNestedKey(json, data.options.key);
       optionTexts.forEach((text, index) => {
         this.options[index] = {
           text: formatProperties(data.object, text),
@@ -37,72 +44,116 @@ class DialogueScene extends Phaser.Scene {
     }
 
     this.message = this.createMessage();
-    this.message.start(formattedText, 50);
+    this.message.start(formattedText, this.registry.get('textSpeed'));
 
     this.cursor = null;
 
     if (this.options.length > 0) {
-      this.optionPositions = [];
+      // When the dialog box has options
+      this.optionPositions = [];  // position of the cursor for each option
       this.currentOptionIndex = 0;
-      // message contains optiosn
-      this.message.on('complete', ()=> {
-        this.options.forEach( (option, index) => {
 
+      // if message contains options, display them once the message text is completed
+      this.message.on('complete', ()=> {
+        // change the action key text to "select"
+        this.manager.events.emit('changeButtonText', 'interact', 'select');
+
+        this.options.forEach((option, index) => {
+          // display a text object for each option
           let margin = this.message.width / (this.options.length + 1);
           let x = this.message.left + margin * (index + 1);
-          let y = this.message.y + 24
+          let y = this.message.y + 24;
 
           let text = this.add.text(
-            x, y, option.text, { fontSize: '12px', color: '#fff', padding: { y: 2 } }
+            x, y, option.text, 
+            { 
+              fontSize: '12px', 
+              color: '#fff', 
+              padding: { y: 2 }, 
+              fontFamily: this.registry.values.globalFontFamily, 
+            }
           ).setOrigin(0.5);
 
-          this.optionPositions[index] = { x: text.getLeftCenter().x - 4, y: text.getLeftCenter().y };
+          // store the position of the text for the cursor
+          this.optionPositions[index] = { 
+            x: text.getLeftCenter().x - 4, 
+            y: text.getLeftCenter().y 
+          };
         });
         
+        // add a cursor sprite
         this.cursor = this.add.image(
-          this.optionPositions[this.currentOptionIndex].x, this.optionPositions[this.currentOptionIndex].y, 'ui-images', 0
-        ).setOrigin(1, 0.5);
+          this.optionPositions[this.currentOptionIndex].x, 
+          this.optionPositions[this.currentOptionIndex].y, 
+          'ui-images', 
+          0
+        )
+          .setOrigin(1, 0.5);
       });
     }
 
-    this.keys.interact.on('down', () => {
-        // when the message is still typing, show all text
-        // when the message is complete, start next page or close if last page is reached
-        if (this.message.isTyping) {
-          this.message.stop(true);
-        } else {
-          if (this.cursor) {
-            this.manager.scene.stop('Dialogue');  // TODO: does this always work?
-            // options and stuff
-            this.options[this.currentOptionIndex].callback();
-            // currentScene.scene.resume(currentScene.scene.key);
-          } else {
-            // normal text
-            if (this.message.isLastPage) {
-              this.message.destroy();
-              if (data.callback) { data.callback(); }
-            } else {
-              this.message.typeNextPage();
-            }
-          } 
-        }
+    this.buttonCallbacks = {
+      interact: this.interactButtonCallback.bind(this),
+      inventory: ()=> {
+        this.message.destroy();
+        this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
+        if (this.data.callback) { this.data.callback(); }
       }
-    );
+    };
+
+    this.manager.inputHandler.configureKeys(this);
+    this.manager.inputHandler.checkForGamepad(this);  
+
+    this.manager.events.emit('changeButtonText', 'inventory', 'exit');
+  }
+  
+  interactButtonCallback() {
+    console.log(this.message.isTyping)
+    // when the message is still typing, show all text
+    // when the message is complete, start next page or close if last page is reached
+    if (this.message.isTyping) {
+      // make sure is has popped up completely
+      if (this.message.scale === 1) {
+        this.message.stop(true);
+      }
+    } else {
+      if (this.cursor) {
+        this.manager.scene.stop('Dialogue');  // TODO: does this always work?
+
+        // change the text back
+        this.manager.events.emit('changeButtonText', 'interact', '');
+        this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
+
+        // execute the callback with the currently selected index
+        this.options[this.currentOptionIndex].callback();
+      } else {
+        // normal text
+        if (this.message.isLastPage) {
+          this.message.destroy();
+          this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
+          if (this.data.callback) { this.data.callback(); }
+        } else {
+          this.message.typeNextPage();
+        }
+      } 
+    }
   }
 
-  update() {
+  update(time, delta) {
     if (this.cursor) {
-      let delay = 500;
-      let dir = getCursorDirections(this, delay);
+      // move the cursor if the dialogue has options
+      let dir = this.manager.inputHandler.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+      // let dir = Utils.Phaser.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
       if (dir.x !== 0) {
-        this.currentOptionIndex = (this.currentOptionIndex + 1) % this.options.length;
         if (dir.x > 0) {
-          this.cursor.setX(this.optionPositions[this.currentOptionIndex].x);
+          this.currentOptionIndex = (this.currentOptionIndex + 1) % this.options.length;
         } else {
-          // TODO: doesn't work exactly right (doesn't crash tho)
-          let bIndex = this.options.length - 1 - this.currentOptionIndex;
-          this.cursor.setX(this.optionPositions[bIndex].x);
+          this.currentOptionIndex--;
+          if (this.currentOptionIndex < 0) {
+            this.currentOptionIndex = this.options.length - 1;
+          }
         }
+        this.cursor.setX(this.optionPositions[this.currentOptionIndex].x);
       }
     }
   }    
@@ -150,6 +201,8 @@ const GetBBcodeText = function(scene, wrapWidth, fixedWidth, fixedHeight, fontSi
       fixedWidth: fixedWidth,
       fixedHeight: fixedHeight,
 
+      fontFamily: scene.registry.values.globalFontFamily,
+
       fontSize: `${fontSize}px`,
       wrap: {
           mode: 'word',
@@ -159,7 +212,7 @@ const GetBBcodeText = function(scene, wrapWidth, fixedWidth, fixedHeight, fontSi
   })
 }
 
-const showMessage = function(currentScene, key, object=null, onEndCallback=null, options=null) {
+export const showMessage = function(currentScene, key, object=null, onEndCallback=null, options=null) {
   // helper function that pauses the current scene and starts the dialogue scene with the give key
   // if another dialogue is running, quit that
   currentScene.scene.pause(currentScene.scene.key);
@@ -196,8 +249,135 @@ const formatProperties = function(object, string) {
 
   matches.forEach(elem => {
     let key = elem.replaceAll(/\{|\}/g, '');
-    string = string.replace(elem, getNestedKey(object, key));
+    string = string.replace(elem, Utils.Misc.getNestedKey(object, key));
   });
 
   return string;
+}
+
+
+export class GenericMenu extends Phaser.Scene {
+  preload() {
+    // Rex UI
+    this.load.scenePlugin({
+      key: 'rexuiplugin',
+      url: this.registry.values.rexui_url,
+      sceneKey: 'rexUI'
+    });
+  }
+
+  create(config) {
+    /* config contains:
+    x, y,     // screen positions
+    height,   // defines the upper and lower bounds of the items
+    background: {
+      x, y, w, h, color, alpha
+    },
+    options: ['foo', 'bar'],
+    callbacks: [function(){}, function(){}],
+    exitCallback: function(){},
+    fontStyle: TextStyle object
+    */
+    this.manager = this.scene.get('GameManager');
+    
+    this.currentOptionIndex = 0;
+
+    if ('background' in config) {
+      this.background = this.add.rectangle(
+        config.background.x, config.background.y,
+        config.background.w, config.background.h,
+        config.background.color, config.background.alpha
+      );
+    }
+
+    this.options = config.options;
+    this.callbacks = config.callbacks;
+    if (this.options.length !== this.callbacks.length) {
+      console.warn('Mismatching number of options and callbacks.', this.options);
+    }
+
+    // set the position of options based on their number
+    this.optionPositions = [];
+
+    let fontStyle;
+    if ('fontStyle' in config) {
+      fontStyle = config.fontStyle;
+    } else {
+      fontStyle = { 
+        fontSize: '12px', 
+        color: '#fff', 
+        padding: { y: 2 }, 
+        fontFamily: this.registry.values.globalFontFamily, 
+      };
+    }
+
+    let margin = config.height / (this.options.length + 1);
+
+    for (let i = 0; i < this.options.length; i++) {
+      let y = config.y + margin * i;
+      let x = config.x;
+      let text = this.add.text(x, y, this.options[i], fontStyle)
+        .setOrigin(0);
+
+      this.optionPositions[i] = { x: text.getLeftCenter().x - 4, y: text.getLeftCenter().y };
+    }
+
+    this.cursor = this.add.image(
+      this.optionPositions[this.currentOptionIndex].x, this.optionPositions[this.currentOptionIndex].y, 'ui-images', 0
+    ).setOrigin(1, 0.5);
+
+
+    // Button configuration
+    this.buttonCallbacks = {
+      interact: ()=> {
+        // select the current option
+        if (this.callbacks[this.currentOptionIndex]) {
+          this.scene.stop(this.scene.key);
+
+          // change the text back
+          this.manager.events.emit('changeButtonText', 'interact', '');
+          this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
+
+          // options and stuff
+          this.callbacks[this.currentOptionIndex]();
+        } else {
+          console.warn('no callback for index ' + this.currentOptionIndex);
+        }
+      },
+      inventory: ()=> {
+        // exit the Menu preemptively
+        this.scene.stop(this.scene.key);
+        if ('exitCallback' in config) {
+          config.exitCallback();
+        } else {
+          this.scene.run(this.manager.currentGameScene);
+          this.manager.events.emit('changeButtonText', 'inventory', 'inventory');
+        } 
+      }
+    };
+
+    this.manager.inputHandler.configureKeys(this);
+    this.manager.inputHandler.checkForGamepad(this); 
+
+    this.manager.events.emit('changeButtonText', 'inventory', 'exit');
+  }
+
+  update(time, delta) {
+    if (this.cursor) {
+      // move the cursor
+      let dir = this.manager.inputHandler.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+      // let dir = Utils.Phaser.getCursorDirections(this, this.registry.values.menuScrollDelay, delta);
+      if (dir.y !== 0) {
+        if (dir.y > 0) {
+          this.currentOptionIndex = (this.currentOptionIndex + 1) % this.options.length;
+        } else {
+          this.currentOptionIndex--;
+          if (this.currentOptionIndex < 0) {
+            this.currentOptionIndex = this.options.length - 1;
+          }
+        }
+        this.cursor.setY(this.optionPositions[this.currentOptionIndex].y);
+      }
+    }
+  } 
 }

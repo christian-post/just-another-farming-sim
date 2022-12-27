@@ -1,34 +1,46 @@
-const windowWidth = 426;
-const windowHeight = 240;
+import { DialogueScene, GenericMenu } from './user-interface.js';
+import { 
+  InventoryManager, 
+  InventoryDisplay, 
+  ShopDisplayBuy, 
+  ShopDisplaySell,
+  SpecificItemUseDisplay
+} from './managers/inventory-manager.js';
+import * as GameScenes from './scenes/scene-overworld.js';
+import { PreloadingScene } from './scenes/scene-preload.js';
+import { TitleScene, ShowControls } from './scenes/scene-title.js';
+import { TransitionScene } from './scenes/scene-transition.js';
+import { GameManager } from './managers/game-manager.js';
+import { InputManager } from './managers/input-manager.js';
 
-const COLOR_BACKGROUND = 0x9ae81f;
+
+
+const WINDOW_WIDTH = 426;
+const WINDOW_HEIGHT = 240;
+
+const COLOR_BACKGROUND = 0x006022;
 
 // debug settings
-const DEBUG = false;
-const SCENEWATCHER = false;
-
-// RexUI Plugin File path
-// URL_REXUI = 'plugins/rexuiplugin.js'
-URL_REXUI = 'plugins/rexuiplugin.min.js'
-URL_SCENEWATCHER = 'plugins/phaser-plugin-scene-watcher.umd.js'
+const DEBUG = true;
+const SCENEWATCHER = true;
 
 
-
-
-const config = {
+let config = {
+  parent: "canvas-container",
   type: Phaser.AUTO,
-  width: windowWidth,
-  height: windowHeight,
+  width: WINDOW_WIDTH,
+  height: WINDOW_HEIGHT,
   backgroundColor: COLOR_BACKGROUND,
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: {y: 0},
+      gravity: { y: 0 },
       debug: DEBUG,
       debugShowBody: true
     }
   },
-  antialias: false,
+  // antialias: false,
+  pixelArt: true,
   scale: {
     zoom: 3
   },
@@ -36,12 +48,17 @@ const config = {
     target: 60
   },
   audio: {
-    noAudio: true  // set to off during testing
+    noAudio: true  // set to "off" during testing
+  },
+  input: {
+    gamepad: true
   }
 };
 
+
+// Scene watcher for debugging
 if (SCENEWATCHER) {
-  Object.assign(config, {
+  config = Object.assign(config, {
     plugins: {
       global: [
         { key: 'SceneWatcher', plugin: PhaserSceneWatcherPlugin, start: true }
@@ -50,35 +67,69 @@ if (SCENEWATCHER) {
   });
 }
 
+
 const game = new Phaser.Game(config);
 
-
 // additional configuration to be added to the game registry
-let additionalConfig = {
-  windowWidth: windowWidth,
-  windowHeight: windowHeight,
+game.registry.merge({
+  // technical settings
+  rexui_url: 'plugins/rexuiplugin.min.js',
+  debug: DEBUG,
+  windowWidth: WINDOW_WIDTH,
+  windowHeight: WINDOW_HEIGHT,
   tileSize: 16,
-  ingameTimeSpeed: 20,  // in-game seconds per real-time second
+  menuScrollDelay: 200,
+  textSpeed: 50,
+  globalMusicVolume: 0,
+  globalSoundeffectsVolume: 0.5,
+  // globalFontFamily: 'CustomFont',
+  globalFontFamily: 'Verdana',
+  // in-game settings
+  playerWalkSpeed: 80,
+  playerDebugSpeed: 300,  // player running speed when in debug mode (normal = 80)
+  ingameTimeSpeed: 60,  // in-game seconds per real-time second (normal = 60)
   startingDaytime: {
     hour: 12,
     minutes: 0
   },
-  startingMoney: 10000
-};
-
-// Object.assign(game.registry.values, additionalConfig);
-game.registry.merge(additionalConfig);
+  playerStaminaRechargeRate: 100,  // how much stamina is refilled
+  playerStaminaRechargeDelay: 10,  // ingame minutes until stamina is refilled by the given amount
+  startingMoney: 10000,
+  startingMaxStamina: 200,
+  wateringCanAmount: 2,  // how much the watering can raises the soil's water level
+  maxWateringLevel: 4
+});
 
 // define the scenes
-game.scene.add('Preload', PreloadingScene, false);
+game.scene.add('Preload', PreloadingScene, false);   
 game.scene.add('GameManager', GameManager, false);
+game.scene.add('InputManager', InputManager, false);
 game.scene.add('Title', TitleScene, false);
-game.scene.add('Test', TestScene, false);
+game.scene.add('ShowControls', ShowControls, false);
+// In Game scenes
+game.scene.add('FarmScene', GameScenes.FarmScene, false);
+game.scene.add('VillageScene', GameScenes.VillageScene, false);
+game.scene.add('BarnInteriorScene', GameScenes.BarnInteriorScene, false);
+game.scene.add('HouseInteriorScene', GameScenes.HouseInteriorScene, false);
+
 game.scene.add('InventoryManager', InventoryManager, false); 
 game.scene.add('InventoryDisplay', InventoryDisplay, false);
-game.scene.add('ShopDisplay', ShopDisplay, false);
+game.scene.add('ShopDisplayBuy', ShopDisplayBuy, false);
+game.scene.add('ShopDisplaySell', ShopDisplaySell, false);
+game.scene.add('SpecificItemUseDisplay', SpecificItemUseDisplay, false);
 game.scene.add('Dialogue', DialogueScene, false);
+game.scene.add('Transition', TransitionScene, false);
+game.scene.add('Menu', GenericMenu, false);
 
-// start the game
-game.scene.start('Preload', 'GameManager');
-// game.scene.start('Title');
+
+// load a custom font
+new FontFace("CustomFont", "url(assets/fonts/slkscr.ttf)")
+  .load()
+  .then(function (loaded) {
+    document.fonts.add(loaded);
+    game.scene.start('Preload');
+  })
+  .catch(function (error) {
+    return error;
+  });
+
