@@ -1,7 +1,6 @@
 import * as Utils from '../utils.js';
 
 
-
 const XBOXMAPPING = {
   0: 'A',
   1: 'B',
