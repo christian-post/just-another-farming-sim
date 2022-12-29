@@ -80,6 +80,7 @@ export class PreloadingScene extends Phaser.Scene {
     this.load.tilemapTiledJSON('village', 'assets/tilemaps/village.json');
     this.load.tilemapTiledJSON('barns', 'assets/tilemaps/barns.json');
     this.load.tilemapTiledJSON('houses', 'assets/tilemaps/houses.json');
+    this.load.tilemapTiledJSON('test', 'assets/tilemaps/test.json');
 
     this.load.image('overworld', 'assets/images/tilesets/!CL_DEMO.png');
     this.load.image('village', 'assets/images/tilesets/village.png');
@@ -94,7 +95,8 @@ export class PreloadingScene extends Phaser.Scene {
         farm: 'overworld',
         village: 'village',
         barns: 'barnInterior',
-        houses: 'houseInterior'
+        houses: 'houseInterior',
+        test: 'test'
       }
     });
 

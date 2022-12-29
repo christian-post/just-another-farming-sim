@@ -219,18 +219,22 @@ export class GameManager extends Phaser.Scene {
 
   quitGame() {
     // quits the game and returns to the title scene
+
+    // stop all other overworld scenes (should be sleeping)
     this.overworldScenes.forEach(scene => {
       if (scene !== this.currentGameScene) {
         this.scene.stop(scene);
       }
     });
 
+    // TODO add "scene transition" effect back
     this.switchScenes(this.currentGameScene, 'Title', {}, true, true);
+
     this.scene.get(this.currentGameScene).events.once('shutdown', ()=> {
       this.scene.stop('InventoryManager');
       this.scene.stop('InventoryDisplay');
       this.scene.resume(this.scene.key);
-      // remove manager events
+      // remove game manager events
       this.events.removeAllListeners();
       // remove registry data manager events
       this.registry.events.removeListener('changedata');
@@ -343,7 +347,7 @@ export class GameManager extends Phaser.Scene {
 
   switchScenes(current, next, createConfig, playTransitionAnim=true, stopScene=false) {
 
-    // console.log(`Switching from ${current} to ${next}`);
+    console.log(`Switching from ${current} to ${next}`);
 
     if (playTransitionAnim) {
       // Fade out/fade in effect
@@ -356,14 +360,17 @@ export class GameManager extends Phaser.Scene {
       });
       
     } else {
-      // no effect
+      // no transition effect
+      // just go directly to the other scene
       if (stopScene) {
         this.scene.stop(current);
       } else {
         this.scene.sleep(current);
       }
-      this.currentGameScene = next;
-      this.scene.run(next, createConfig);
+      if (next) {
+        this.currentGameScene = next;
+        this.scene.run(next, createConfig);
+      }
     }
   }
 
@@ -473,7 +480,7 @@ export class GameManager extends Phaser.Scene {
               this.scene.get(scene), 
               elem.constructor.x, 
               elem.constructor.y, 
-              elem.constructor.name, 
+              elem.constructor.crop, 
               elem.constructor.mapIndex
             );
 

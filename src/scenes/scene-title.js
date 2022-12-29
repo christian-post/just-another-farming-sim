@@ -13,6 +13,9 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create() {
+
+    console.log('run the title scene')
+
     this.manager = this.scene.get('GameManager');
     this.nextScene = 'FarmScene';
 
@@ -182,7 +185,6 @@ export class TitleScene extends Phaser.Scene {
     this.manager.configureIngameVariables();
 
     // start the Inventory Scene and User Interface
-    console.log('starting a new game')
     this.scene.run('InventoryManager');
 
     // execute when there is no save game

@@ -49,6 +49,7 @@ export class OverworldScene extends Phaser.Scene {
 
     // sprites that move around and should change their depth based on their y-position
     this.depthSortedSprites = this.add.layer();
+    this.depthSortedSprites.name = 'depthSortedSprites';
     this.depthSortedSprites.setDepth(this.depthValues.sprites);
 
     // create the Player sprite for this scene
@@ -141,7 +142,7 @@ export class OverworldScene extends Phaser.Scene {
     layersDrawnAbove: Array -> Layers that are drawn on top of the sprites
     */
 
-    this.collisionLayers = collisionLayers;
+    this.collisionLayers = collisionLayers || [];
 
     this.currentMap = this.make.tilemap({ key: mapKey });
     this.currentTileset = this.currentMap.addTilesetImage(this.registry.values.tilemapImages[mapKey]);
@@ -160,13 +161,15 @@ export class OverworldScene extends Phaser.Scene {
     });
 
     // draw the layers above the sprites
-    layersDrawnAbove.forEach(layer => {
-      if (layer in this.mapLayers) {
-        this.mapLayers[layer].setDepth(this.depthValues.mapAboveSprites);
-      } else {
-        console.warn(`${layer} not in map "${mapKey}".`);
-      }
-    });
+    if (layersDrawnAbove) {
+      layersDrawnAbove.forEach(layer => {
+        if (layer in this.mapLayers) {
+          this.mapLayers[layer].setDepth(this.depthValues.mapAboveSprites);
+        } else {
+          console.warn(`${layer} not in map "${mapKey}".`);
+        }
+      });
+    }
 
     this.physics.world.setBounds(0, 0, this.mapLayers.layer1.width, this.mapLayers.layer1.height);
 

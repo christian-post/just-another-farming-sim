@@ -34,25 +34,11 @@ export class BaseCharacterSprite extends Phaser.Physics.Arcade.Sprite {
     this.shadow = this.scene.add.image(this.x, this.getBounds().bottom, 'player-shadow')
       .setAlpha(0.3)
       .setDepth(this.scene.depthValues.sprites - 1);
+
+    this.shadow.name = 'player-shadow';
     this.scene.events.on('prerender', ()=> {
       this.shadow.setPosition(this.x, this.getBounds().bottom);
     });
-
-    this.on('destroy', ()=> this.shadow.destroy());
-
-    // debug stuff
-    this.debugInfo = this.scene.add.text(
-      this.x, 
-      this.y, 
-      'TEST', 
-      { 
-        color: '#fff', 
-        fontSize: '12px', 
-        fontFamily: this.scene.registry.values.globalFontFamily
-      }
-    )
-      .setDepth(30)
-      .setVisible(false);
 
     this.scene.registry.events.on('changedata-debug', (_, value) => {
       // what happens when the debug flag changes
@@ -336,7 +322,7 @@ export class Player extends BaseCharacterSprite {
                 let cropX = this.scene.registry.values.tileSize * interactX;
                 let cropY = this.scene.registry.values.tileSize * interactY;
 
-                this.scene.arableMap[index].plantCrop(this.scene, cropX, cropY, item.name, index);
+                this.scene.arableMap[index].plantCrop(this.scene, cropX, cropY, item.crop, index);
       
                 this.manager.events.emit('itemConsumed', item, button);              
 
@@ -509,7 +495,7 @@ export class Player extends BaseCharacterSprite {
         }
         break;
       default:
-        console.warn('function for tool not implemented: ', item.name);
+        console.warn('function for tool not implemented: ', item.key);
     }
   }
 
@@ -680,8 +666,9 @@ export class NPC extends BaseCharacterSprite {
         if (path === null) {
           console.warn("Path was not found.");
         } else {
-          // this.path = Utils.Math.simplifyPath(path);
-          this.path = path;
+          // follow only the corners of the path
+          this.path = Utils.Math.simplifyPath(path);
+          // this.path = path;
 
           if (this.scene.registry.values.debug) {
             if (this.scene.hasOwnProperty('debugPath')) {
@@ -928,12 +915,15 @@ export class Animal extends NPC {
 
 
 export class Crop extends Phaser.GameObjects.Image {
-  constructor(scene, x, y, name, mapIndex) {
-    let data = Utils.Misc.deepcopy(scene.cache.json.get('cropData').croplist[name]);
+  constructor(scene, x, y, key, mapIndex) {
+    let data = Utils.Misc.deepcopy(scene.cache.json.get('cropData').croplist[key]);
+    // add the displayed name from the dialogue data
+    data.screenName = scene.cache.json.get('dialogue')['screen-name'][key];
+
     super(scene, x, y, 'crops', data.frames[0]);
     this.setData(data);
 
-    this.name = name; // key for json data
+    this.key = key; // key for json data
     this.mapIndex = mapIndex;  // reference to the arable Map of the gameplay scene
 
     // reference to game manager
@@ -982,7 +972,7 @@ export class Crop extends Phaser.GameObjects.Image {
       constructor: {
         x: this.x,
         y: this.y,
-        name: this.name,
+        key: this.key,
         mapIndex: this.mapIndex
       },
       attributes: {
@@ -1159,7 +1149,7 @@ export class Trough extends Phaser.GameObjects.Image {
     
     this.data = {};
     data.forEach(obj => {
-      this.data[obj.name] = obj.value;
+      this.data[obj.key] = obj.value;
     });
 
     this.interactionButtonText = 'inspect';

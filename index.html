@@ -39,7 +39,14 @@
   <script type="module">
     // Functionality for the save button
     // let's the user download save data from the local storage
-    import { download } from '/src/utils/misc.js';
+    const download = function(content, fileName, contentType) {
+      // lets the user save data from the browser
+      let a = document.createElement('a');
+      let file = new Blob([content], {type: contentType});
+      a.href = URL.createObjectURL(file);
+      a.download = fileName;
+      a.click();
+    }
 
     let saveData = localStorage.getItem('save0');
     

@@ -1,7 +1,7 @@
 {
   "croplist": {
     "wheat": {
-      "name": "wheat",
+      "key": "wheat",
       "frames": [5, 6, 7, 8],
       "numPhases": 4,
       "phaseHarvest": 3,
@@ -12,7 +12,7 @@
       "maxFertilizer": 3
     },
     "potato": {
-      "name": "potato",
+      "key": "potato",
       "frames": [0, 1, 2, 3],
       "numPhases": 4,
       "phaseHarvest": 3,
@@ -23,7 +23,7 @@
       "maxFertilizer": 4
     },
     "maize": {
-      "name": "maize",
+      "key": "maize",
       "frames": [11, 12, 13, 14, 15],
       "numPhases": 5,
       "phaseHarvest": 4,
@@ -34,7 +34,7 @@
       "maxFertilizer": 5
     },
     "sugarbeet": {
-      "name": "sugarbeet",
+      "key": "sugarbeet",
       "frames": [18, 19, 20, 21],
       "numPhases": 4,
       "phaseHarvest": 3,

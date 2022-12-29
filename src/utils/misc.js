@@ -10,13 +10,3 @@ export const deepcopy = function(object) {
   // deep copy of an object with JSON serialization
   return JSON.parse(JSON.stringify(object));
 }
-
-
-export const download = function(content, fileName, contentType) {
-  // lets the user save data from the browser
-  let a = document.createElement('a');
-  let file = new Blob([content], {type: contentType});
-  a.href = URL.createObjectURL(file);
-  a.download = fileName;
-  a.click();
-}

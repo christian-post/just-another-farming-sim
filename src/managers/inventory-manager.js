@@ -1,6 +1,7 @@
 import { showMessage } from '../user-interface.js';
 import { callbacks } from '../callbacks.js';
 import * as Utils from '../utils.js';
+import { getNestedKey } from '../utils/misc.js';
 
 
 export class InventoryManager extends Phaser.Scene {
@@ -412,11 +413,11 @@ export class InventoryManager extends Phaser.Scene {
     }
   }
 
-  isEquipped(name) {
+  isEquipped(key) {
     // checks if this item is equipped on any button
     let item1 = this.getSelectedItem('item1');
     let item2 = this.getSelectedItem('item2');
-    return (item1 && item1.name === name) || (item2 && item2.name === name);
+    return (item1 && item1.key === key) || (item2 && item2.key === key);
   }
 
   isEquippedType(type) {
@@ -430,7 +431,7 @@ export class InventoryManager extends Phaser.Scene {
     // looks for instances of this item and returns the total amount owned
     let total = 0;
     this.inventory.forEach(inventoryItem => {
-      if (inventoryItem && inventoryItem.name === item.name) {
+      if (inventoryItem && inventoryItem.key === item.key) {
         if (item.unique) {
           total += 1;
         } else {
@@ -468,7 +469,7 @@ export class InventoryManager extends Phaser.Scene {
 
     if (!itemToAdd.unique) {
       for (let [index, item] of this.inventory.entries()) {
-        if (item !== null && item.name === itemToAdd.name && item.type === itemToAdd.type) {
+        if (item !== null && item.key === itemToAdd.key && item.type === itemToAdd.type) {
           if (item.quantity < this.itemMaxQuantity) {
             // add to the existing slot if the amount is lower than the allowed max. quantity
             rest = this.inventory[index].quantity + itemToAdd.quantity - this.itemMaxQuantity;
@@ -762,7 +763,9 @@ export class GenericInventoryDisplay extends Phaser.Scene {
   updateBottomText(item) {
     // item: currently selected item
     // individual behaviour for child scene, to be overwritten if needed
-    this.currentItemText.setText(item ? item.screenName : '');
+    let data = this.cache.json.get('dialogue');
+    let screenName = data['screen-name'][item?.key];
+    this.currentItemText.setText(item ? screenName || 'ERROR' : '');
   }
 
   addToSidebar(element, index) {
@@ -795,6 +798,7 @@ export class GenericInventoryDisplay extends Phaser.Scene {
 
 
 export class InventoryDisplay extends GenericInventoryDisplay {
+  // The ingame Inventory of the player
   create() {
     super.create({
       x: 80,
@@ -851,7 +855,7 @@ export class InventoryDisplay extends GenericInventoryDisplay {
   }
 
   interactWithItem(item) {
-    showMessage(this, 'tooltips.' + item.tooltip, item);
+    showMessage(this, 'tooltips.' + item.key, item);
   }
 
   getItem(index) {
@@ -1017,7 +1021,7 @@ export class ShopDisplayBuy extends ShopDisplayTemplate {
         this.manager.events.emit('item-collected', item);
       } else {
         if (item.type === 'livestock') {
-          this.manager.farmData.addAnimal(item.name, item, 0);
+          this.manager.farmData.addAnimal(item.key, item, 0);
         }
       }
 
@@ -1141,11 +1145,11 @@ export class ShopDisplaySell extends ShopDisplayTemplate {
       if (item.type === 'livestock') {
 
         // check if the animal can be sold
-        sellPrice = callbacks.selling[item.name](this, item);
+        sellPrice = callbacks.selling[item.key](this, item);
         if (sellPrice > 0) {
           this.registry.set('money',  currentFunds + sellPrice);
           this.showMoneyChange('+' + sellPrice);
-          this.manager.farmData.removeAnimal(item.name, item.id);
+          this.manager.farmData.removeAnimal(item.key, item.id);
         } else {
           // not ready to sell
           showMessage(this, 'npc-dialogue.shopping.animalNoSell');

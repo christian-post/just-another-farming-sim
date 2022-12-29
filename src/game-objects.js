@@ -6,9 +6,10 @@ import * as Utils from './utils.js';
 
 
 export class DialogueTrigger extends Phaser.GameObjects.Rectangle {
+  // rectangle that when interacted with, spawns a dialogue box
   constructor(scene, x, y, width, height, dialogueKey, options=null, optionsAreCallbacks){
-    // TODO: color and alpha only for testing
     super(scene, x, y, width, height);
+
     this.scene.add.existing(this);
     this.scene.allSprites.add(this);
     this.scene.physics.add.existing(this);
@@ -31,7 +32,7 @@ export class DialogueTrigger extends Phaser.GameObjects.Rectangle {
       this.dialogueKey += '.text';
 
       this.options = options;
-      // TODO: grab callbacks from js file
+      
       if (optionsAreCallbacks) {
         options.forEach(option => {
           let callback = Utils.Misc.getNestedKey(callbacks, option);
@@ -59,8 +60,10 @@ export class DialogueTrigger extends Phaser.GameObjects.Rectangle {
 
 
 export class InteractTrigger extends Phaser.GameObjects.Rectangle {
+  // used for interactive objects in the Tiled data
   constructor(scene, x, y, width, height, callbackKey, callbackArgs, interactionText){
     super(scene, x, y, width, height);
+
     this.scene.add.existing(this);
     this.scene.allSprites.add(this);
     this.scene.physics.add.existing(this);
@@ -85,8 +88,10 @@ export class InteractTrigger extends Phaser.GameObjects.Rectangle {
 
 
 export class TeleportTrigger extends Phaser.GameObjects.Rectangle {
+  // used for teleporter triggers in the Tiled map data
   constructor(scene, x, y, width, height, targetScene, playerX, playerY){
     super(scene, x, y, width, height);
+
     this.scene.add.existing(this);
     this.scene.allSprites.add(this);
     this.scene.physics.add.existing(this);
@@ -98,7 +103,7 @@ export class TeleportTrigger extends Phaser.GameObjects.Rectangle {
       this.setFillStyle(0xff0000, 0.3 * + value);
     });
 
-    // collision results in change of tilemaps
+    // a player collision results in change of tilemaps
     this.scene.physics.add.overlap(this.scene.player, this, ()=> {
       this.scene.manager.switchScenes(
         this.scene.scene.key,
@@ -107,7 +112,7 @@ export class TeleportTrigger extends Phaser.GameObjects.Rectangle {
           playerPos: { x: playerX, y: playerY },
           lastDir: this.scene.player.lastDir
         },
-        true  // start transition scene
+        true  // start transition effect scene
       );
     });
   }
@@ -115,8 +120,9 @@ export class TeleportTrigger extends Phaser.GameObjects.Rectangle {
 
 
 export class TeleportInteractTrigger extends Phaser.GameObjects.Rectangle {
-  // Teleport, but you have to press the interact button instead of 
+  // like Teleport, but you have to press the interact button instead of 
   // just colliding with it
+  // used for doors etc.
   constructor(scene, x, y, width, height, targetScene, playerX, playerY){
     super(scene, x, y, width, height);
     this.scene.add.existing(this);
@@ -155,6 +161,7 @@ export class TeleportInteractTrigger extends Phaser.GameObjects.Rectangle {
 export class SoilPatch extends Phaser.GameObjects.Rectangle {
   constructor(scene, x, y, index) {
     super(scene, x, y, scene.registry.values.tileSize, scene.registry.values.tileSize);
+    
     this.scene.add.existing(this);
     this.scene.allSprites.add(this);
     this.scene.physics.add.existing(this);
@@ -194,9 +201,9 @@ export class SoilPatch extends Phaser.GameObjects.Rectangle {
     });
   }
 
-  plantCrop(scene, cropX, cropY, name, index) {
+  plantCrop(scene, cropX, cropY, key, index) {
     // keep a reference to the crop sprite
-    this.crop = new Crop(scene, cropX, cropY, name, index);
+    this.crop = new Crop(scene, cropX, cropY, key, index);
     return this.crop;
   }
 

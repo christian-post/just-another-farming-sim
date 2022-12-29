@@ -14,12 +14,8 @@ export class DialogueScene extends Phaser.Scene {
 
   create(data) {
     this.manager = this.scene.get('GameManager');
+
     this.data = data;
-
-    // this.keys = Utils.Phaser.addKeysToScene(this, this.manager.inputHandler.keyMapping);
-    // this.manager.inputHandler.configureKeys(this);
-    // this.manager.inputHandler.checkForGamepad(this);  
-
     let json = this.cache.json.get('dialogue');
     let messageText = Utils.Misc.getNestedKey(json, data.key);
   
@@ -108,7 +104,6 @@ export class DialogueScene extends Phaser.Scene {
   }
   
   interactButtonCallback() {
-    console.log(this.message.isTyping)
     // when the message is still typing, show all text
     // when the message is complete, start next page or close if last page is reached
     if (this.message.isTyping) {
